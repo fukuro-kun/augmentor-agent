@@ -79,7 +79,7 @@ def recommendation(session, portal):
             return 'Wayland portal candidate: keyboard, pointer and screencast advertised. Live consent, capture and input tests still required.'
         return 'Wayland portal capabilities are incomplete for full desktop control; inspect the installed portal backend.'
     if session == 'x11':
-        return 'X11 backend candidate. Validate accessibility, capture and XTest in an isolated test desktop.'
+        return 'X11 backend available (x11-xtest). Requires python3-xlib, the XTEST extension and Flameshot or Qt screen capture; validate accessibility in the live session.'
     return 'Unknown session type. No desktop-control backend selected.'
 
 
@@ -102,7 +102,7 @@ def report(probe=False, environment=None):
         'desktop': environment.get('XDG_CURRENT_DESKTOP', 'unknown'),
         'session_type': session,
         'python_gi_installed': importlib.util.find_spec('gi') is not None,
-        'commands': {name: shutil.which(name) is not None for name in ('gdbus', 'xdotool', 'wmctrl', 'Xvfb')},
+        'commands': {name: shutil.which(name) is not None for name in ('gdbus', 'xdotool', 'wmctrl', 'Xvfb', 'flameshot')},
         'portals': portal,
         'assessment': recommendation(session, portal),
         'limitations': [

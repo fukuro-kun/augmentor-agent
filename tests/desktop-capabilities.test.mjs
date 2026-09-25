@@ -14,4 +14,6 @@ test('deferred Windows backend is unavailable and Linux retains its restrictions
  assert.equal(desktopCapabilities('win32',{},()=>true).available,false);
  const c=desktopCapabilities('linux',{});
  assert.equal(c.backend,'kde-wayland-portal');assert.equal(c.text,'ASCII');assert.equal(c.monitors,1);
+ const x11=desktopCapabilities('linux',{XDG_SESSION_TYPE:'x11'});
+ assert.equal(x11.backend,'x11-xtest');assert.equal(x11.monitors,0);
 });

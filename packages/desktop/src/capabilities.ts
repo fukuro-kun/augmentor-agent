@@ -7,5 +7,7 @@ export function desktopCapabilities(platform:NodeJS.Platform=process.platform,en
  const mac=platform==='darwin';
  const helper=env.AUGMENTOR_MACOS_HELPER??fileURLToPath(new URL('../../../native/augmentor-desktop-control',import.meta.url));
  const available=env.AUGMENTOR_PI_LINUX_TOOLS!=='0'&&(platform==='linux'||(mac&&present(helper)));
- return {available,preview:true,backend:mac?'macos-screencapturekit':platform==='linux'?'kde-wayland-portal':null,monitors:1,text:mac?'Unicode':'ASCII',requiresImageModel:true,requiresUserConsent:true};
+ const backend=mac?'macos-screencapturekit':platform==='linux'?(env.XDG_SESSION_TYPE==='x11'?'x11-xtest':'kde-wayland-portal'):null;
+ // monitors: 0 means per-active-window scoping (x11); a positive value is the supported monitor count.
+ return {available,preview:true,backend,monitors:backend==='x11-xtest'?0:1,text:mac?'Unicode':'ASCII',requiresImageModel:true,requiresUserConsent:true};
 }

@@ -17,6 +17,9 @@ from PySide6.QtCore import Qt,Signal,QTimer
 from PySide6.QtWidgets import QApplication,QWidget,QHBoxLayout,QLabel,QPushButton
 if sys.platform=='darwin':
     from macos import MacDesktop as Backend
+elif os.environ.get('XDG_SESSION_TYPE')=='x11':
+    from gi.repository import GLib
+    from x11 import X11Desktop as Backend
 else:
     from gi.repository import GLib
     from portal import Portal as Backend
