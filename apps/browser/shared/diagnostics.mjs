@@ -20,7 +20,7 @@ export class MetadataLog {
       if(this.bytes+line.length>1024*1024){this.capped=true;this.close();return}
       if(this.fd===null){
         mkdirSync(this.directory,{recursive:true,mode:0o700});const stat=lstatSync(this.directory)
-        if(stat.isSymbolicLink()||!stat.isDirectory()||stat.uid!==process.getuid())throw Error('Invalid diagnostics directory')
+        if(stat.isSymbolicLink()||!stat.isDirectory()||stat.uid!==process.getuid())throw Error('Ungültiges Diagnoseverzeichnis')
         chmodSync(this.directory,0o700)
         const lock=join(this.directory,'.metadata-rotation')
         try{mkdirSync(lock,{mode:0o700})}catch{return} // Never compete with another rotation.

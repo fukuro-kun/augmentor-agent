@@ -20,40 +20,40 @@ class MemoryDialog(QDialog):
     def __init__(self,owner):
         super().__init__(owner);self.owner=owner;self.client=PromptClient();self.token=None;self.busy=False;self.dismissed=False;self.config={};self.documents=[];self.offset=0;self.total=0
         self.completed.connect(lambda callback,value:callback(value) if not self.dismissed else None)
-        self.setWindowTitle('Memory');self.resize(600,640)
+        self.setWindowTitle('Gedächtnis');self.resize(600,640)
         layout=QVBoxLayout(self)
-        intro=QLabel('Automatic relationship and work memory is shared across Augmentor conversations. Hindsight maintains relationship pages and searchable project memory.');intro.setWordWrap(True);layout.addWidget(intro)
-        tabs=QTabWidget();self.tabs=tabs;layout.addWidget(tabs);connection=QWidget();data=QWidget();tabs.addTab(DualMemoryPanel(owner),'Automatic');tabs.addTab(connection,'Manual library connection');tabs.addTab(data,'Manual library memories')
+        intro=QLabel('Automatisches Beziehungs- und Arbeitsgedächtnis wird über Augmentor-Unterhaltungen hinweg geteilt. Hindsight pflegt Beziehungsseiten und durchsuchbares Projektgedächtnis.');intro.setWordWrap(True);layout.addWidget(intro)
+        tabs=QTabWidget();self.tabs=tabs;layout.addWidget(tabs);connection=QWidget();data=QWidget();tabs.addTab(DualMemoryPanel(owner),'Automatisch');tabs.addTab(connection,'Manuelle Bibliotheksverbindung');tabs.addTab(data,'Manuelle Bibliothekseinträge')
         form=QFormLayout(connection)
         self.endpoint=QLineEdit();self.endpoint.setPlaceholderText('http://127.0.0.1:8888')
         self.key=QLineEdit();self.key.setEchoMode(QLineEdit.EchoMode.Password)
-        self.user=QLineEdit();self.project=QLineEdit();self.scope=QComboBox();self.scope.addItem('User','user');self.scope.addItem('Project','project')
+        self.user=QLineEdit();self.project=QLineEdit();self.scope=QComboBox();self.scope.addItem('Benutzer','user');self.scope.addItem('Projekt','project')
         self.fields=[self.endpoint,self.key,self.user,self.project,self.scope]
-        for title,field in [('Endpoint',self.endpoint),('API key',self.key),('User bank',self.user),('Project bank (optional)',self.project),('Agent recall scope',self.scope)]:
+        for title,field in [('Endpunkt',self.endpoint),('API-Schlüssel',self.key),('Benutzer-Bank',self.user),('Projekt-Bank (optional)',self.project),('Abrufbereich des Agenten',self.scope)]:
             field.setAccessibleName(title);form.addRow(title,field)
             (field.currentIndexChanged if field is self.scope else field.textChanged).connect(self.invalidate)
-        explanation=QLabel('Requires Hindsight 0.9.2. Checking contacts that service without sending chat history. Saving enables recall. Retain sends only the text you enter in Memories; Hindsight may charge for processing. The key is stored in your private configuration without encryption.');explanation.setWordWrap(True);form.addRow(explanation)
-        row=QHBoxLayout();self.check=QPushButton('Check connection');self.save=QPushButton('Save and enable');self.save.setEnabled(False)
+        explanation=QLabel('Erfordert Hindsight 0.9.2. Die Prüfung kontaktiert diesen Dienst ohne Chatverlauf zu senden. Speichern aktiviert den Abruf. „Merken" sendet nur den Text, den du unter Einträge eingibst; Hindsight kann für die Verarbeitung Kosten berechnen. Der Schlüssel wird unverschlüsselt in deiner privaten Konfiguration gespeichert.');explanation.setWordWrap(True);form.addRow(explanation)
+        row=QHBoxLayout();self.check=QPushButton('Verbindung prüfen');self.save=QPushButton('Speichern und aktivieren');self.save.setEnabled(False)
         self.check.clicked.connect(self.check_connection);self.save.clicked.connect(self.configure);row.addWidget(self.check);row.addWidget(self.save);form.addRow(row)
-        self.disable=QPushButton('Disable memory');self.disable.clicked.connect(lambda:self.run('disable',{},self.loaded));form.addRow(self.disable)
-        detail=QLabel('Disable stops new recall and retention. Previously submitted operations may finish. Retained data remains available for viewing, export and deletion.');detail.setWordWrap(True);form.addRow(detail)
-        body=QVBoxLayout(data);self.data_scope=QComboBox();self.data_scope.addItem('User','user');self.data_scope.addItem('Project','project');self.data_scope.setAccessibleName('Memory data scope');body.addWidget(self.data_scope)
+        self.disable=QPushButton('Gedächtnis deaktivieren');self.disable.clicked.connect(lambda:self.run('disable',{},self.loaded));form.addRow(self.disable)
+        detail=QLabel('Deaktivieren stoppt neuen Abruf und neue Speicherung. Bereits übermittelte Vorgänge können noch abschließen. Gespeicherte Daten bleiben zum Ansehen, Exportieren und Löschen verfügbar.');detail.setWordWrap(True);form.addRow(detail)
+        body=QVBoxLayout(data);self.data_scope=QComboBox();self.data_scope.addItem('Benutzer','user');self.data_scope.addItem('Projekt','project');self.data_scope.setAccessibleName('Bereich der Gedächtnisdaten');body.addWidget(self.data_scope)
         self.data_scope.currentIndexChanged.connect(self.change_scope)
-        self.text=QPlainTextEdit();self.text.setPlaceholderText('Text to remember. Only this text will be retained.');self.text.setAccessibleName('Memory text');self.text.setMaximumHeight(115);body.addWidget(self.text)
-        self.retain=QPushButton('Retain this text');self.retain.clicked.connect(self.remember);body.addWidget(self.retain)
+        self.text=QPlainTextEdit();self.text.setPlaceholderText('Text zum Merken. Nur dieser Text wird gespeichert.');self.text.setAccessibleName('Gedächtnistext');self.text.setMaximumHeight(115);body.addWidget(self.text)
+        self.retain=QPushButton('Diesen Text merken');self.retain.clicked.connect(self.remember);body.addWidget(self.retain)
         self.operations=QLabel();self.operations.setWordWrap(True);body.addWidget(self.operations)
-        self.list=QListWidget();self.list.setAccessibleName('Retained documents');self.list.currentRowChanged.connect(self.read_document);body.addWidget(self.list)
-        self.contents=QPlainTextEdit();self.contents.setReadOnly(True);self.contents.setAccessibleName('Retained document text');body.addWidget(self.contents)
+        self.list=QListWidget();self.list.setAccessibleName('Gespeicherte Dokumente');self.list.currentRowChanged.connect(self.read_document);body.addWidget(self.list)
+        self.contents=QPlainTextEdit();self.contents.setReadOnly(True);self.contents.setAccessibleName('Text des gespeicherten Dokuments');body.addWidget(self.contents)
         paging=QHBoxLayout();body.addLayout(paging)
-        self.previous=QPushButton('Previous');self.next=QPushButton('Next');self.page=QLabel()
+        self.previous=QPushButton('Zurück');self.next=QPushButton('Weiter');self.page=QLabel()
         self.previous.clicked.connect(lambda:self.change_page(-20));self.next.clicked.connect(lambda:self.change_page(20))
         paging.addWidget(self.previous);paging.addWidget(self.page,1);paging.addWidget(self.next)
         row=QHBoxLayout();body.addLayout(row)
         self.data_actions=[]
-        for title,callback in [('Refresh',self.refresh),('Export facts',self.export),('Delete selected',self.delete)]:
+        for title,callback in [('Aktualisieren',self.refresh),('Fakten exportieren',self.export),('Auswahl löschen',self.delete)]:
             button=QPushButton(title);button.clicked.connect(callback);row.addWidget(button);self.data_actions.append(button)
-        self.note=QLabel('Loading memory settings…');self.note.setWordWrap(True);layout.addWidget(self.note)
-        close=QPushButton('Done');close.clicked.connect(self.reject);layout.addWidget(close)
+        self.note=QLabel('Gedächtniseinstellungen werden geladen …');self.note.setWordWrap(True);layout.addWidget(self.note)
+        close=QPushButton('Fertig');close.clicked.connect(self.reject);layout.addWidget(close)
         self.timer=QTimer(self);self.timer.setInterval(3000);self.timer.timeout.connect(lambda:self.poll_operations() if self.tabs.currentIndex()==2 else None);self.timer.start()
         self.run('describe',{},self.loaded)
 
@@ -94,13 +94,13 @@ class MemoryDialog(QDialog):
         self.project.setText(value.get('projectBank',''));self.scope.setCurrentIndex(self.scope.findData(value.get('activeScope','user')))
         with QSignalBlocker(self.data_scope):self.data_scope.setCurrentIndex(self.data_scope.findData(value.get('activeScope','user')))
         self.offset=0
-        self.key.clear();self.key.setPlaceholderText('Stored key kept if left blank' if value.get('apiKeySet') else 'Required for a remote service')
-        self.retain.setEnabled(bool(value.get('enabled')));self.note.setText('Hindsight memory enabled.' if value.get('enabled') else 'Hindsight memory disabled.')
+        self.key.clear();self.key.setPlaceholderText('Gespeicherter Schlüssel bleibt bei leerem Feld' if value.get('apiKeySet') else 'Erforderlich für einen entfernten Dienst')
+        self.retain.setEnabled(bool(value.get('enabled')));self.note.setText('Hindsight-Gedächtnis aktiviert.' if value.get('enabled') else 'Hindsight-Gedächtnis deaktiviert.')
         if value.get('endpoint'):self.refresh()
 
     def check_connection(self):
-        self.invalidate();self.note.setText('Checking Hindsight…')
-        def checked(value):self.token=value['token'];self.save.setEnabled(True);self.note.setText('Connection verified. Save to enable memory.')
+        self.invalidate();self.note.setText('Hindsight wird geprüft …')
+        def checked(value):self.token=value['token'];self.save.setEnabled(True);self.note.setText('Verbindung geprüft. Speichern aktiviert das Gedächtnis.')
         self.run('check',{'endpoint':self.endpoint.text(),'apiKey':self.key.text(),'userBank':self.user.text(),'projectBank':self.project.text(),'activeScope':self.scope.currentData()},checked)
 
     def configure(self):
@@ -108,22 +108,22 @@ class MemoryDialog(QDialog):
 
     def remember(self):
         content=self.text.toPlainText()
-        if not content.strip():self.note.setText('Enter the text to retain.');return
+        if not content.strip():self.note.setText('Gib den zu merkenden Text ein.');return
         provenance={'surface':'linux','harness':getattr(self.owner.controller,'harness','pi')}
         session=getattr(self.owner.controller,'session',None)
         if session:provenance['sessionId']=session
         def saved(value):
-            self.text.clear();self.note.setText('Retention queued. Refresh to check completion.' if value['status']=='pending' else 'Retention outcome is unknown. Refresh its status before saving again.');self.poll_operations()
+            self.text.clear();self.note.setText('Speicherung eingereiht. Aktualisiere, um den Abschluss zu prüfen.' if value['status']=='pending' else 'Speicherergebnis unbekannt. Aktualisiere den Status vor einem erneuten Speichern.');self.poll_operations()
         self.run('retain',{'scope':self.data_scope.currentData(),'content':content,'provenance':provenance},saved,uuid.uuid4().hex)
 
     def refresh(self,*_):
         if not self.config.get('endpoint') or self.busy:return
         def loaded(value):
             self.documents=value['items'];self.total=value['total'];self.list.clear();self.contents.clear()
-            for row in self.documents:self.list.addItem(str(row['id'])+' · '+str(row.get('memory_unit_count',0))+' facts')
-            self.page.setText(f"{self.offset+1 if self.documents else 0}–{self.offset+len(self.documents)} of {self.total}")
+            for row in self.documents:self.list.addItem(str(row['id'])+' · '+str(row.get('memory_unit_count',0))+' Fakten')
+            self.page.setText(f"{self.offset+1 if self.documents else 0}–{self.offset+len(self.documents)} von {self.total}")
             self.set_busy(False)
-            self.note.setText('Export facts includes every page.')
+            self.note.setText('„Fakten exportieren" umfasst alle Seiten.')
         self.run('documents',{'scope':self.data_scope.currentData(),'offset':self.offset},loaded)
 
     def change_scope(self,*_):
@@ -135,7 +135,7 @@ class MemoryDialog(QDialog):
 
     def read_document(self,index):
         if index<0 or index>=len(self.documents):return
-        self.run('document',{'scope':self.data_scope.currentData(),'id':self.documents[index]['id']},lambda r:self.contents.setPlainText(r.get('original_text') or '(No source text)'))
+        self.run('document',{'scope':self.data_scope.currentData(),'id':self.documents[index]['id']},lambda r:self.contents.setPlainText(r.get('original_text') or '(Kein Quelltext)'))
 
     def poll_operations(self):
         if self.busy or not self.config.get('endpoint'):return
@@ -150,14 +150,14 @@ class MemoryDialog(QDialog):
         index=self.list.currentRow()
         if self.busy or not 0<=index<len(self.documents):return
         row=self.documents[index]
-        if QMessageBox.question(self,'Delete memory','Delete this source document and its associated memories from Hindsight?')!=QMessageBox.StandardButton.Yes:return
+        if QMessageBox.question(self,'Gedächtnis löschen','Dieses Quelldokument und die zugehörigen Einträge aus Hindsight löschen?')!=QMessageBox.StandardButton.Yes:return
         self.run('delete',{'scope':self.data_scope.currentData(),'id':row['id']},lambda _:self.refresh())
 
     def export(self):
         if self.busy:return
-        path,_=QFileDialog.getSaveFileName(self,'Export memory facts','augmentor-memory.json','JSON (*.json)')
+        path,_=QFileDialog.getSaveFileName(self,'Gedächtnisfakten exportieren','augmentor-memory.json','JSON (*.json)')
         if not path:return
-        scope=self.data_scope.currentData();self.set_busy(True);self.note.setText('Exporting facts…')
+        scope=self.data_scope.currentData();self.set_busy(True);self.note.setText('Fakten werden exportiert …')
         def work():
             temporary=None
             try:
@@ -165,7 +165,7 @@ class MemoryDialog(QDialog):
                 while True:
                     page=self.client.call('memory.exportPage',{'scope':scope,'offset':offset});items=page['items'];rows.extend(items);offset+=len(items)
                     if offset>=page['total']:break
-                    if not items:raise RuntimeError('Memory changed during export. Please try again.')
+                    if not items:raise RuntimeError('Das Gedächtnis hat sich während des Exports geändert. Bitte versuche es erneut.')
                 descriptor,temporary=tempfile.mkstemp(prefix='.augmentor-memory-',dir=Path(path).parent)
                 with os.fdopen(descriptor,'w') as file:
                     json.dump({'provider':'hindsight','scope':scope,'facts':rows},file,ensure_ascii=False,indent=2)
@@ -177,7 +177,7 @@ class MemoryDialog(QDialog):
                 if temporary:Path(temporary).unlink(missing_ok=True)
         def finished(error):
             if self.dismissed:return
-            self.set_busy(False);self.note.setText(error or 'Memory facts exported.')
+            self.set_busy(False);self.note.setText(error or 'Gedächtnisfakten exportiert.')
         self.background(work,finished)
 
     def reject(self):

@@ -7,7 +7,7 @@ import {promptCall} from '../../../dist/prompt-library/src/client.js'
 
 export async function promptLibrary(request = {}, call = promptCall) {
   const action=request.action??'list'
-  if(!['list','save','delete','improvement.save'].includes(action))return {ok:false,error:'Unsupported prompt action'}
+  if(!['list','save','delete','improvement.save'].includes(action))return {ok:false,error:'Nicht unterstützte Prompt-Aktion'}
   try {
     const {action:_,...params}=request
     return {ok:true,library:await call('prompts.'+action,params)}

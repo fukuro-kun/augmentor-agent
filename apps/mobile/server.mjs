@@ -30,21 +30,21 @@ export function createRemoteServer({state,origins,port=8765,vncPort=5975,resize=
   }
   const files=new Map([['/',['web/index.html','text/html']],['/app.js',['build/app.js','text/javascript']],['/third-party.txt',['build/third-party.txt','text/plain; charset=utf-8']],['/style.css',['web/style.css','text/css']],['/manifest.webmanifest',['web/manifest.webmanifest','application/manifest+json']],['/icon-192.png',['web/icon-192.png','image/png']],['/icon-512.png',['web/icon-512.png','image/png']]]);
   const server=http.createServer(async(req,res)=>{
-    if(!valid(req,req.method==='POST'))return reply(res,403,{error:'Unrecognized origin.'});
+    if(!valid(req,req.method==='POST'))return reply(res,403,{error:'Unbekannte Herkunft.'});
     if(req.method==='GET'){
-      const file=files.get(req.url);if(!file)return reply(res,404,{error:'Not found.'});
-      try{return reply(res,200,readFileSync(path.join(here,file[0])),file[1]);}catch{return reply(res,503,{error:'Build the remote client first.'});}
+      const file=files.get(req.url);if(!file)return reply(res,404,{error:'Nicht gefunden.'});
+      try{return reply(res,200,readFileSync(path.join(here,file[0])),file[1]);}catch{return reply(res,503,{error:'Baue zuerst den Remote-Client.'});}
     }
-    if(req.method!=='POST'||!['/api/pair','/api/connect','/api/logout','/api/resize','/api/show'].includes(req.url))return reply(res,404,{error:'Not found.'});
-    if(req.url!=='/api/pair'&&!authorized(req))return reply(res,401,{error:'Pair with your computer.'});
-    if(req.headers['content-type']!=='application/json')return reply(res,400,{error:'Expected JSON.'});
+    if(req.method!=='POST'||!['/api/pair','/api/connect','/api/logout','/api/resize','/api/show'].includes(req.url))return reply(res,404,{error:'Nicht gefunden.'});
+    if(req.url!=='/api/pair'&&!authorized(req))return reply(res,401,{error:'Kopple mit deinem Computer.'});
+    if(req.headers['content-type']!=='application/json')return reply(res,400,{error:'JSON wird erwartet.'});
     try{
-      let size=0;const chunks=[];for await(const chunk of req){size+=chunk.length;if(size>16384){reply(res,413,{error:'Request too large.'});req.destroy();return;}chunks.push(chunk);}
+      let size=0;const chunks=[];for await(const chunk of req){size+=chunk.length;if(size>16384){reply(res,413,{error:'Anfrage zu groß.'});req.destroy();return;}chunks.push(chunk);}
       const body=JSON.parse(Buffer.concat(chunks));if(!body||typeof body!=='object'||Array.isArray(body))throw Error('Invalid request.');
       if(req.url==='/api/pair'){
-        attempts=attempts.filter(t=>Date.now()-t<60000);if(attempts.length>=5)return reply(res,429,{error:'Wait one minute before trying again.'});
+        attempts=attempts.filter(t=>Date.now()-t<60000);if(attempts.length>=5)return reply(res,429,{error:'Warte eine Minute vor dem nächsten Versuch.'});
         const supplied=Buffer.from(typeof body.key==='string'?body.key:'');const expected=Buffer.from(key);
-        if(supplied.length!==expected.length||!timingSafeEqual(supplied,expected)){attempts.push(Date.now());return reply(res,401,{error:'Invalid pairing key.'});}
+        if(supplied.length!==expected.length||!timingSafeEqual(supplied,expected)){attempts.push(Date.now());return reply(res,401,{error:'Ungültiger Kopplungsschlüssel.'});}
         for(const [token,expires] of sessions)if(expires<Date.now())sessions.delete(token);
         const token=randomBytes(32).toString('base64url');sessions.set(token,Date.now()+43200000);
         return reply(res,200,{ok:true},'application/json',{'Set-Cookie':`augmentor_desktop=${token}; HttpOnly; SameSite=Strict; Path=/; Max-Age=43200${req.headers.origin.startsWith('https:')?'; Secure':''}`});
@@ -54,16 +54,16 @@ export function createRemoteServer({state,origins,port=8765,vncPort=5975,resize=
         return reply(res,200,{ok:true},'application/json',{'Set-Cookie':'augmentor_desktop=; HttpOnly; SameSite=Strict; Path=/; Max-Age=0'});
       }
       if(req.url==='/api/connect'){
-        if(control)return reply(res,409,{error:'Another tab or device is connected. Disconnect it, then reconnect here.'});
+        if(control)return reply(res,409,{error:'Ein anderer Tab oder ein anderes Gerät ist verbunden. Trenne es und verbinde dich hier erneut.'});
         return reply(res,200,{protocol:'augmentor-desktop/1',password:readFileSync(path.join(state,'vnc-secret'),'utf8').trim()});
       }
-      if(control&&control.owner!==cookie(req))return reply(res,409,{error:'Another device is controlling this window.'});
+      if(control&&control.owner!==cookie(req))return reply(res,409,{error:'Ein anderes Gerät steuert dieses Fenster.'});
       if(req.url==='/api/resize'){
         if(!Number.isInteger(body.width)||!Number.isInteger(body.height)||body.width<340||body.width>1600||body.height<300||body.height>1400)throw Error('Invalid viewport.');
         await resize(body.width,body.height);
       }else await resize(null,null,true);
       reply(res,200,{ok:true});
-    }catch{return reply(res,400,{error:'Request could not be applied. No input was replayed.'});}
+    }catch{return reply(res,400,{error:'Die Anfrage konnte nicht angewendet werden. Eingaben wurden nicht wiederholt.'});}
   });
   server.requestTimeout=15000;server.headersTimeout=10000;server.maxConnections=24;
   server.on('upgrade',(req,socket,head)=>{

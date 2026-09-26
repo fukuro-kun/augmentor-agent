@@ -53,7 +53,7 @@ void refreshDesktopAppearance().catch(()=>{})
 const appearanceTimer=setInterval(()=>{void refreshDesktopAppearance().catch(()=>{})},15000)
 window.addEventListener('pagehide',()=>clearInterval(appearanceTimer),{once:true})
 const openSettings=async(section)=>{
-  try { const r=await send('settings/open',{section});if(!r?.ok)throw Error(r?.error||'Could not open Settings') }
+  try { const r=await send('settings/open',{section});if(!r?.ok)throw Error(r?.error||'Einstellungen konnten nicht geöffnet werden') }
   catch(error){ui.sendFail(error.message)}
 }
 // The same More menu entry point as the floating window.
@@ -61,10 +61,10 @@ import {attachSurface} from './surface.mjs'
 const surface=attachSurface({send,openSettings,onError:message=>ui.sendFail(message),approval:()=>openAccessMenu(),state:()=>ui.state})
 let refreshSerial=0
 const setupNotice=document.createElement('button');setupNotice.id='setup-notice';setupNotice.hidden=true
-setupNotice.textContent='Connect a model in Settings';setupNotice.onclick=()=>openSettings('models')
+setupNotice.textContent='Verbinde ein Modell in den Einstellungen';setupNotice.onclick=()=>openSettings('models')
 document.querySelector('header').after(setupNotice)
 const editBar=document.createElement('div');editBar.hidden=true;editBar.className='edit-message-bar'
-const editLabel=document.createElement('span');editLabel.textContent='Editing latest message';const cancelEdit=document.createElement('button');cancelEdit.textContent='Cancel';cancelEdit.type='button';editBar.append(editLabel,cancelEdit)
+const editLabel=document.createElement('span');editLabel.textContent='Letzte Nachricht wird bearbeitet';const cancelEdit=document.createElement('button');cancelEdit.textContent='Abbrechen';cancelEdit.type='button';editBar.append(editLabel,cancelEdit)
 document.getElementById('composer-field').before(editBar)
 cancelEdit.onclick=()=>{if(editingMessage)document.getElementById('input').value=editingMessage.draft;editingMessage=null;editBar.hidden=true;document.getElementById('input').dispatchEvent(new Event('input'))}
 async function messageAction(action,seq,text){
@@ -210,15 +210,15 @@ function renderPicker() {
     const label = document.createElement('span')
     const ready = ui.state.phase === 'ready'
     label.textContent = ready
-      ? ui.state.error ?? 'Model list unavailable'
+      ? ui.state.error ?? 'Modellliste nicht verfügbar'
       : ui.state.phase === 'connecting'
-        ? 'Loading models…'
-        : 'Not connected'
+        ? 'Modelle werden geladen…'
+        : 'Nicht verbunden'
     strip.appendChild(label)
     if (ready) {
       const retry = document.createElement('button')
       retry.type = 'button'
-      retry.textContent = 'Retry'
+      retry.textContent = 'Erneut versuchen'
       retry.addEventListener('click', fetchModels)
       strip.appendChild(retry)
     }
@@ -269,7 +269,7 @@ function renderPicker() {
     const h = document.createElement('div')
     h.className = 'mp-group pin'
     h.innerHTML = PIN_SVG + '<span></span>'
-    h.querySelector('span').textContent = 'Pinned'
+    h.querySelector('span').textContent = 'Angepinnt'
     modelPopBody.appendChild(h)
     for (const { g, m } of pinnedVisible) modelPopBody.appendChild(makeRow(g, m))
   }
@@ -283,7 +283,7 @@ function renderPicker() {
   if (!pinnedVisible.length && !visibleGroups.length) {
     const strip = document.createElement('div')
     strip.className = 'mp-strip'
-    strip.textContent = `No models match${q ? ` “${pickerQuery.trim()}”` : ''}.`
+    strip.textContent = `Keine passenden Modelle${q ? ` für „${pickerQuery.trim()}“` : ''}.`
     modelPopBody.appendChild(strip)
   }
 }
@@ -378,7 +378,7 @@ async function chooseModel(sel) {
     if (res.model) pickerSelection = res.model
     renderPicker()
   } else {
-    ui.sendFail(res?.error ?? 'model switch failed')
+    ui.sendFail(res?.error ?? 'Modellwechsel fehlgeschlagen')
   }
 }
 
@@ -422,15 +422,15 @@ async function refresh() {
     voice.update(res,!!viewSessionId)
     surface.update(res)
     surfaceCapabilities=res.capabilities??surfaceCapabilities
-    setupNotice.hidden=res.phase!=='needs-setup';setupNotice.textContent=res.harness==='dsh'?'Connect DSH in Settings':'Connect a model in Settings'
+    setupNotice.hidden=res.phase!=='needs-setup';setupNotice.textContent=res.harness==='dsh'?'DSH in den Einstellungen verbinden':'Modell in den Einstellungen verbinden'
 
     for(const row of res.interactions??[]){
       if(answeredInteractions.has(row.id))continue;answeredInteractions.add(row.id)
       const p=row.params;let value
-      if(row.method==='approval.requested')value={outcome:window.confirm((p.toolName??'Action')+'\n'+(p.reason??'Allow this action?'))?'allowed-once':'denied'}
+      if(row.method==='approval.requested')value={outcome:window.confirm((p.toolName??'Action')+'\n'+(p.reason??'Diese Aktion erlauben?'))?'allowed-once':'denied'}
       else {const answers=[];for(const q of p.questions??[]){const answer=window.prompt(q.question+(q.options?.length?'\n'+q.options.map(o=>o.label).join(' / '):''),q.prefill??'');if(answer!==null)answers.push({id:q.id,selected:[],custom:answer})}value={answer:{answers}}}
       const outcome=await send('interaction/respond',{id:row.id,value})
-      if(!outcome?.ok)ui.sendFail(outcome?.error??'The decision was not confirmed.')
+      if(!outcome?.ok)ui.sendFail(outcome?.error??'Die Entscheidung wurde nicht bestätigt.')
     }
     ui.setState({ phase: res.phase, error: res.error, running: viewSessionId ? false : res.running })
     if (!viewSessionId) updateSaveBadge(res)
@@ -479,7 +479,7 @@ const sessionsPopCtl = popover({
   align: 'left',
   onOpen: () => {
     renderSessionsList([])
-    sessionsPopBody.firstElementChild.textContent = 'Loading sessions…'
+    sessionsPopBody.firstElementChild.textContent = 'Sitzungen werden geladen…'
     loadSessionsList()
   },
 })
@@ -492,7 +492,7 @@ function renderSessionsList(items) {
   if (!items?.length) {
     const strip = document.createElement('div')
     strip.className = 'sp-strip'
-    strip.textContent = 'No sessions in the DSH app'
+    strip.textContent = 'Keine Sitzungen in der DSH-App'
     sessionsPopBody.appendChild(strip)
   }
   for (const item of items) {
@@ -527,10 +527,10 @@ function renderSessionsList(items) {
   const strip = document.createElement('div')
   strip.className = 'sp-strip'
   const label = document.createElement('span')
-  label.textContent = 'Trust-fence probe (this origin → DSH app)'
+  label.textContent = 'Vertrauensgrenzen-Probe (dieser Ursprung → DSH-App)'
   const btn = document.createElement('button')
   btn.type = 'button'
-  btn.textContent = 'Probe'
+  btn.textContent = 'Prüfen'
   btn.addEventListener('click', async () => {
     btn.disabled = true
     btn.textContent = '…'
@@ -539,10 +539,10 @@ function renderSessionsList(items) {
       strip.className = 'sp-strip ' + (res?.ok ? 'ok' : 'err')
       const api = res?.probe?.api
       const root = res?.probe?.root
-      const apiTxt = api?.error ? `api: blocked (${api.error})` : `api: HTTP ${api.status}`
-      const rootTxt = root?.error ? `control: blocked` : `control: HTTP ${root.status}`
+      const apiTxt = api?.error ? `api: blockiert (${api.error})` : `api: HTTP ${api.status}`
+      const rootTxt = root?.error ? `control: blockiert` : `control: HTTP ${root.status}`
       label.textContent = `${apiTxt} · ${rootTxt}`
-      btn.textContent = 'Re-probe'
+      btn.textContent = 'Erneut prüfen'
     } finally {
       btn.disabled = false
     }
@@ -556,7 +556,7 @@ async function openDshSession(item, title) {
   if(ui.state.submitting)return
   const res = await send('session/history', { sessionId: item.sessionId })
   if (!res?.ok) {
-    ui.sendFail(res?.error ?? 'could not load the session history')
+    ui.sendFail(res?.error ?? 'Der Sitzungsverlauf konnte nicht geladen werden')
     return
   }
   // Reset the renderer's baseline so the DSH session's seqs don't collide
@@ -589,7 +589,7 @@ async function loadSessionsList() {
     sessionsPopBody.replaceChildren()
     const strip = document.createElement('div')
     strip.className = 'sp-strip err'
-    strip.textContent = res?.error ?? 'session list failed'
+    strip.textContent = res?.error ?? 'Sitzungsliste fehlgeschlagen'
     sessionsPopBody.appendChild(strip)
     return
   }
@@ -599,7 +599,7 @@ async function loadSessionsList() {
   if (typeof res.total === 'number' && res.total > res.items.length) {
     const foot = document.createElement('div')
     foot.className = 'sp-strip'
-    foot.textContent = `Latest ${res.items.length} of ${res.total} sessions`
+    foot.textContent = `Neueste ${res.items.length} von ${res.total} Sitzungen`
     sessionsPopBody.appendChild(foot)
   }
 }
@@ -618,7 +618,7 @@ ui.setState = (s) => {
   document.getElementById('stop').hidden = !running
   modelBtn.disabled = running || !!ui.state.submitting
   cancelEdit.disabled = !!ui.state.submitting
-  modelBtn.title = running ? 'Finish the current turn to switch models' : 'Switch model'
+  modelBtn.title = running ? 'Beende den aktuellen Durchlauf, um das Modell zu wechseln' : 'Modell wechseln'
   if (running && !modelPop.hidden) closeModelPop()
 }
 
@@ -647,7 +647,7 @@ function updateSaveBadge(res) {
   // accent) — never textContent, which would destroy the SVG child.
   saveBtn.classList.toggle('saved', saved)
   saveBtn.textContent=saved?'★':'☆'
-  saveBtn.title = saved ? 'Unsave chat' : 'Save chat'
+  saveBtn.title = saved ? 'Chat nicht mehr speichern' : 'Chat speichern'
 }
 saveBtn.addEventListener('click', async () => {
   const res = await send(m3Saved.has(m3SessionId) ? 'unsave' : 'save')
@@ -760,9 +760,9 @@ $newchat.addEventListener('click', async (e) => {
 // defaultPreset at all, so existing installs keep their saved choice; full
 // access stays one long-press away (behind its risk confirmation).
 const ACCESS_PRESETS = [
-  { value: 'read-only', label: 'Read only', desc: 'Nothing is written; attempts ask for approval.' },
-  { value: 'workspace-write', label: 'Manual (workspace write)', desc: 'Writes inside the workspace; wider actions ask you first.' },
-  { value: 'danger-full-access', label: 'Automatic (full access)', desc: 'Everything allowed automatically — no approval prompts.' },
+  { value: 'read-only', label: 'Nur lesen', desc: 'Es wird nichts geschrieben; Versuche fragen um Freigabe.' },
+  { value: 'workspace-write', label: 'Manuell (Workspace-Schreibzugriff)', desc: 'Schreibt innerhalb des Workspace; weitergehende Aktionen fragen dich zuerst.' },
+  { value: 'danger-full-access', label: 'Automatisch (voller Zugriff)', desc: 'Alles wird automatisch erlaubt — keine Freigabe-Abfragen.' },
 ]
 const DEFAULT_ACCESS = 'workspace-write'
 let accessCurrent = null
@@ -771,11 +771,11 @@ let accessMenu = null
 
 function accessLabel(value) {
   const p = ACCESS_PRESETS.find((x) => x.value === value)
-  return p ? p.label : value ?? 'unknown'
+  return p ? p.label : value ?? 'unbekannt'
 }
 
 function accessTitle() {
-  return `Approval mode: ${accessLabel(accessCurrent)} — applies to new chats. Hold New Chat to change.`
+  return `Freigabemodus: ${accessLabel(accessCurrent)} — gilt für neue Chats. „Neuer Chat“ halten, um ihn zu ändern.`
 }
 
 async function loadAccess() {
@@ -815,7 +815,7 @@ function openAccessMenu() {
   accessMenu.id = 'access-menu'
   const head = document.createElement('div')
   head.className = 'access-head'
-  head.textContent = 'Approval mode — new chats'
+  head.textContent = 'Freigabemodus — neue Chats'
   accessMenu.appendChild(head)
   for (const p of ACCESS_PRESETS) {
     const opt = document.createElement('button')
@@ -848,7 +848,7 @@ async function pickAccess(value) {
   // The DSH GUI gates the full-access preset behind an explicit risk
   // confirmation; mirror that stance here.
   if (value === 'danger-full-access' &&
-      !window.confirm('Switch to Automatic (full access)?\n\nNo approval prompts will appear — every action is allowed automatically. Applies to new chats.')) {
+      !window.confirm('Zu Automatisch (voller Zugriff) wechseln?\n\nEs erscheinen keine Freigabe-Abfragen — jede Aktion wird automatisch erlaubt. Gilt für neue Chats.')) {
     return
   }
   const res = await send('settings/mutate', {
@@ -857,7 +857,7 @@ async function pickAccess(value) {
     ...(accessRevision !== null ? { expectedRevision: accessRevision } : {}),
   })
   if (res?.ok === false) {
-    ui.sendFail('Switch approval mode: ' + (res.error ?? 'failed'))
+    ui.sendFail('Freigabemodus wechseln: ' + (res.error ?? 'fehlgeschlagen'))
     return
   }
   const view = res.value

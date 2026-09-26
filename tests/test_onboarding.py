@@ -16,9 +16,9 @@ class OnboardingTests(unittest.TestCase):
             window=SimpleNamespace(controller=controller,editing=None,composer=SimpleNamespace(toPlainText=lambda:''),model_picker=SimpleNamespace(currentData=lambda:{'provider':'test','model':'test'}),new_chat=lambda:calls.append('new'),bring_forward=lambda:None)
             identity=str(uuid.uuid4())
             controller.running=True
-            with self.assertRaisesRegex(RuntimeError,'current Linux action'):start(window,'memory',identity)
+            with self.assertRaisesRegex(RuntimeError,'aktuelle Linux-Aktion'):start(window,'memory',identity)
             controller.running=False;window.composer.toPlainText=lambda:'Important draft'
-            with self.assertRaisesRegex(RuntimeError,'unfinished'):start(window,'memory',identity)
+            with self.assertRaisesRegex(RuntimeError,'unfertige'):start(window,'memory',identity)
             self.assertEqual(calls,[])
             window.composer.toPlainText=lambda:''
             self.assertEqual(start(window,'memory',identity)['status'],'started')
@@ -28,5 +28,5 @@ class OnboardingTests(unittest.TestCase):
             self.assertTrue(start(SimpleNamespace(**window.__dict__),'memory',identity)['reused'])
             self.assertEqual(len(calls),2)
             self.assertEqual((Path(folder)/'onboarding-requests.json').stat().st_mode & 0o777,0o600)
-            with self.assertRaisesRegex(RuntimeError,'Unknown'):start(window,'shell',identity)
-            with self.assertRaisesRegex(RuntimeError,'Invalid'):start(window,'memory','bad')
+            with self.assertRaisesRegex(RuntimeError,'Unbekannte'):start(window,'shell',identity)
+            with self.assertRaisesRegex(RuntimeError,'Ungültige'):start(window,'memory','bad')

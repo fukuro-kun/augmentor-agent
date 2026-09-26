@@ -11,7 +11,7 @@ from pathlib import Path
 
 
 def ensure_running(harness='pi'):
-    if harness != 'pi':raise ValueError('Only Pi uses the managed socket runtime.')
+    if harness != 'pi':raise ValueError('Nur Pi nutzt die verwaltete Socket-Laufzeit.')
     prefix='AUGMENTOR_'+harness.upper()
     project=Path(__file__).resolve().parents[3]
     state=Path(os.environ.get(prefix+'_STATE',Path(os.environ.get('XDG_STATE_HOME',Path.home()/'.local/state'))/('augmentor-'+harness)))
@@ -28,13 +28,13 @@ def ensure_running(harness='pi'):
         if alive():return
         node=os.environ.get('AUGMENTOR_PI_NODE') or shutil.which('node')
         script=project/'dist/runtime/src/main.js'
-        if not node or not script.exists():raise RuntimeError(harness+' runtime is not built. Run npm ci --ignore-scripts and npm run build in the app installation.')
+        if not node or not script.exists():raise RuntimeError(harness+' Laufzeit wurde nicht gebaut. Führe npm ci --ignore-scripts und npm run build in der App-Installation aus.')
         log=os.open(state/'runtime.log',os.O_WRONLY|os.O_CREAT|os.O_APPEND,0o600)
         try:child=subprocess.Popen([sys.executable,str(project/'scripts/run-component.py'),'runtime',node,str(script)],cwd=project,stdin=subprocess.DEVNULL,stdout=log,stderr=log,start_new_session=True,env={**os.environ,'PI_TELEMETRY':'0','PI_SKIP_VERSION_CHECK':'1'})
         finally:os.close(log)
         until=time.monotonic()+60
         while time.monotonic()<until:
             if alive():return
-            if child.poll() is not None:raise RuntimeError(harness+' runtime failed to start. See '+str(state/'runtime.log'))
+            if child.poll() is not None:raise RuntimeError(harness+' Laufzeit konnte nicht gestartet werden. Siehe '+str(state/'runtime.log'))
             time.sleep(.1)
-        raise RuntimeError(harness+' runtime startup timed out. See '+str(state/'runtime.log'))
+        raise RuntimeError(harness+' Zeitüberschreitung beim Laufzeitstart. Siehe '+str(state/'runtime.log'))

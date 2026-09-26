@@ -8,9 +8,9 @@ export function presentSettingsForm(dialog, container) {
   container.append(dialog)
   dialog.classList.add('settings-form')
   dialog.setAttribute('role', 'region')
-  dialog.setAttribute('aria-label', dialog.querySelector('h3')?.textContent || 'Settings')
+  dialog.setAttribute('aria-label', dialog.querySelector('h3')?.textContent || 'Einstellungen')
   for (const button of dialog.querySelectorAll('button')) {
-    if (['Later', 'Done', 'Close'].includes(button.textContent)) button.hidden = true
+    if (['Später', 'Fertig', 'Schließen'].includes(button.textContent)) button.hidden = true
   }
   // show(), unlike showModal(), does not use the top layer or block the page.
   dialog.show()

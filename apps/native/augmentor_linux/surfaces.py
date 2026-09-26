@@ -19,7 +19,7 @@ def model_sections(catalog, query=''):
     query = query.strip().casefold()
     def matches(g, m):
         return query in ' '.join([m['name'], m['model'], g['name'], g['provider']]).casefold()
-    result = [('Pinned', [m for g,m in pinned if matches(g,m)])]
+    result = [('Angepinnt', [m for g,m in pinned if matches(g,m)])]
     for g in groups:
         rows = [m for m in g.get('models', []) if m['provider'] + '/' + m['model'] not in seen and m['provider'] + '/' + m['model'] not in catalog.get('hidden', []) and matches(g,m)]
         result.append((g['name'], rows))
@@ -32,11 +32,11 @@ class ModelPicker(QPushButton):
     pin_requested = Signal(dict, bool)
 
     def __init__(self, parent=None):
-        super().__init__('Choose a model  ▾', parent)
+        super().__init__('Modell wählen  ▾', parent)
         self.catalog = {'groups': []}
         self.selection = None
         self.popup = None
-        self.setAccessibleName('Search and select a model')
+        self.setAccessibleName('Modell suchen und auswählen')
         self.clicked.connect(self.open_picker)
 
     def count(self):
@@ -63,9 +63,9 @@ class ModelPicker(QPushButton):
         if self.selection:
             text = self.selection.get('name', self.selection['model'])
             self.setText(self.fontMetrics().elidedText(text,Qt.TextElideMode.ElideRight,max(50,self.width()-20)) + '  ▾')
-            self.setToolTip(f"{self.selection['provider']} / {self.selection['model']} · {self.selection.get('location', 'Harness route')}")
+            self.setToolTip(f"{self.selection['provider']} / {self.selection['model']} · {self.selection.get('location', 'Harness-Route')}")
         else:
-            self.setText('Choose a model  ▾')
+            self.setText('Modell wählen  ▾')
 
     def resizeEvent(self,event):
         super().resizeEvent(event);self.refresh_label()
@@ -81,15 +81,15 @@ class ModelPicker(QPushButton):
 
     def open_picker(self):
         self.popup = QDialog(self.window())
-        self.popup.setWindowTitle('Models')
+        self.popup.setWindowTitle('Modelle')
         self.popup.setMinimumSize(420, 520)
         layout = QVBoxLayout(self.popup)
         row = QHBoxLayout()
         self.search = QLineEdit()
-        self.search.setPlaceholderText('Search models or providers…')
+        self.search.setPlaceholderText('Modelle oder Anbieter suchen …')
         self.search.setClearButtonEnabled(True)
         row.addWidget(self.search)
-        refresh = QPushButton('Refresh')
+        refresh = QPushButton('Aktualisieren')
         refresh.clicked.connect(self.refresh_requested.emit)
         row.addWidget(refresh); layout.addLayout(row)
         self.rows = QListWidget()
@@ -112,7 +112,7 @@ class ModelPicker(QPushButton):
         model=item.data(Qt.ItemDataRole.UserRole) if item else None
         if not model:return
         pinned=model['provider']+'/'+model['model'] in self.catalog.get('pinned',[])
-        menu=QMenu(self.rows);action=menu.addAction('Unpin model' if pinned else 'Pin model')
+        menu=QMenu(self.rows);action=menu.addAction('Modell loslösen' if pinned else 'Modell anpinnen')
         if menu.exec(self.rows.mapToGlobal(point))==action:self.pin_requested.emit(model,not pinned)
 
     def render_rows(self):
@@ -126,11 +126,11 @@ class ModelPicker(QPushButton):
             self.rows.addItem(heading)
             for model in rows:
                 selected = self.selection and all(model[k] == self.selection.get(k) for k in ('provider','model'))
-                item = QListWidgetItem(('✓  ' if selected else '    ') + model['name'] + '  ·  ' + model.get('location',model['provider']) + (' · needs credentials' if model.get('available') is False else ''))
+                item = QListWidgetItem(('✓  ' if selected else '    ') + model['name'] + '  ·  ' + model.get('location',model['provider']) + (' · Zugangsdaten nötig' if model.get('available') is False else ''))
                 item.setData(Qt.ItemDataRole.UserRole, model)
                 item.setToolTip(model['provider'] + ' / ' + model['model'])
                 self.rows.addItem(item); count += 1
-        self.footer.setText(f'{count} models · Pins follow the selected harness settings.' if count else 'No matching models. Try another search or refresh.')
+        self.footer.setText(f'{count} Modelle · Pins folgen den Einstellungen des gewählten Harness.' if count else 'Keine passenden Modelle. Versuche eine andere Suche oder aktualisiere.')
 
 
 class Orb(QWidget):
@@ -152,7 +152,7 @@ class Orb(QWidget):
         self.label.setGeometry(34,46,140,20);self.label.hide()
         self.label.setAlignment(Qt.AlignmentFlag.AlignCenter)
         self.label.setStyleSheet('font-size: 10px; letter-spacing: 2px; background: transparent;')
-        self.activity = QLabel('Ready', self)
+        self.activity = QLabel('Bereit', self)
         self.activity.setAlignment(Qt.AlignmentFlag.AlignCenter)
         self.activity.setWordWrap(True)
         self.activity.setGeometry(31,72,146,47)
@@ -163,13 +163,13 @@ class Orb(QWidget):
         self.model.setStyleSheet('font-size: 9px; background: transparent;')
         self.expand = QPushButton('↗',self)
         self.expand.setGeometry(60,146,40,27)
-        self.expand.setToolTip('Expand conversation')
-        self.expand.setAccessibleName('Expand conversation')
+        self.expand.setToolTip('Unterhaltung erweitern')
+        self.expand.setAccessibleName('Unterhaltung erweitern')
         self.expand.clicked.connect(self.expand_requested.emit)
         self.stop = QPushButton('■',self)
         self.stop.setGeometry(108,146,40,27)
-        self.stop.setToolTip('Stop current turn')
-        self.stop.setAccessibleName('Stop current turn')
+        self.stop.setToolTip('Aktuellen Durchlauf stoppen')
+        self.stop.setAccessibleName('Aktuellen Durchlauf stoppen')
         self.stop.clicked.connect(self.stop_requested.emit)
         self.stop.setEnabled(False)
         self.timer = QTimer(self)
@@ -276,7 +276,7 @@ class AppearanceDialog(QDialog):
 
     def __init__(self, values, parent=None):
         super().__init__(parent)
-        self.setWindowTitle('Colors & skins')
+        self.setWindowTitle('Farben & Skins')
         self.setMinimumWidth(350)
         from copy import deepcopy
         self.values = deepcopy(values)
@@ -289,32 +289,33 @@ class AppearanceDialog(QDialog):
         layout.addWidget(QLabel('Skin'));layout.addWidget(self.skin_picker)
         self.reload_skins();self.skin_picker.activated.connect(self.select_skin)
         row=QHBoxLayout()
-        for title,callback in [('Save as…',self.save_skin),('Import…',self.import_skin),('Export…',self.export_skin)]:
+        for title,callback in [('Speichern als …',self.save_skin),('Importieren …',self.import_skin),('Exportieren …',self.export_skin)]:
             button=QPushButton(title);button.clicked.connect(callback);row.addWidget(button)
         layout.addLayout(row)
-        self.effect_picker=QComboBox();self.effect_picker.setAccessibleName('Activity effect')
-        for title,key in [('Plasma & flares','plasma'),('Butterfly glitter','butterflies'),('Butterflies · 3× larger','butterflies-large'),('None','none')]:self.effect_picker.addItem(title,key)
+        self.effect_picker=QComboBox();self.effect_picker.setAccessibleName('Aktivitätseffekt')
+        for title,key in [('Plasma & Flares','plasma'),('Schmetterlings-Glitzer','butterflies'),('Schmetterlinge · 3× größer','butterflies-large'),('Keiner','none')]:self.effect_picker.addItem(title,key)
         self.effect_picker.setCurrentIndex(self.effect_picker.findData(values.get('effect','plasma')))
         self.effect_picker.currentIndexChanged.connect(lambda _:self.change('effect',self.effect_picker.currentData()))
-        layout.addWidget(QLabel('Activity effect'));layout.addWidget(self.effect_picker)
-        self.background_picker=QComboBox();self.background_picker.setAccessibleName('Background')
-        self.background_picker.addItem('Plain','none');self.background_picker.addItem('Blossom lake','blossom-lake')
-        if values.get('background')=='uploaded':self.background_picker.addItem('Uploaded image','uploaded')
+        layout.addWidget(QLabel('Aktivitätseffekt'));layout.addWidget(self.effect_picker)
+        self.background_picker=QComboBox();self.background_picker.setAccessibleName('Hintergrund')
+        self.background_picker.addItem('Einfarbig','none');self.background_picker.addItem('Blüten-See','blossom-lake')
+        if values.get('background')=='uploaded':self.background_picker.addItem('Hochgeladenes Bild','uploaded')
         self.background_picker.setCurrentIndex(self.background_picker.findData(values.get('background','none')))
         self.background_picker.currentIndexChanged.connect(lambda _:self.change('background',self.background_picker.currentData()))
-        layout.addWidget(QLabel('Background'));layout.addWidget(self.background_picker)
-        upload=QPushButton('Upload background…');upload.clicked.connect(self.upload_background);layout.addWidget(upload)
+        layout.addWidget(QLabel('Hintergrund'));layout.addWidget(self.background_picker)
+        upload=QPushButton('Hintergrund hochladen …');upload.clicked.connect(self.upload_background);layout.addWidget(upload)
         theme_row=QHBoxLayout();theme_row.addWidget(QLabel('Theme'));theme_row.addStretch()
         self.theme_group=QButtonGroup(self);self.theme_buttons={}
         for mode in ('light','dark'):
             button=QPushButton();button.setCheckable(True);button.setChecked(values['theme']==mode)
             button.setFixedSize(38,30);button.setIconSize(QSize(18,18))
-            button.setToolTip(mode.title()+' mode');button.setAccessibleName(mode.title()+' mode')
+            mode_label={'light':'Hell','dark':'Dunkel'}[mode]
+            button.setToolTip(mode_label+'-Modus');button.setAccessibleName(mode_label+'-Modus')
             button.clicked.connect(lambda checked,m=mode:self.change('theme',m))
             self.theme_group.addButton(button);self.theme_buttons[mode]=button;theme_row.addWidget(button)
         layout.addLayout(theme_row)
         self.sliders={}
-        for key,title,lo,hi in [('hue','Panel colour',0,359),('brightness','Panel brightness',-15,15),('accent_hue','Accent colour',0,359),('accent_brightness','Accent brightness',-15,15),('saturation','Theme saturation',0,100),('opacity','Opacity',35,100)]:
+        for key,title,lo,hi in [('hue','Panelfarbe',0,359),('brightness','Panelhelligkeit',-15,15),('accent_hue','Akzentfarbe',0,359),('accent_brightness','Akzenthelligkeit',-15,15),('saturation','Theme-Sättigung',0,100),('opacity','Deckkraft',35,100)]:
             label=QLabel(title);layout.addWidget(label)
             slider=ColourSlider(Qt.Orientation.Horizontal);slider.setRange(lo,hi);slider.setValue(values[key]);slider.setFixedHeight(24)
             slider.setAccessibleName(title);layout.addWidget(slider);self.sliders[key]=slider
@@ -323,22 +324,22 @@ class AppearanceDialog(QDialog):
         from .markdown import FORMAT_LABELS, FORMAT_ROLES
         row=QHBoxLayout();self.format_role=QComboBox()
         for label,role in zip(FORMAT_LABELS,FORMAT_ROLES):self.format_role.addItem(label,role)
-        self.format_role.setAccessibleName('Formatting colour category');row.addWidget(self.format_role)
-        colour=QPushButton('Choose colour…');colour.clicked.connect(self.choose_format_colour);row.addWidget(colour)
-        layout.addWidget(QLabel('Formatting colours'));layout.addLayout(row)
-        self.flares=QCheckBox('Show activity effects');self.flares.setChecked(values.get('flares',True));layout.addWidget(self.flares)
+        self.format_role.setAccessibleName('Kategorie der Formatierungsfarbe');row.addWidget(self.format_role)
+        colour=QPushButton('Farbe wählen …');colour.clicked.connect(self.choose_format_colour);row.addWidget(colour)
+        layout.addWidget(QLabel('Formatierungsfarben'));layout.addLayout(row)
+        self.flares=QCheckBox('Aktivitätseffekte anzeigen');self.flares.setChecked(values.get('flares',True));layout.addWidget(self.flares)
         self.flares.toggled.connect(lambda value:self.change('flares',value))
-        self.animate=QCheckBox('Animate activity effects');self.animate.setChecked(values['animation']);layout.addWidget(self.animate)
+        self.animate=QCheckBox('Aktivitätseffekte animieren');self.animate.setChecked(values['animation']);layout.addWidget(self.animate)
         self.animate.toggled.connect(lambda value:self.change('animation',value))
-        buttons=QHBoxLayout();reset=QPushButton('Reset');buttons.addWidget(reset);reset.clicked.connect(self.reset)
-        close=QPushButton('Done');buttons.addWidget(close);close.clicked.connect(self.accept);layout.addLayout(buttons)
+        buttons=QHBoxLayout();reset=QPushButton('Zurücksetzen');buttons.addWidget(reset);reset.clicked.connect(self.reset)
+        close=QPushButton('Fertig');buttons.addWidget(close);close.clicked.connect(self.accept);layout.addLayout(buttons)
         self.refresh_colours()
 
     def choose_format_colour(self):
         from .markdown import format_defaults
         role=self.format_role.currentData();saved=self.values.get('format_colours',{})
         value=saved.get(role,format_defaults(self.values['theme'])[role])
-        colour=QColorDialog.getColor(QColor(value),self,'Choose '+self.format_role.currentText().lower())
+        colour=QColorDialog.getColor(QColor(value),self,'Wähle: '+self.format_role.currentText().lower())
         if colour.isValid():self.change('format_colours',{**saved,role:colour.name()})
 
     def refresh_colours(self):
@@ -376,7 +377,7 @@ class AppearanceDialog(QDialog):
         from .skins import BUILTINS, skin_document
         self.skin_picker.clear();self.skin_picker.addItem('Custom',None)
         for name,appearance in BUILTINS.items():self.skin_picker.addItem(name,skin_document(name,appearance))
-        for document in self.values.get('custom_skins',[]):self.skin_picker.addItem(document['name']+' (saved)',document)
+        for document in self.values.get('custom_skins',[]):self.skin_picker.addItem(document['name']+' (gespeichert)',document)
         for i in range(1,self.skin_picker.count()):
             document=self.skin_picker.itemData(i)
             if document['name']==self.values.get('skin_name'):
@@ -397,58 +398,58 @@ class AppearanceDialog(QDialog):
             widget.blockSignals(True);widget.setChecked(value);widget.blockSignals(False)
         self.effect_picker.blockSignals(True);self.effect_picker.setCurrentIndex(self.effect_picker.findData(self.values['effect']));self.effect_picker.blockSignals(False)
         self.background_picker.blockSignals(True)
-        self.background_picker.clear();self.background_picker.addItem('Plain','none');self.background_picker.addItem('Blossom lake','blossom-lake')
-        if self.values.get('background')=='uploaded':self.background_picker.addItem('Uploaded image','uploaded')
+        self.background_picker.clear();self.background_picker.addItem('Einfarbig','none');self.background_picker.addItem('Blüten-See','blossom-lake')
+        if self.values.get('background')=='uploaded':self.background_picker.addItem('Hochgeladenes Bild','uploaded')
         self.background_picker.setCurrentIndex(self.background_picker.findData(self.values.get('background','none')));self.background_picker.blockSignals(False)
         self.reload_skins();self.refresh_colours();self.changed.emit(dict(self.values))
 
     def remember_skin(self,document):
         from .skins import BUILTINS
-        if document['name'] in BUILTINS:raise ValueError('Choose a different name from the built-in skins.')
+        if document['name'] in BUILTINS:raise ValueError('Wähle einen anderen Namen als die eingebauten Skins.')
         skins=self.values.get('custom_skins',[])
-        if any(s['name']==document['name'] for s in skins):raise ValueError('A saved skin already has this name. Choose another name.')
-        if len(skins)>=100:raise ValueError('The library holds up to 100 skins.')
+        if any(s['name']==document['name'] for s in skins):raise ValueError('Ein gespeicherter Skin hat bereits diesen Namen. Wähle einen anderen Namen.')
+        if len(skins)>=100:raise ValueError('Die Bibliothek fasst bis zu 100 Skins.')
         self.values['custom_skins']=[*skins,document];self.apply_skin(document)
 
     def upload_background(self):
         from .backgrounds import upload_background
         from .skins import skin_document
-        path,_=QFileDialog.getOpenFileName(self,'Upload background','','Images (*.png *.jpg *.jpeg *.webp)')
+        path,_=QFileDialog.getOpenFileName(self,'Hintergrund hochladen','','Bilder (*.png *.jpg *.jpeg *.webp)')
         if not path:return
         try:
             appearance={**self.values,**upload_background(path,self.values['theme']=='dark')}
             self.apply_skin(skin_document('Custom',appearance))
-        except (OSError,ValueError) as error:QMessageBox.warning(self,'Cannot use background',str(error))
+        except (OSError,ValueError) as error:QMessageBox.warning(self,'Hintergrund nicht verwendbar',str(error))
 
     def save_skin(self):
         from .skins import skin_document
-        name,ok=QInputDialog.getText(self,'Save skin','Name for your skin')
+        name,ok=QInputDialog.getText(self,'Skin speichern','Name für deinen Skin')
         if not ok:return
         try:self.remember_skin(skin_document(name,self.values))
-        except ValueError as error:QMessageBox.warning(self,'Cannot save skin',str(error))
+        except ValueError as error:QMessageBox.warning(self,'Skin nicht speicherbar',str(error))
 
     def import_skin(self):
         from .skins import read_skin
-        path,_=QFileDialog.getOpenFileName(self,'Import skin','','Augmentor skin (*.json)')
+        path,_=QFileDialog.getOpenFileName(self,'Skin importieren','','Augmentor skin (*.json)')
         if not path:return
         try:
             from .skins import BUILTINS, validate_skin
             document=read_skin(path)
             existing=set(BUILTINS) | {s['name'] for s in self.values.get('custom_skins',[])}
             if document['name'] in existing:
-                name,ok=QInputDialog.getText(self,'Name imported skin','This name already exists. Choose a new name:',text=document['name']+' copy')
+                name,ok=QInputDialog.getText(self,'Importierten Skin benennen','Dieser Name existiert bereits. Wähle einen neuen Namen:',text=document['name']+' Kopie')
                 if not ok:return
                 document=validate_skin({**document,'name':name})
             self.remember_skin(document)
-        except (OSError,ValueError) as error:QMessageBox.warning(self,'Cannot import skin',str(error))
+        except (OSError,ValueError) as error:QMessageBox.warning(self,'Skin nicht importierbar',str(error))
 
     def export_skin(self):
         from .skins import write_skin
-        path,_=QFileDialog.getSaveFileName(self,'Export skin','my-skin.augmentor-skin.json','Augmentor skin (*.json)')
+        path,_=QFileDialog.getSaveFileName(self,'Skin exportieren','my-skin.augmentor-skin.json','Augmentor skin (*.json)')
         if not path:return
         if not path.lower().endswith('.json'):path+='.json'
         try:write_skin(path,self.values.get('skin_name','Custom'),self.values)
-        except (OSError,ValueError) as error:QMessageBox.warning(self,'Cannot export skin',str(error))
+        except (OSError,ValueError) as error:QMessageBox.warning(self,'Skin nicht exportierbar',str(error))
 
     def reset(self):
         from .skins import BASE, skin_document

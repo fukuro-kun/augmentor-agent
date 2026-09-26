@@ -206,10 +206,10 @@ class RecoveryDialogTests(unittest.TestCase):
             until = time.monotonic()+3
             while time.monotonic() < until:
                 self.app.processEvents()
-                if 'conversation is ready' in dialog.progress.toPlainText(): break
+                if 'Unterhaltung ist bereit' in dialog.progress.toPlainText(): break
                 time.sleep(.01)
             self.assertIn('History verified', dialog.progress.toPlainText())
-            self.assertIn('conversation is ready', dialog.progress.toPlainText())
+            self.assertIn('Unterhaltung ist bereit', dialog.progress.toPlainText())
             self.assertTrue(dialog.close_button.isEnabled()); self.assertFalse(dialog.active)
             dialog.accept()
         owner.controller.close(); owner.close()

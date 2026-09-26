@@ -21,7 +21,7 @@ export function createRemoteAdapter(base, client, notify, log = () => {}) {
     })
     const body = await response.json().catch(() => null)
     if (!response.ok || body?.type !== 'server-response' || body.rpcId !== rpcId) {
-      throw new Error(`${endpoint}: unexpected response (HTTP ${response.status})`)
+      throw new Error(`${endpoint}: unerwartete Antwort (HTTP ${response.status})`)
     }
     if (!body.result?.ok) throw new Error(body.result?.error?.message ?? `${endpoint} failed`)
     return body.result.value
@@ -79,7 +79,7 @@ export function createRemoteAdapter(base, client, notify, log = () => {}) {
     const state = { cursor: -1, snapshot: null }
     sessions.set(sessionId, state)
     state.ready = new Promise((resolve, reject) => {
-      const timeout = setTimeout(() => { state.stream.close(); sessions.delete(sessionId); reject(new Error('DSH session stream did not open')) }, 15000)
+      const timeout = setTimeout(() => { state.stream.close(); sessions.delete(sessionId); reject(new Error('Der DSH-Sitzungsstream wurde nicht geöffnet')) }, 15000)
       state.stream = stream('session/follow', {
         request: { address: { kind: 'session', sessionId }, maxMessages: 200, assistantStream: true },
       }, frame => {
@@ -91,7 +91,7 @@ export function createRemoteAdapter(base, client, notify, log = () => {}) {
             // that gap explicitly rather than silently skipping events.
             const events = frame.records.map(record => record.event)
             if (frame.hasMore && events[0]?.seq > state.cursor + 1) {
-              throw new Error('DSH history gap after reconnect; reopen this chat to reload its history')
+              throw new Error('DSH-Verlaufslücke nach Wiederverbindung; öffne diesen Chat erneut, um den Verlauf neu zu laden')
             }
             for (const event of events) if (event.seq > state.cursor) emitEvent(sessionId, event)
           }
@@ -168,7 +168,7 @@ export function createRemoteAdapter(base, client, notify, log = () => {}) {
         const line=content.length===1&&content[0].type==='text'?content[0].text:''
         if(/^\/[a-z][a-z0-9_-]*(?=$|[\t\n\r ])/.test(line)) {
           const command=await invoke('commands/execute',{agentId:payload.sessionId,line,submittedAttachments:[]})
-          if(!command)throw new Error('Unknown DSH command. To insert a saved prompt, select it with Tab or click it first.')
+          if(!command)throw new Error('Unbekannter DSH-Befehl. Um einen gespeicherten Prompt einzufügen, wähle ihn zuerst mit Tab oder per Klick aus.')
           if(command.result.kind==='error')throw new Error(command.result.text)
           return {accepted:true,command}
         }
@@ -179,7 +179,7 @@ export function createRemoteAdapter(base, client, notify, log = () => {}) {
         if(method==='session.cancel')await refreshStatus(payload.sessionId)
         return result
       }
-      throw new Error(`Unsupported DSH method: ${method}`)
+      throw new Error(`Nicht unterstützte DSH-Methode: ${method}`)
     },
   }
 }

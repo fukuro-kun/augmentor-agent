@@ -22,7 +22,7 @@ class TouchTests(unittest.TestCase):
         observed=[]
         def inspect():
             popup=QApplication.activePopupWidget();observed.extend(a.text() for a in popup.actions());popup.close()
-        QTimer.singleShot(10,inspect);w.more_button.click();self.assertIn('Colors & skins',observed);w.close()
+        QTimer.singleShot(10,inspect);w.more_button.click();self.assertIn('Farben & Skins',observed);w.close()
     def test_dialog_remains_reachable_on_narrow_screen(self):
         w=Window();w.touch_layout=TouchLayout(w);w.touch_layout.viewport=(360,500)
         dialog=QDialog(w);dialog.setMinimumSize(600,650);layout=QVBoxLayout(dialog);layout.addWidget(QPushButton('Original action'));dialog.show();self.app.processEvents();w.touch_layout.fit_dialog(dialog)

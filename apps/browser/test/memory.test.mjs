@@ -21,6 +21,6 @@ test('automatic memory controls are independent of Hindsight',async t=>{
   const dialog=memoryDialog(dom.window.document,send,()=>({harness:'dsh',sessionId:'test'}));
   await new Promise(r=>setTimeout(r,20));
   assert.match(dialog.textContent,/Enjoys calm conversation/);assert.match(dialog.textContent,/Project uses SQLite/);
-  [...dialog.querySelectorAll('button')].find(b=>b.textContent==='Pause automatic memory').click();await new Promise(r=>setTimeout(r,20));
-  assert.equal(enabled,false);assert.match(dialog.textContent,/Resume automatic memory/);assert.ok(!calls.some(c=>c.action==='disable'));
+  [...dialog.querySelectorAll('button')].find(b=>b.textContent==='Automatisches Gedächtnis pausieren').click();await new Promise(r=>setTimeout(r,20));
+  assert.equal(enabled,false);assert.match(dialog.textContent,/Automatisches Gedächtnis fortsetzen/);assert.ok(!calls.some(c=>c.action==='disable'));
 });

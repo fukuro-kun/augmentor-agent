@@ -85,7 +85,7 @@ class MarkdownTests(unittest.TestCase):
         w=Window()
         w.fold_event({'type':'assistant/chunk','data':{'chunk':{'type':'reasoning-delta','text':'Checking the supplied details.'}}})
         w.render_messages()
-        self.assertIn('Thinking',w.transcript.toPlainText())
+        self.assertIn('Denken',w.transcript.toPlainText())
         self.assertNotIn('Checking the supplied',w.transcript.toPlainText())
         w.message_action(QUrl('augmentor-think:0'))
         self.assertIn('Checking the supplied details.',w.transcript.toPlainText())
@@ -100,7 +100,7 @@ class MarkdownTests(unittest.TestCase):
     def test_copy_each_code_block_excludes_surrounding_prose(self):
         from PySide6.QtCore import QUrl
         w=Window();w.messages=[('Augmentor','Explanation\n\n```python\nif True:\n    print("🌞")\n```\n\nNext\n\n```sh\necho done\n```')];w.render_messages()
-        self.assertEqual(w.transcript.toPlainText().count('▣ Copy'),2)
+        self.assertEqual(w.transcript.toPlainText().count('▣ Kopieren'),2)
         w.message_action(QUrl('augmentor-code:0:0'))
         self.assertEqual(QApplication.clipboard().text(),'if True:\n    print("🌞")')
         w.message_action(QUrl('augmentor-code:0:1'))
@@ -150,9 +150,9 @@ class MarkdownTests(unittest.TestCase):
             QTest.mouseClick(w.transcript.viewport(),Qt.MouseButton.LeftButton,pos=point);self.app.processEvents()
             self.assertFalse(w.transcript.textCursor().hasSelection())
         self.assertNotIn('click to expand',w.transcript.toPlainText())
-        click('Thinking');self.assertIn('Checking details.',w.transcript.toPlainText())
-        click('Thinking');self.assertNotIn('Checking details.',w.transcript.toPlainText())
-        click('Copy');self.assertEqual(QApplication.clipboard().text(),'print(42)')
+        click('Denken');self.assertIn('Checking details.',w.transcript.toPlainText())
+        click('Denken');self.assertNotIn('Checking details.',w.transcript.toPlainText())
+        click('Kopieren');self.assertEqual(QApplication.clipboard().text(),'print(42)')
         frames=w.transcript.document().rootFrame().childFrames()
         self.assertGreaterEqual(len([f for f in frames if f.format().toTableFormat().cellPadding()==12]),1)
         w.close()
@@ -175,12 +175,12 @@ class MarkdownTests(unittest.TestCase):
         w=Window();w.messages=[('Augmentor','```python\nprint(1)\n```\n\n```sh\necho two\n```')];w.render_messages()
         w.message_action(QUrl('augmentor-code:0:1'))
         self.assertEqual(QApplication.clipboard().text(),'echo two')
-        self.assertEqual(w.transcript.toPlainText().count('✓ Copied'),1)
-        self.assertEqual(w.transcript.toPlainText().count('▣ Copy'),1)
+        self.assertEqual(w.transcript.toPlainText().count('✓ Kopiert'),1)
+        self.assertEqual(w.transcript.toPlainText().count('▣ Kopieren'),1)
         self.assertTrue(w.copy_feedback_timer.isActive())
         w.clear_copy_feedback()
-        self.assertNotIn('Copied',w.transcript.toPlainText())
-        self.assertEqual(w.transcript.toPlainText().count('▣ Copy'),2)
+        self.assertNotIn('Kopiert',w.transcript.toPlainText())
+        self.assertEqual(w.transcript.toPlainText().count('▣ Kopieren'),2)
         w.close()
 
     def test_prompt_visible_before_backend_and_confirmed_only_once(self):
@@ -188,13 +188,13 @@ class MarkdownTests(unittest.TestCase):
         w=Window();w.send_button.setEnabled(True);w.composer.setPlainText('Immediate prompt')
         def send(text,selection):
             self.assertIn('Immediate prompt',w.transcript.toPlainText())
-            self.assertIn('Sending',w.transcript.toPlainText())
+            self.assertIn('Sende',w.transcript.toPlainText())
             return True
         w.controller=SimpleNamespace(send=send,session=None,running=False)
         w.send();w.controller=None
         w.fold_event({'seq':1,'type':'user/message','data':{'source':{'kind':'user'},'content':[{'type':'text','text':'Immediate prompt'}]}});w.render_messages()
         self.assertEqual(w.transcript.toPlainText().count('Immediate prompt'),1)
-        self.assertNotIn('Sending',w.transcript.toPlainText());w.close()
+        self.assertNotIn('Sende',w.transcript.toPlainText());w.close()
 
     def test_failed_prompt_preserves_draft(self):
         from types import SimpleNamespace

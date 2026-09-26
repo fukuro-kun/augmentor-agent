@@ -365,7 +365,7 @@ class HaloCanvas(QWidget):
                          Qt.WindowType.WindowTransparentForInput |
                          Qt.WindowType.WindowDoesNotAcceptFocus)
         self.activity=activity
-        self.setWindowTitle('Augmentor activity')
+        self.setWindowTitle('Augmentor-Aktivität')
         self.setAttribute(Qt.WidgetAttribute.WA_TranslucentBackground)
         self.setAttribute(Qt.WidgetAttribute.WA_ShowWithoutActivating)
         self.setAttribute(Qt.WidgetAttribute.WA_TransparentForMouseEvents)

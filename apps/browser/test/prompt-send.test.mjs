@@ -25,7 +25,7 @@ for(const delivery of ['before-ack','after-ack','command'])test(`instant draft t
   input.value=text;let resolve,calls=0
   const send=()=>{calls++;return new Promise(r=>resolve=r)}
   const pending=submitDraft({input,ui,send})
-  assert.equal(input.value,'');assert.match(log.textContent,/Sending/);assert.ok(log.textContent.includes(text))
+  assert.equal(input.value,'');assert.match(log.textContent,/Senden/);assert.ok(log.textContent.includes(text))
   await Promise.resolve();assert.equal(calls,1)
   input.value='Next draft';ui.setState({running:false}) // stale poll while RPC is pending
   assert.equal(button.disabled,true)

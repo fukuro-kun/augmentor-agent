@@ -43,20 +43,20 @@ export function attachSurface({send,openSettings,onError,approval,state}){
       if(entry.contentRect.width!==width){width=entry.contentRect.width;fit()}
     }).observe($('composer-field'))
   }
-  const controls=()=>{improve.disabled=!improving&&(!input.value.trim()||state().phase!=='ready'||state().running);improve.textContent=improving?'×':undo?'↶':'✦';improve.title=improving?'Cancel prompt improvement':undo?'Undo prompt improvement':'Improve prompt';improve.setAttribute('aria-label',improve.title)}
+  const controls=()=>{improve.disabled=!improving&&(!input.value.trim()||state().phase!=='ready'||state().running);improve.textContent=improving?'×':undo?'↶':'✦';improve.title=improving?'Prompt-Verbesserung abbrechen':undo?'Prompt-Verbesserung rückgängig':'Prompt verbessern';improve.setAttribute('aria-label',improve.title)}
   input.addEventListener('input',()=>{cancelImprovement();undo=null;fit();controls()})
   new MutationObserver(fit).observe(input,{attributes:true,attributeFilter:['disabled']})
   improve.onclick=async()=>{
     if(improving){cancelImprovement();controls();return}
     if(undo!==null){input.value=undo;undo=null;void remember();fit();controls();return}
-    const original=input.value,id=++epoch;improving=true;roll=startLetterRoll(input);controls();announce('Improving prompt…')
+    const original=input.value,id=++epoch;improving=true;roll=startLetterRoll(input);controls();announce('Verbessere Prompt…')
     const animation=roll
     try{
       const r=await send('prompt/improve',{text:original})
       if(id!==epoch||input.value!==original)return
-      if(!r?.ok||r.result?.kind!=='rewrite'||typeof r.result.text!=='string'||!r.result.text.trim())throw Error(r?.error||'Could not improve the prompt')
+      if(!r?.ok||r.result?.kind!=='rewrite'||typeof r.result.text!=='string'||!r.result.text.trim())throw Error(r?.error||'Der Prompt konnte nicht verbessert werden')
       if(!await animation.settle(r.result.text)||id!==epoch||input.value!==original)return
-      input.value=r.result.text;undo=original;void remember();fit();announce('Prompt improved. Undo is available.')
+      input.value=r.result.text;undo=original;void remember();fit();announce('Prompt verbessert. Rückgängig ist verfügbar.')
     }catch(error){if(id===epoch)fail(error)}finally{if(id===epoch){cancelImprovement();controls()}}
   }
   input.addEventListener('keydown',e=>{
@@ -70,5 +70,5 @@ export function attachSurface({send,openSettings,onError,approval,state}){
   fit();controls()
   return {get improving(){return improving},update(value){
     if(value.sessionId){if(sessionId&&value.sessionId!==sessionId){cancelImprovement();undo=null;void chrome.storage.session.remove(draftKey)}sessionId=value.sessionId;if(!restored){restored=true;void chrome.storage.session.get(draftKey).then(saved=>{const draft=saved[draftKey];if(draft?.sessionId===sessionId&&!input.value){input.value=draft.text;fit();controls()}})}}
-    const current={...state(),...value};const dot=$('connection-dot');dot.dataset.phase=current.phase;dot.title=current.phase==='ready'?'Connected':current.error||'Connecting…';dot.setAttribute('aria-label',dot.title);controls()}}
+    const current={...state(),...value};const dot=$('connection-dot');dot.dataset.phase=current.phase;dot.title=current.phase==='ready'?'Verbunden':current.error||'Verbinden…';dot.setAttribute('aria-label',dot.title);controls()}}
 }

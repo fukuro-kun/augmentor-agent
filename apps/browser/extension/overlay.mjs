@@ -167,21 +167,21 @@ export function overlayTextFor(action, params, phase, result) {
   }
   const name = (r) => {
     const t = String(r?.name ?? '').replace(/\s+/g, ' ').trim()
-    if (!t) return 'the element'
+    if (!t) return 'das Element'
     return t.length > 32 ? t.slice(0, 32) + '…' : t
   }
   switch (action) {
     case 'tabs_list':
-      return 'Checking open tabs…'
+      return 'Prüfe offene Tabs…'
     case 'navigate':
-      return phase === 'after' ? `Opened ${host(params?.url)}` : `Opening ${host(params?.url)}…`
+      return phase === 'after' ? `${host(params?.url)} geöffnet` : `Öffne ${host(params?.url)}…`
     case 'snapshot':
-      return 'Analysing the page…'
+      return 'Analysiere die Seite…'
     case 'click':
-      return phase === 'after' ? `Clicked on ${name(result)}` : 'Clicking…'
+      return phase === 'after' ? `Auf ${name(result)} geklickt` : 'Klicke…'
     case 'type':
-      return phase === 'after' ? `Typed into ${name(result)}` : 'Typing…'
+      return phase === 'after' ? `In ${name(result)} geschrieben` : 'Schreibe…'
     default:
-      return 'Thinking…'
+      return 'Denke nach…'
   }
 }

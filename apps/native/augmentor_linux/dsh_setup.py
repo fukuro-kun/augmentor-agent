@@ -13,20 +13,20 @@ class DshSetupDialog(QDialog):
         super().__init__(owner);self.owner=owner;self.client=PromptClient()
         self.token=None;self.installed=False;self.busy=False;self.dismissed=False;self.changing=False
         self.completed.connect(lambda callback,value:callback(value) if not self.dismissed else None)
-        self.setWindowTitle('Connect DSH');self.setModal(True);self.setMinimumWidth(460)
+        self.setWindowTitle('DSH verbinden');self.setModal(True);self.setMinimumWidth(460)
         layout=QVBoxLayout(self)
-        intro=QLabel('Connect a running local DSH 0.1.5-rc.1 web profile. Augmentor adds its Linux and browser roles, shared prompts and memory. Model providers remain managed in DSH. This connection is shared by both Augmentor interfaces.');intro.setWordWrap(True);layout.addWidget(intro)
+        intro=QLabel('Verbinde ein laufendes lokales DSH 0.1.5-rc.1-Webprofil. Augmentor fügt seine Linux- und Browser-Rollen, geteilte Prompts und Gedächtnis hinzu. Modellanbieter bleiben in DSH verwaltet. Diese Verbindung wird von beiden Augmentor-Oberflächen geteilt.');intro.setWordWrap(True);layout.addWidget(intro)
         form=QFormLayout();layout.addLayout(form)
         self.endpoint=QLineEdit();self.home=QLineEdit()
-        for label,field in [('DSH URL',self.endpoint),('DSH data folder',self.home)]:
+        for label,field in [('DSH-URL',self.endpoint),('DSH-Datenordner',self.home)]:
             field.setAccessibleName(label);form.addRow(label,field);field.textChanged.connect(self.invalidate)
-        note=QLabel('Install integration adds Augmentor-owned presets and appends to the DSH profile, keeping a backup. It does not interrupt running tasks. Restart DSH yourself after installation, then check again. Existing custom Augmentor integration requires migration.');note.setWordWrap(True);layout.addWidget(note)
-        self.note=QLabel('Loading connection…');self.note.setWordWrap(True);layout.addWidget(self.note)
+        note=QLabel('„Integration installieren" fügt Augmentor-eigene Presets hinzu und ergänzt das DSH-Profil, mit Backup. Laufende Aufgaben werden nicht unterbrochen. Starte DSH nach der Installation selbst neu und prüfe dann erneut. Bestehende eigene Augmentor-Integration erfordert eine Migration.');note.setWordWrap(True);layout.addWidget(note)
+        self.note=QLabel('Verbindung wird geladen …');self.note.setWordWrap(True);layout.addWidget(self.note)
         actions=QHBoxLayout();layout.addLayout(actions)
-        self.later=QPushButton('Later');self.later.clicked.connect(self.reject);actions.addWidget(self.later)
-        self.check=QPushButton('Check connection');self.check.clicked.connect(self.test);actions.addWidget(self.check)
-        self.install=QPushButton('Install integration');self.install.clicked.connect(self.integrate);actions.addWidget(self.install)
-        self.save=QPushButton('Save and use DSH');self.save.clicked.connect(self.commit);actions.addWidget(self.save)
+        self.later=QPushButton('Später');self.later.clicked.connect(self.reject);actions.addWidget(self.later)
+        self.check=QPushButton('Verbindung prüfen');self.check.clicked.connect(self.test);actions.addWidget(self.check)
+        self.install=QPushButton('Integration installieren');self.install.clicked.connect(self.integrate);actions.addWidget(self.install)
+        self.save=QPushButton('Speichern und DSH verwenden');self.save.clicked.connect(self.commit);actions.addWidget(self.save)
         self.run('describe',{},self.loaded)
 
     def invalidate(self,*_):
@@ -55,10 +55,10 @@ class DshSetupDialog(QDialog):
 
     def loaded(self,value):
         self.endpoint.setText(value['endpoint']);self.home.setText(value['home'])
-        self.note.setText('Check this connection before saving or installing the integration.')
+        self.note.setText('Prüfe diese Verbindung, bevor du speicherst oder die Integration installierst.')
 
     def test(self):
-        self.invalidate();self.note.setText('Checking DSH and its integration…')
+        self.invalidate();self.note.setText('DSH und seine Integration werden geprüft …')
         def checked(value):self.token=value['token'];self.installed=value['installed'];self.note.setText(value['message'])
         self.run('check',{'endpoint':self.endpoint.text(),'home':self.home.text()},checked)
 
@@ -68,7 +68,7 @@ class DshSetupDialog(QDialog):
 
     def commit(self):
         if self.owner.controller and (self.owner.controller.running or self.owner.controller.navigating or self.owner.editing):
-            self.note.setText('Finish the current action before changing harness settings.');return
+            self.note.setText('Beende die aktuelle Aktion, bevor du Harness-Einstellungen änderst.');return
         def saved(value):
             self.accept();QTimer.singleShot(0,lambda:self.owner.switch_harness('dsh',reconnect=True))
         self.run('save',{'token':self.token},saved)

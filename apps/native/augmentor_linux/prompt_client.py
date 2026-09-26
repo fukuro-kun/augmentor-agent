@@ -25,26 +25,26 @@ class PromptClient:
             try:connection.connect(endpoint)
             except (FileNotFoundError,ConnectionRefusedError):
                 service=Path(__file__).resolve().parents[3]/('services/memory/service.py' if automatic else 'services/prompt-library/service.py')
-                if not service.is_file():raise ContractError('Shared prompt service is not installed.')
+                if not service.is_file():raise ContractError('Der geteilte Prompt-Dienst ist nicht installiert.')
                 child=subprocess.Popen([sys.executable,str(service)],stdin=subprocess.DEVNULL,stdout=subprocess.DEVNULL,stderr=subprocess.DEVNULL,start_new_session=True)
                 threading.Thread(target=child.wait,daemon=True).start()
                 deadline=time.monotonic()+5
                 while True:
                     try:connection.connect(endpoint);break
                     except (FileNotFoundError,ConnectionRefusedError):
-                        if time.monotonic()>deadline:raise ContractError('Shared prompt service could not start.')
+                        if time.monotonic()>deadline:raise ContractError('Der geteilte Prompt-Dienst konnte nicht gestartet werden.')
                         time.sleep(.05)
             identity=request_id or uuid.uuid4().hex
             raw=(json.dumps({'protocol':PROTOCOL,'id':identity,'method':method,'params':payload or {}})+'\n').encode()
             if len(raw)>1024*1024:raise ContractError('Prompt request exceeds size limit.')
             connection.sendall(raw)
             with connection.makefile('rb') as reader:response=reader.readline(1024*1024+1)
-            if len(response)>1024*1024 or not response.endswith(b'\n'):raise ContractError('Invalid prompt response')
+            if len(response)>1024*1024 or not response.endswith(b'\n'):raise ContractError('Ungültige Prompt-Antwort')
             result=json.loads(response)
-            if result.get('id')!=identity:raise ContractError('Invalid prompt response ID')
+            if result.get('id')!=identity:raise ContractError('Ungültige Prompt-Antwort-ID')
             if 'error' in result:raise ContractError(result['error']['message'])
             return result['result']
-        except (OSError,ValueError) as error:raise ContractError('Shared prompt library is unavailable: '+str(error)) from error
+        except (OSError,ValueError) as error:raise ContractError('Geteilte Prompt-Bibliothek ist nicht verfügbar: '+str(error)) from error
         finally:connection.close()
     def setting(self,namespace):
         if namespace!='prompt-library':return None

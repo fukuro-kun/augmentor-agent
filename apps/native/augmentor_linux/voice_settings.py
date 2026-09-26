@@ -15,17 +15,17 @@ def voice_request(path, values=None, raw=False):
     home=Path(os.environ.get('RESONANT_VOICE_HOME',Path(os.environ.get('XDG_CONFIG_HOME',Path.home()/'.config'))/'resonant-voice'))
     config=json.loads((home/'config.json').read_text())
     port=config.get('port',8877)
-    if type(port) is not int or not 1024<=port<=65535:raise ValueError('Invalid voice service port')
+    if type(port) is not int or not 1024<=port<=65535:raise ValueError('Ungültiger Port des Sprachdienstes')
     request=urllib.request.Request(f'http://127.0.0.1:{port}/internal/{path}',data=json.dumps({**(values or {}),'profile':current_name()}).encode(),
         headers={'Content-Type':'application/json','x-resonant-token':(home/'token').read_text().strip()})
     try:
         with urllib.request.urlopen(request,timeout=20) as response:
             data=response.read(4*1024*1024+1)
-            if len(data)>4*1024*1024:raise ValueError('Voice response exceeded its limit')
+            if len(data)>4*1024*1024:raise ValueError('Sprachantwort überschreitet ihr Limit')
             return data if raw else json.loads(data)
     except urllib.error.HTTPError as exc:
-        try:message=json.loads(exc.read(8192)).get('error','Voice request failed')
-        except ValueError:message='Voice request failed'
+        try:message=json.loads(exc.read(8192)).get('error','Sprachanfrage fehlgeschlagen')
+        except ValueError:message='Sprachanfrage fehlgeschlagen'
         raise RuntimeError(message) from None
 
 
@@ -37,36 +37,36 @@ class VoiceSettingsDialog(QDialog):
         self.owner=window;self.closing=False;self.voices=[];self.previewing=False
         self.preview_stop=threading.Event();self.saved=None
         self.completed.connect(lambda callback,result:callback(result) if not self.closing else None)
-        self.setWindowTitle('Resonant Voice — '+('First agent' if current_name()=='main' else 'Second agent'));self.setMinimumWidth(410)
+        self.setWindowTitle('Resonant Voice — '+('Erster Agent' if current_name()=='main' else 'Zweiter Agent'));self.setMinimumWidth(410)
         from .settings_icons import settings_icon,settings_label
         layout=QVBoxLayout(self);layout.setSpacing(12)
-        self.enabled=QCheckBox('Enable Resonant Voice');self.enabled.setChecked(window.preferences.values.get('resonant_voice',True))
+        self.enabled=QCheckBox('Resonant Voice aktivieren');self.enabled.setChecked(window.preferences.values.get('resonant_voice',True))
         self.enabled.toggled.connect(window.set_voice_enabled);layout.addWidget(self.enabled)
-        group=QGroupBox();form=QVBoxLayout(group);form.addWidget(settings_label('Voice','voice',window.accent))
-        self.voice=QComboBox();self.voice.setAccessibleName('Speaking voice');form.addWidget(self.voice)
-        self.description=QLabel('Loading voices…');self.description.setWordWrap(True);form.addWidget(self.description)
-        self.preview=QPushButton('Play voice sample');self.preview.setEnabled(False);self.preview.clicked.connect(self.play_preview);form.addWidget(self.preview)
+        group=QGroupBox();form=QVBoxLayout(group);form.addWidget(settings_label('Stimme','voice',window.accent))
+        self.voice=QComboBox();self.voice.setAccessibleName('Sprechstimme');form.addWidget(self.voice)
+        self.description=QLabel('Stimmen werden geladen …');self.description.setWordWrap(True);form.addWidget(self.description)
+        self.preview=QPushButton('Stimmprobe abspielen');self.preview.setEnabled(False);self.preview.clicked.connect(self.play_preview);form.addWidget(self.preview)
         layout.addWidget(group)
-        playback=QGroupBox();rows=QVBoxLayout(playback);rows.addWidget(settings_label('Playback','playback',window.accent))
-        self.speed,self.speed_value=self.slider(rows,'Speaking speed',75,150,100)
-        self.volume,self.volume_value=self.slider(rows,'Output volume',0,100,100)
+        playback=QGroupBox();rows=QVBoxLayout(playback);rows.addWidget(settings_label('Wiedergabe','playback',window.accent))
+        self.speed,self.speed_value=self.slider(rows,'Sprechgeschwindigkeit',75,150,100)
+        self.volume,self.volume_value=self.slider(rows,'Ausgabelautstärke',0,100,100)
         self.speed.valueChanged.connect(self.refresh_values);self.volume.valueChanged.connect(self.refresh_values)
         layout.addWidget(playback)
-        conversation=QGroupBox('Conversation');conversation_rows=QVBoxLayout(conversation)
-        self.mode=QComboBox();self.mode.setAccessibleName('Conversation mode')
-        self.mode.addItem('Hold or slide to lock','manual');self.mode.addItem('Hands-free conversation','hands-free')
+        conversation=QGroupBox('Unterhaltung');conversation_rows=QVBoxLayout(conversation)
+        self.mode=QComboBox();self.mode.setAccessibleName('Unterhaltungsmodus')
+        self.mode.addItem('Halten oder schieben zum Sperren','manual');self.mode.addItem('Freisprechen','hands-free')
         self.mode.setCurrentIndex(self.mode.findData(window.preferences.values.get('voice_mode','manual')))
         conversation_rows.addWidget(self.mode)
-        self.pause,self.pause_value=self.slider(conversation_rows,'Pause before sending',400,2000,window.preferences.values.get('voice_pause_ms',800))
+        self.pause,self.pause_value=self.slider(conversation_rows,'Pause vor dem Senden',400,2000,window.preferences.values.get('voice_pause_ms',800))
         self.pause.valueChanged.connect(lambda:self.pause_value.setText(f'{self.pause.value()/1000:.2f} s'))
         self.pause_value.setText(f'{self.pause.value()/1000:.2f} s')
-        explanation=QLabel('Hands-free: tap to start, speak naturally, pause to send. Speak over a reply to interrupt. Tap or Esc stops the microphone. Longer pauses give you more time to think.');explanation.setWordWrap(True);conversation_rows.addWidget(explanation)
+        explanation=QLabel('Freisprechen: tippen zum Starten, natürlich sprechen, Pause zum Senden. Sprich über eine Antwort, um zu unterbrechen. Tippen oder Esc stoppt das Mikrofon. Längere Pausen geben dir mehr Zeit zum Nachdenken.');explanation.setWordWrap(True);conversation_rows.addWidget(explanation)
         layout.addWidget(conversation)
-        self.note=QLabel('Changes apply to the next spoken reply. Preview uses the speed and volume shown here.');self.note.setWordWrap(True);layout.addWidget(self.note)
-        guide=QLabel('Hold to record • Slide left to lock\nClick while locked to send • Esc to cancel\n10-minute maximum • Orange at 8 min • Red at 9 min');guide.setWordWrap(True);layout.addWidget(guide)
-        row=QHBoxLayout();reset=QPushButton('Reset playback');reset.clicked.connect(lambda:(self.speed.setValue(100),self.volume.setValue(100)));row.addWidget(reset)
-        self.apply=QPushButton('Save');self.apply.setEnabled(False);self.apply.clicked.connect(self.save);row.addWidget(self.apply)
-        done=QPushButton('Done');done.clicked.connect(self.accept);row.addWidget(done);layout.addLayout(row)
+        self.note=QLabel('Änderungen gelten für die nächste gesprochene Antwort. Die Vorschau nutzt die hier gezeigte Geschwindigkeit und Lautstärke.');self.note.setWordWrap(True);layout.addWidget(self.note)
+        guide=QLabel('Halten zum Aufnehmen • Nach links schieben zum Sperren\nKlicken im gesperrten Zustand sendet • Esc bricht ab\nMaximal 10 Minuten • Orange bei 8 Min • Rot bei 9 Min');guide.setWordWrap(True);layout.addWidget(guide)
+        row=QHBoxLayout();reset=QPushButton('Wiedergabe zurücksetzen');reset.clicked.connect(lambda:(self.speed.setValue(100),self.volume.setValue(100)));row.addWidget(reset)
+        self.apply=QPushButton('Speichern');self.apply.setEnabled(False);self.apply.clicked.connect(self.save);row.addWidget(self.apply)
+        done=QPushButton('Fertig');done.clicked.connect(self.accept);row.addWidget(done);layout.addLayout(row)
         for button,name in [(self.preview,'play'),(reset,'recover'),(self.apply,'save'),(done,'done')]:button.setIcon(settings_icon(name,window.accent))
         self.enabled.setIcon(settings_icon('voice',window.accent))
         self.voice.currentIndexChanged.connect(self.selection_changed)
@@ -92,7 +92,7 @@ class VoiceSettingsDialog(QDialog):
 
     def loaded(self,result):
         data,error=result
-        if error:self.note.setText('Voice settings unavailable: '+error);return
+        if error:self.note.setText('Spracheinstellungen nicht verfügbar: '+error);return
         self.saved=data['values'];self.voices=data['voices']
         self.voice.clear()
         for voice in self.voices:self.voice.addItem(voice['name'],voice['id'])
@@ -103,7 +103,7 @@ class VoiceSettingsDialog(QDialog):
     def selection_changed(self,*_):
         self.stop_preview()
         voice=next((v for v in self.voices if v['id']==self.voice.currentData()),None)
-        self.description.setText(voice.get('description','') if voice else 'Choose a voice')
+        self.description.setText(voice.get('description','') if voice else 'Wähle eine Stimme')
         self.preview.setEnabled(bool(voice))
 
     def values(self):
@@ -115,10 +115,10 @@ class VoiceSettingsDialog(QDialog):
     def play_preview(self):
         if self.previewing:self.stop_preview();return
         voice=getattr(self.owner,'voice_dialog',None)
-        if voice and voice.capture:self.note.setText('Finish recording before previewing a voice.');return
+        if voice and voice.capture:self.note.setText('Beende die Aufnahme, bevor du eine Stimme vorhörst.');return
         if voice:voice.interrupt()
         self.preview_stop=threading.Event();stop=self.preview_stop;values=self.values()
-        self.previewing=True;self.preview.setText('Stop preview');self.note.setText('Loading voice sample…')
+        self.previewing=True;self.preview.setText('Vorschau stoppen');self.note.setText('Stimmprobe wird geladen …')
         def play():
             pcm=voice_request('preview',values,raw=True)
             if stop.is_set():return
@@ -128,8 +128,8 @@ class VoiceSettingsDialog(QDialog):
                     if stop.is_set():break
                     output.write(pcm[offset:offset+960])
         def finished(result):
-            _,error=result;self.previewing=False;self.preview.setText('Play voice sample')
-            self.note.setText(error or 'Sample finished. Save to use these settings for replies.')
+            _,error=result;self.previewing=False;self.preview.setText('Stimmprobe abspielen')
+            self.note.setText(error or 'Probe beendet. Speichern, um diese Einstellungen für Antworten zu nutzen.')
         self.work(play,finished)
 
     def save(self):
@@ -143,7 +143,7 @@ class VoiceSettingsDialog(QDialog):
             self.owner.preferences.values['voice_mode']=self.mode.currentData()
             self.owner.preferences.values['voice_pause_ms']=self.pause.value()
             self.owner.preferences.save();self.owner.update_controls()
-            self.note.setText('Saved. Tap the voice icon to start.' if changed else 'Saved. These settings apply to the next spoken reply.')
+            self.note.setText('Gespeichert. Tippe das Sprachsymbol zum Starten.' if changed else 'Gespeichert. Diese Einstellungen gelten für die nächste gesprochene Antwort.')
         self.work(lambda:voice_request('preferences',{'values':values}),finished)
 
     def finish(self,*_):

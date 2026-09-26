@@ -38,11 +38,11 @@ class PromptCatalog(QObject):
         def read():
             try:
                 section=self.client.setting('prompt-library')
-                if section is None:raise ContractError('Prompt library is unavailable.')
+                if section is None:raise ContractError('Die Prompt-Bibliothek ist nicht verfügbar.')
                 prompts=section['value'].get('prompts',[])
                 self.completed.emit(prompts,'',generation)
             except Exception as exc:
-                try:self.completed.emit(None,'Cannot load shared prompts. '+str(exc),generation)
+                try:self.completed.emit(None,'Geteilte Prompts konnten nicht geladen werden. '+str(exc),generation)
                 except RuntimeError:pass # The window was disposed during shutdown.
         threading.Thread(target=read,daemon=True).start()
 
@@ -81,7 +81,7 @@ class PromptMenu(QListWidget):
         self.setHorizontalScrollBarPolicy(Qt.ScrollBarPolicy.ScrollBarAlwaysOff)
         self.setTextElideMode(Qt.TextElideMode.ElideRight)
         self.setAttribute(Qt.WidgetAttribute.WA_ShowWithoutActivating)
-        self.setAccessibleName('Saved prompts')
+        self.setAccessibleName('Gespeicherte Prompts')
         self.setStyleSheet('QListWidget {background:#243537;color:#edf3f3;border:1px solid #607d7d;border-radius:10px;padding:4px;} QListWidget::item {padding:7px;} QListWidget::item:selected {background:#426760;color:#ffffff;border-radius:6px;}')
         self.itemClicked.connect(lambda _:self.choose())
         self.items=[]; self.dismissed=None
@@ -97,10 +97,10 @@ class PromptMenu(QListWidget):
         if not self.catalog.error:
             self.items=matching_prompts(self.catalog.prompts,query)
             for item in self.items:
-                row=QListWidgetItem('/'+item['name']+'  ·  Tab to insert\n'+' '.join(item['content'].split())[:75])
+                row=QListWidgetItem('/'+item['name']+'  ·  Tab zum Einfügen\n'+' '.join(item['content'].split())[:75])
                 row.setToolTip(item['content']);row.setData(Qt.ItemDataRole.UserRole,item['id']);self.addItem(row)
         if not self.items:
-            self.addItem(self.catalog.error or ('No matching prompts' if self.catalog.prompts else 'Add prompts in More → Prompt library' if self.catalog.loaded else 'Loading prompts…'))
+            self.addItem(self.catalog.error or ('Keine passenden Prompts' if self.catalog.prompts else 'Prompts unter Weitere Optionen → Prompt-Bibliothek hinzufügen' if self.catalog.loaded else 'Prompts werden geladen …'))
         self.setCurrentRow(next((i for i,p in enumerate(self.items) if p["id"]==selected),0))
         self.setFixedWidth(max(260,editor.width()))
         self.setFixedHeight(min(230,max(70,self.sizeHintForRow(0)*min(5,self.count())+18)))

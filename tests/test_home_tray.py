@@ -55,7 +55,7 @@ class HomeTrayTests(unittest.TestCase):
         tray.show_settings()
         self.assertIs(tray.dialog, dialog)
         dialog.findChild(QLineEdit).setText('http://nas.local:8123/home-lighting/lights')
-        next(b for b in dialog.findChildren(QPushButton) if b.text() == 'Save and open').click()
+        next(b for b in dialog.findChildren(QPushButton) if b.text() == 'Speichern und öffnen').click()
         self.assertEqual(opened, ['http://nas.local:8123/home-lighting/lights'])
         tray.open_action.trigger()
         self.assertEqual(len(opened), 2)

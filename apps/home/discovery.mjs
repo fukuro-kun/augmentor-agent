@@ -6,9 +6,9 @@ export function readDiscovery(stateDir){
  if(!stateDir)return {devices:[],scanned_at:null};
  const file=join(stateDir,'discovered-devices.json');
  try{
-  if(statSync(file).size>131072)throw Error('Discovery inventory too large');
+  if(statSync(file).size>131072)throw Error('Erkennungsinventar zu groß');
   const data=JSON.parse(readFileSync(file,'utf8'));
-  if(!Array.isArray(data.devices)||data.devices.length>128||!Number.isFinite(Date.parse(data.scanned_at)))throw Error('Invalid discovery inventory');
+  if(!Array.isArray(data.devices)||data.devices.length>128||!Number.isFinite(Date.parse(data.scanned_at)))throw Error('Ungültiges Erkennungsinventar');
   const field=(value,max)=>typeof value==='string'?value.slice(0,max):'';
   return {scanned_at:data.scanned_at,devices:data.devices.map(d=>({name:field(d.name,200)||'Unidentified device',model:field(d.model,100),host:field(d.host,100),status:d.status==='unsupported'?'unsupported':'needs_setup'}))};
  }catch(error){if(error.code==='ENOENT')return {devices:[],scanned_at:null};throw error;}

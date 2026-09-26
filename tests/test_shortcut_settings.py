@@ -28,7 +28,7 @@ class ShortcutSettingsTests(unittest.TestCase):
                 self.app.processEvents();self.assertTrue(row['button'].isEnabled())
                 QTest.mouseClick(row['button'],Qt.MouseButton.LeftButton)
                 self.assertEqual(save.call_args.args[1],name)
-                self.assertIn('Saved.',row['note'].text());self.assertTrue(row['editor'].keySequence().isEmpty())
+                self.assertIn('Gespeichert.',row['note'].text());self.assertTrue(row['editor'].keySequence().isEmpty())
             owner.close()
 
     def test_failure_keeps_displayed_binding_and_allows_retry(self):

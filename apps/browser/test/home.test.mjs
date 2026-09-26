@@ -14,5 +14,5 @@ test('Home settings pair once, clear the code and use the native connection boun
  form.elements.url.value='https://home.example.com';form.elements.code.value='fixture-code';
  form.dispatchEvent(new dom.window.Event('submit',{cancelable:true,bubbles:true}));await new Promise(r=>setImmediate(r));
  assert.equal(calls.at(-1).type,'homeConnection');assert.equal(calls.at(-1).body.request.action,'pair');assert.equal(form.elements.code.value,'');
- assert.equal(form.querySelector('button[type=submit]').disabled,true);assert.match(form.textContent,/Connected/);
+ assert.equal(form.querySelector('button[type=submit]').disabled,true);assert.match(form.textContent,/Verbunden/);
 });

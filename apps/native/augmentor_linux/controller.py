@@ -39,7 +39,7 @@ class Controller(QObject):
     def __init__(self, parent=None, client=None, harness="pi"):
         super().__init__(parent)
         if harness not in ('pi','dsh'):
-            raise ValueError('Choose DSH or Pi. OpenCode support has been retired; its saved data is retained.')
+            raise ValueError('Wähle DSH oder Pi. Die OpenCode-Unterstützung wurde eingestellt; deren gespeicherte Daten bleiben erhalten.')
         if client is None and harness=='dsh':
             from .adapters.dsh import DshAdapter
             self.client=DshAdapter()
@@ -186,7 +186,7 @@ class Controller(QObject):
         def work():
             row=self.client.call('session.branch',{'sessionId':source,'newSessionId':target,'messageSeq':seq,'mode':'reply'})
             self.attach_branch(row)
-            self.status.emit('Branched into a new chat')
+            self.status.emit('In einen neuen Chat verzweigt')
         self.navigate(work)
 
     def toggle_saved(self):
@@ -270,7 +270,7 @@ class Controller(QObject):
                 if self.closed:return
                 self.connection.emit(False)
                 self.last_connection_error = str(exc)
-                self.status.emit('Reconnecting… '+str(exc)[:240]+' · Settings → Recover connection')
+                self.status.emit('Verbinde erneut … '+str(exc)[:240]+' · Einstellungen → Verbindung wiederherstellen')
                 self.shutdown.wait(delay)
                 delay=min(15,delay*2)
 
@@ -280,7 +280,7 @@ class Controller(QObject):
                 return False
             self.repairing = True
         self.connection.emit(self.online)
-        self.status.emit("Recovering connection…")
+        self.status.emit("Verbindung wird wiederhergestellt …")
         def work():
             ok = False
             message = ''
@@ -288,7 +288,7 @@ class Controller(QObject):
             try:
                 # Wait for an in-flight health check, then exclude automatic recovery.
                 if not self.recovery_lock.acquire(timeout=25):
-                    raise ContractError('A connection check is still finishing. Please retry recovery shortly.')
+                    raise ContractError('Eine Verbindungsprüfung läuft noch. Bitte versuche die Wiederherstellung gleich erneut.')
                 try:
                     import sys
                     services = str(Path(__file__).resolve().parents[3]/'services')
@@ -309,14 +309,14 @@ class Controller(QObject):
                 if self.closed: return
                 self.recover_connection(manual=True)
                 ok = self.online and not self.unavailable_session
-                message = 'Connected. Your conversation is ready.' if ok else self.session_restore_error or 'The runtime did not finish reconnecting.'
+                message = 'Verbunden. Deine Unterhaltung ist bereit.' if ok else self.session_restore_error or 'Die Laufzeitumgebung hat die Wiederverbindung nicht abgeschlossen.'
             except Exception as exc:
                 if not (runtime_checked and self.unavailable_session and self.online):
                     self.online = False
                     self.connected = False
                 self.last_connection_error = str(exc)
-                message = 'Recovery could not finish: '+str(exc)
-                self.status.emit('Recovery needs attention · Settings → Recover connection')
+                message = 'Wiederherstellung konnte nicht abgeschlossen werden: '+str(exc)
+                self.status.emit('Wiederherstellung erfordert Aufmerksamkeit · Einstellungen → Verbindung wiederherstellen')
             finally:
                 self.repairing = False
                 if not self.closed:
@@ -342,8 +342,8 @@ class Controller(QObject):
             self.read_only = False
             self.running = False
             self._recover_connection(manual)
-            self.problem.emit('Connected, but the previous chat could not be reopened. Its history is preserved. '
-                              'Use Settings → Recover connection to repair it, or start a new chat. '+str(exc))
+            self.problem.emit('Verbunden, aber der vorherige Chat konnte nicht wieder geöffnet werden. Sein Verlauf bleibt erhalten. '
+                              'Nutze Einstellungen → Verbindung wiederherstellen zur Reparatur oder starte einen neuen Chat. '+str(exc))
 
     def _recover_connection(self, manual=False):
         if not self.recovery_lock.acquire(blocking=False):return
@@ -366,7 +366,7 @@ class Controller(QObject):
                 if row is None:
                     # A deleted session must not cause an endless reconnect loop.
                     self.session=None;self.loaded_events=[];self.save_session()
-                    self.problem.emit('The previous chat is unavailable. Choose a conversation from History or start a new one.')
+                    self.problem.emit('Der vorherige Chat ist nicht verfügbar. Wähle eine Unterhaltung aus dem Verlauf oder starte eine neue.')
                     sid=None
                 else:
                     self.read_only=not getattr(self.client,'owns_preset',lambda preset:preset==self.preset)(row.get('agentPreset'))
@@ -410,7 +410,7 @@ class Controller(QObject):
             except ContractError:pass
             self.session_info.emit({'sessionId':sid,'saved':sid in self.saved_ids,'readOnly':self.read_only})
             self.last_connection_error='';self.online=True;self.connection.emit(True);self.busy.emit(self.running)
-            self.status.emit('Working…' if self.running else 'Ready')
+            self.status.emit('Arbeitet …' if self.running else 'Bereit')
         finally:
             with self.events_lock:self.recover_buffer=None
             self.recovery_lock.release()
@@ -418,8 +418,8 @@ class Controller(QObject):
     def prepare_voice(self, selection):
         with self.lock:
             if self.running or self.navigating or self.repairing or self.closed or self.read_only or not self.online:
-                raise ContractError('Open an idle, connected DSH conversation first.')
-            if not hasattr(self.client,'voice_ticket'):raise ContractError('Voice requires the DSH integration.')
+                raise ContractError('Öffne zuerst eine bereite, verbundene DSH-Unterhaltung.')
+            if not hasattr(self.client,'voice_ticket'):raise ContractError('Sprache erfordert die DSH-Integration.')
             self.navigating=True
         try:
             self.client.validate_model(selection)
@@ -454,7 +454,7 @@ class Controller(QObject):
                 if cancelled.is_set():
                     return
                 if edit_from:
-                    if edit_from['sessionId']!=self.session:raise ContractError('The conversation changed. Choose Edit again.')
+                    if edit_from['sessionId']!=self.session:raise ContractError('Die Unterhaltung hat sich geändert. Wähle „Bearbeiten" erneut.')
                     row=self.client.call('session.branch',{'sessionId':self.session,'newSessionId':self.preset+'-'+uuid.uuid4().hex,'messageSeq':edit_from['seq'],'mode':'edit'})
                     self.attach_branch(row)
                     if cancelled.is_set():return
@@ -475,7 +475,7 @@ class Controller(QObject):
                     return
                 response = self.client.call('session.prompt', {'sessionId': self.session, 'mode': 'queue', 'requestId': request_id or str(uuid.uuid4()), 'content': [{'type': 'text', 'text': text}]})
                 if response.get('accepted') is not True:
-                    raise ContractError('The harness did not accept the message.')
+                    raise ContractError('Das Harness hat die Nachricht nicht angenommen.')
                 accepted = True
                 self.sent.emit(text)
                 if response.get('command'):
@@ -503,10 +503,10 @@ class Controller(QObject):
             try:
                 # Preserve order behind the first prompt while a new chat is being prepared.
                 while self.preparing and not self.closed:
-                    if self.generation is not generation:raise ContractError('The conversation changed before the prompt could be queued.')
+                    if self.generation is not generation:raise ContractError('Die Unterhaltung hat sich geändert, bevor der Prompt eingereiht werden konnte.')
                     time.sleep(.03)
                 target=sid or self.session
-                if self.closed or self.generation is not generation or target!=self.session or not target or self.cancel_requested.is_set():raise ContractError('Prompt was not queued; the active response stopped or changed.')
+                if self.closed or self.generation is not generation or target!=self.session or not target or self.cancel_requested.is_set():raise ContractError('Prompt wurde nicht eingereiht; die aktive Antwort wurde gestoppt oder geändert.')
                 result=self.client.call('session.prompt',{'sessionId':target,'requestId':request_id,'mode':mode,'content':[{'type':'text','text':text}]})
                 self.queue_result.emit({'id':request_id,'accepted':result.get('accepted') is True,'command':bool(result.get('command'))})
             except Exception as exc:
@@ -555,7 +555,7 @@ class Controller(QObject):
             if method in ('host/session-status','host/session-error'):
                 if payload.get('sessionId')!=self.session:return
                 if method=='host/session-error':
-                    self.problem.emit(payload.get('message','The DSH task stopped. Check the conversation before retrying.'))
+                    self.problem.emit(payload.get('message','Die DSH-Aufgabe wurde gestoppt. Prüfe die Unterhaltung vor einem erneuten Versuch.'))
                     self.set_idle()
                 elif type(payload.get('running')) is bool:
                     was_running=self.running
@@ -572,7 +572,7 @@ class Controller(QObject):
                 event = payload.get('event', {})
                 self.loaded_events=self.merge_events(self.loaded_events,[event])
                 self.event.emit(event)
-                if event.get('type') == 'runtime/error':self.problem.emit(event.get('data',{}).get('message','Pi runtime error'))
+                if event.get('type') == 'runtime/error':self.problem.emit(event.get('data',{}).get('message','Pi-Laufzeitfehler'))
                 if event.get('type') == 'turn/end':
                     self.set_idle()
                     if self.online and self.session:
@@ -587,14 +587,14 @@ class Controller(QObject):
         self.connected=False;self.online=False
         if not self.closed:
             self.connection.emit(False)
-            self.status.emit('Reconnecting…')
+            self.status.emit('Verbinde erneut …')
 
     def stop(self):
         self.cancel_requested.set()
         if self.session and not self.read_only:
             def work():
                 response = self.client.call('session.cancel', {'sessionId': self.session})
-                self.status.emit('Cancellation requested')
+                self.status.emit('Abbruch angefordert')
                 live=getattr(self.client,'running_state',lambda _session:None)(self.session)
                 if not self.preparing and (live is False or response.get('accepted') is not True):
                     self.set_idle()

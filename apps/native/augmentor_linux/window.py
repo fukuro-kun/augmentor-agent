@@ -76,36 +76,36 @@ class Window(QWidget):
         self.expanded=QFrame();self.stack.addWidget(self.expanded)
         layout=QVBoxLayout(self.expanded);layout.setContentsMargins(*([SURFACE['inset']]*4));layout.setSpacing(SURFACE['gap'])
         header=QHBoxLayout();header.setSpacing(SURFACE['headerGap'])
-        self.title=QLabel('New conversation');self.title.setTextFormat(Qt.TextFormat.PlainText)
+        self.title=QLabel('Neue Unterhaltung');self.title.setTextFormat(Qt.TextFormat.PlainText)
         self.title.setSizePolicy(QSizePolicy.Policy.Ignored,QSizePolicy.Policy.Preferred)
         self.title.setStyleSheet('font-size:11px;font-weight:400;padding-left:8px;')
-        self.title.setToolTip('Double-click to rename this conversation')
+        self.title.setToolTip('Doppelklick zum Umbenennen dieser Unterhaltung')
         self.title.mouseDoubleClickEvent=lambda _:self.rename_chat()
         identity=QVBoxLayout();identity.setSpacing(2);identity.setContentsMargins(0,0,0,0)
         self.brand=QLabel(window_label());self.brand.setStyleSheet('font-size:13px;font-weight:600;padding-left:8px;')
         identity.addWidget(self.brand)
         self.title_stack=QStackedLayout();self.title_stack.setContentsMargins(0,0,0,0)
         self.title_stack.addWidget(self.title)
-        self.title_editor=TitleEditor();self.title_editor.setAccessibleName('Session title')
+        self.title_editor=TitleEditor();self.title_editor.setAccessibleName('Sitzungstitel')
         self.title_editor.setFixedHeight(18)
         self.title_editor.setStyleSheet('QLineEdit {font-size:11px;padding:0 0 0 8px;border:0;border-radius:0;background:transparent;}')
         self.title_editor.returnPressed.connect(self.save_inline_title)
         self.title_editor.cancelled.connect(self.cancel_inline_title)
         self.title_stack.addWidget(self.title_editor);self.title_stack.setCurrentWidget(self.title)
         self.rename_session=None;identity.addLayout(self.title_stack);header.addLayout(identity,1)
-        self.new_button=self.icon_button(SURFACE['glyphs']['newchat'],'New chat · right-click for approval mode',self.new_chat)
+        self.new_button=self.icon_button(SURFACE['glyphs']['newchat'],'Neuer Chat · Rechtsklick für Freigabemodus',self.new_chat)
         self.new_button.setContextMenuPolicy(Qt.ContextMenuPolicy.CustomContextMenu)
         self.new_button.customContextMenuRequested.connect(lambda _:self.open_access())
-        self.save_button=self.icon_button(SURFACE['glyphs']['save'],'Save this chat',self.toggle_save)
-        self.history_button=self.icon_button(SURFACE['glyphs']['sessions'],'Conversation history',self.open_history)
-        self.pin_button=self.icon_button(SURFACE['glyphs']['pin'],'Follow me across all desktops',self.toggle_pin,checkable=True)
+        self.save_button=self.icon_button(SURFACE['glyphs']['save'],'Diesen Chat speichern',self.toggle_save)
+        self.history_button=self.icon_button(SURFACE['glyphs']['sessions'],'Verlauf der Unterhaltungen',self.open_history)
+        self.pin_button=self.icon_button(SURFACE['glyphs']['pin'],'Mir über alle Desktops folgen',self.toggle_pin,checkable=True)
         self.pin_button.setChecked(self.preferences.values['pinned'])
-        self.compact_button=self.icon_button(SURFACE['glyphs']['compact'],'Circular activity view',self.toggle_compact)
-        self.more_button=self.icon_button(SURFACE['glyphs']['more'],'More options',self.open_menu)
-        self.hide_button=self.icon_button(SURFACE['glyphs']['hide'],'Hide Augmentor',self.hide)
+        self.compact_button=self.icon_button(SURFACE['glyphs']['compact'],'Runde Aktivitätsansicht',self.toggle_compact)
+        self.more_button=self.icon_button(SURFACE['glyphs']['more'],'Weitere Optionen',self.open_menu)
+        self.hide_button=self.icon_button(SURFACE['glyphs']['hide'],'Augmentor ausblenden',self.hide)
         for button in (self.new_button,self.save_button,self.history_button,self.pin_button,self.compact_button,self.more_button,self.hide_button):header.addWidget(button,0,Qt.AlignmentFlag.AlignVCenter)
         layout.addLayout(header)
-        self.status=QLabel('UI preview' if preview else 'Connecting…');self.status.hide()
+        self.status=QLabel('UI-Vorschau' if preview else 'Verbinde …');self.status.hide()
         self.model_picker=ModelPicker();self.model_picker.selected.connect(self.model_selected)
         self.model_picker.pin_requested.connect(self.pin_model)
         self.model_picker.refresh_requested.connect(lambda:self.controller.refresh_models() if self.controller else None)
@@ -114,7 +114,7 @@ class Window(QWidget):
         self.model_picker.setStyleSheet('text-align:left;border:0;background:transparent;padding:0;font-size:11px;')
         self.body=QFrame();body=QVBoxLayout(self.body);body.setContentsMargins(0,0,0,0);body.setSpacing(0)
         self.transcript=Transcript();self.transcript.setOpenExternalLinks(False);self.transcript.setOpenLinks(False)
-        self.transcript.setAccessibleName('Conversation');self.transcript.setStyleSheet('QTextBrowser {background:transparent;border:0;padding:2px;}')
+        self.transcript.setAccessibleName('Unterhaltung');self.transcript.setStyleSheet('QTextBrowser {background:transparent;border:0;padding:2px;}')
         self.transcript.verticalScrollBar().valueChanged.connect(self.scrolled)
         self.transcript.anchorClicked.connect(self.message_action)
         body.addWidget(self.transcript,1);layout.addWidget(self.body,1)
@@ -127,14 +127,14 @@ class Window(QWidget):
         self.composer.improve_requested.connect(self.improve_prompt)
         self.composer.improvement_changed.connect(self.update_controls)
         self.edit_bar=QFrame();edit_layout=QHBoxLayout(self.edit_bar);edit_layout.setContentsMargins(2,0,2,0)
-        edit_label=QLabel('Editing latest message');edit_layout.addWidget(edit_label,1)
-        self.cancel_edit_button=QPushButton('Cancel');self.cancel_edit_button.clicked.connect(self.cancel_edit);edit_layout.addWidget(self.cancel_edit_button)
-        self.edit_bar.setToolTip('Resubmit from before this message. The previous conversation stays in History.')
+        edit_label=QLabel('Letzte Nachricht wird bearbeitet');edit_layout.addWidget(edit_label,1)
+        self.cancel_edit_button=QPushButton('Abbrechen');self.cancel_edit_button.clicked.connect(self.cancel_edit);edit_layout.addWidget(self.cancel_edit_button)
+        self.edit_bar.setToolTip('Ab dieser Nachricht erneut senden. Die bisherige Unterhaltung bleibt im Verlauf.')
         self.edit_bar.hide();input_layout.addWidget(self.edit_bar)
         self.composer.submit_requested.connect(self.send);input_layout.addWidget(self.composer)
         self.voice_opening=False;self.voice_epoch=0;self.voice_gesture_mode=None;self.voice_input=None
         footer=QHBoxLayout();footer.setSpacing(SURFACE['footerGap']);footer.addWidget(self.model_picker,1)
-        self.connection_dot=QLabel('●');self.connection_dot.setToolTip('Connecting to the harness');self.connection_dot.setFixedWidth(12);footer.addWidget(self.connection_dot)
+        self.connection_dot=QLabel('●');self.connection_dot.setToolTip('Verbinde mit dem Harness');self.connection_dot.setFixedWidth(12);footer.addWidget(self.connection_dot)
         self.voice_dialog=None
         self.voice_button=VoiceButton(self)
         self.voice_button.pressed.connect(self.voice_pressed)
@@ -143,9 +143,9 @@ class Window(QWidget):
         self.voice_button.released.connect(self.end_voice)
         self.voice_button.cancelled.connect(self.cancel_voice_recording)
         footer.addWidget(self.voice_button)
-        self.latest_button=self.icon_button(SURFACE['glyphs']['latest'],'Return to latest message',self.jump_latest);self.latest_button.hide();footer.addWidget(self.latest_button)
-        self.send_button=self.icon_button(SURFACE['glyphs']['send'],'Send · Enter (Shift+Enter for a new line)',self.send);self.send_button.setEnabled(False);footer.addWidget(self.send_button)
-        self.stop_button=self.icon_button(SURFACE['glyphs']['stop'],'Stop current turn',self.stop);self.stop_button.hide();footer.addWidget(self.stop_button)
+        self.latest_button=self.icon_button(SURFACE['glyphs']['latest'],'Zurück zur neuesten Nachricht',self.jump_latest);self.latest_button.hide();footer.addWidget(self.latest_button)
+        self.send_button=self.icon_button(SURFACE['glyphs']['send'],'Senden · Enter (Umschalt+Enter für neue Zeile)',self.send);self.send_button.setEnabled(False);footer.addWidget(self.send_button)
+        self.stop_button=self.icon_button(SURFACE['glyphs']['stop'],'Aktuellen Durchlauf stoppen',self.stop);self.stop_button.hide();footer.addWidget(self.stop_button)
         layout.addLayout(footer)
         self.orb=Orb();self.stack.addWidget(self.orb);self.orb.expand_requested.connect(self.toggle_compact);self.orb.stop_requested.connect(self.stop)
         self.orb.setContextMenuPolicy(Qt.ContextMenuPolicy.CustomContextMenu);self.orb.customContextMenuRequested.connect(self.orb_menu)
@@ -154,7 +154,7 @@ class Window(QWidget):
         self.shared_appearance_timer.setInterval(1500)
         self.shared_appearance_timer.timeout.connect(self.refresh_shared_appearance)
         if not preview and getattr(self.preferences,'persistent',False):self.shared_appearance_timer.start()
-        self.transcript.setHtml('<p>How can I help?</p>')
+        self.transcript.setHtml('<p>Wie kann ich helfen?</p>')
         self.save_button.setEnabled(False)
         for button in (self.new_button,self.history_button):button.setEnabled(not preview)
         QShortcut(QKeySequence('Ctrl+Shift+Space'),self,activated=self.toggle_compact)
@@ -171,17 +171,17 @@ class Window(QWidget):
             from .touch import TouchLayout
             self.touch_layout=TouchLayout(self)
         if self.preferences.retired_harness and not preview:
-            QTimer.singleShot(0,lambda:QMessageBox.information(self,'Connect DSH',
-                'OpenCode support has been retired. Its conversations and configuration are retained. '
-                'DSH is selected for this window; connect it in Settings. '
-                'No OpenCode conversation has been transferred or replayed.'))
+            QTimer.singleShot(0,lambda:QMessageBox.information(self,'DSH verbinden',
+                'Die OpenCode-Unterstützung wurde eingestellt. Deren Unterhaltungen und Konfiguration bleiben erhalten. '
+                'DSH ist für dieses Fenster ausgewählt; verbinde es in den Einstellungen. '
+                'Es wurde keine OpenCode-Unterhaltung übertragen oder wiedergegeben.'))
 
     def switch_harness(self,harness,reconnect=False):
         if self.voice_dialog or self.voice_input or self.voice_opening:self.close_voice_panel()
         if harness not in ('pi','dsh') or not self.controller:return
         if self.controller.harness==harness and not reconnect:return
         if self.controller.running or self.controller.navigating or self.editing or getattr(self.controller,'repairing',False):
-            self.set_status('Finish the current action before switching harness.');return
+            self.set_status('Beende die aktuelle Aktion, bevor du das Harness wechselst.');return
         if self.composer.improving:self.composer.cancel_improvement()
         old=self.controller;old.close()
         for signal_name in ('status','models','selection_changed','session_info','busy','event','problem','interaction','sent','page','recovered','connection'):
@@ -221,7 +221,7 @@ class Window(QWidget):
     def open_setup(self):
         if not self.controller:return
         if self.controller.running or self.controller.navigating:
-            self.set_status('Finish the current action before configuring a model.');return
+            self.set_status('Beende die aktuelle Aktion, bevor du ein Modell konfigurierst.');return
         if self.setup_dialog and self.setup_dialog.isVisible():self.setup_dialog.raise_();return
         from .setup import SetupDialog
         from .dsh_setup import DshSetupDialog
@@ -238,7 +238,7 @@ class Window(QWidget):
         self.controller.task(work)
 
     def set_status(self,text):
-        self.status.setText(text);self.connection_dot.setToolTip(text);self.title.setToolTip(text+' · double-click to rename');self.sync_orb()
+        self.status.setText(text);self.connection_dot.setToolTip(text);self.title.setToolTip(text+' · Doppelklick zum Umbenennen');self.sync_orb()
 
     def sync_orb(self):
         selection=self.model_picker.currentData() or {}
@@ -277,7 +277,7 @@ class Window(QWidget):
                 self.open_voice();return
             remaining[0]-=1
             if remaining[0]>0:QTimer.singleShot(500,ready)
-            else:self.set_status('Voice could not connect. Check the DSH connection and try the voice button again.')
+            else:self.set_status('Sprache konnte nicht verbunden werden. Prüfe die DSH-Verbindung und versuche die Sprachtaste erneut.')
         ready()
 
     def voice_is_hands_free(self):
@@ -371,9 +371,9 @@ class Window(QWidget):
     def open_voice(self):
         if getattr(getattr(self,'preferences',None),'persistent',False):self.refresh_voice_preferences()
         if not self.preferences.values.get('resonant_voice',True):
-            self.set_status('Enable Resonant Voice in Settings to use the microphone.');return
+            self.set_status('Aktiviere Resonant Voice in den Einstellungen, um das Mikrofon zu nutzen.');return
         if self.editing:
-            self.set_status('Finish or cancel the message edit before opening Voice.');return
+            self.set_status('Beende oder brich die Nachrichtenbearbeitung ab, bevor du Voice öffnest.');return
         if self.voice_dialog or not self.controller:return
         if self.voice_is_hands_free():self.prepare_voice_input()
         if self.voice_opening:return
@@ -392,7 +392,7 @@ class Window(QWidget):
             ticket,error=result
             if error:
                 self.voice_button.set_state('error',error)
-                self.set_status('Voice unavailable. '+error);return
+                self.set_status('Sprache nicht verfügbar. '+error);return
             if not self.preferences.values.get('resonant_voice',True) or controller is not self.controller or controller.closed or controller.session!=ticket['sessionId']:
                 self.close_voice_panel();return
             from .voice import VoiceSession
@@ -413,7 +413,7 @@ class Window(QWidget):
         else:
             accepted=controller.send(event['text'],self.model_picker.currentData(),request_id='resonant-voice:'+event['requestId'])
         if not accepted and self.voice_dialog:
-            self.voice_dialog.set_status('Message was not submitted. '+event['text'])
+            self.voice_dialog.set_status('Nachricht wurde nicht gesendet. '+event['text'])
             if getattr(self.voice_dialog,'hands_free',False):self.voice_dialog.shutdown()
 
     def session_changed(self,info):
@@ -431,9 +431,9 @@ class Window(QWidget):
         if 'saved' in info:self.is_saved=info['saved']
         if 'title' in info:self.title_text=str(info['title'] or 'Augmentor Agent');self.title.setText(self.title_text)
         self.save_button.setText('★' if self.is_saved else '☆')
-        self.save_button.setToolTip('Unsave this conversation' if self.is_saved else 'Save this conversation')
+        self.save_button.setToolTip('Diese Unterhaltung nicht mehr speichern' if self.is_saved else 'Diese Unterhaltung speichern')
         self.model_selected(self.model_picker.currentData(),persist=False);self.update_controls()
-        if self.read_only:self.set_status('History view')
+        if self.read_only:self.set_status('Verlaufsansicht')
 
     def update_controls(self):
         self.voice_button.hands_free=self.voice_is_hands_free()
@@ -452,21 +452,21 @@ class Window(QWidget):
         self.save_button.setEnabled(bool(self.controller and self.controller.session) and not self.read_only)
         working=bool(self.controller and self.controller.running)
         self.stop_button.setVisible(working);self.stop_button.setEnabled(working);self.send_button.setVisible(not working or can_queue)
-        self.send_button.setToolTip('Queue prompt · Enter' if working and can_queue else 'Send · Enter (Shift+Enter for a new line)')
+        self.send_button.setToolTip('Prompt einreihen · Enter' if working and can_queue else 'Senden · Enter (Umschalt+Enter für neue Zeile)')
         self.queue_panel.online=bool(self.controller and getattr(self.controller,'online',False));self.queue_panel.running=working;self.queue_panel.render()
         self.connection_dot.setStyleSheet('color:'+('#a6d6c8' if not self.controller or getattr(self.controller,'online',False) else '#d8ae70')+';font-size:8px;')
         self.sync_orb()
 
     def set_busy(self,busy):
         self.activity.configure(busy=busy)
-        self.update_controls();self.set_status('Working…' if busy else ('History view' if self.read_only else 'Ready'))
+        self.update_controls();self.set_status('Arbeitet …' if busy else ('Verlaufsansicht' if self.read_only else 'Bereit'))
         self.cancel_edit_button.setEnabled(not busy)
         self.rendered_messages=None;self.render_timer.start()
         if not busy and self.close_pending:QTimer.singleShot(0,self.close)
 
     def new_chat(self):
         if self.controller and not self.controller.running and not self.controller.navigating and not self.controller.recovery_lock.locked():
-            self.cancel_edit();self.controller.new_chat();self.rendered_messages=None;self.messages=[];self.partial='';self.seen_events=set();self.message_events={};self.reasoning_index=None;self.expanded_thinking=set();self.transcript.clear();self.composer.clear();self.follow_tail=True;self.set_status('New conversation')
+            self.cancel_edit();self.controller.new_chat();self.rendered_messages=None;self.messages=[];self.partial='';self.seen_events=set();self.message_events={};self.reasoning_index=None;self.expanded_thinking=set();self.transcript.clear();self.composer.clear();self.follow_tail=True;self.set_status('Neue Unterhaltung')
 
     def improve_prompt(self):
         if not self.controller or self.composer.improving:return
@@ -479,7 +479,7 @@ class Window(QWidget):
             try:
                 from .prompt_client import PromptClient
                 settings=PromptClient().call('prompts.list').get('improvement')
-                if not settings:raise ValueError('Restart the prompt service to load Improve prompt settings.')
+                if not settings:raise ValueError('Starte den Prompt-Dienst neu, um die Einstellungen für „Prompt verbessern" zu laden.')
                 template=settings['content']
                 result=adapter.improve_prompt(original,template,selection)
             except Exception as exc:error=str(exc)
@@ -509,7 +509,7 @@ class Window(QWidget):
         if self.submitted_draft is None:return
         draft=self.submitted_draft;self.submitted_draft=None
         if not self.composer.toPlainText():self.composer.setPlainText(draft)
-        else:self.messages.append(('Status','Prompt not confirmed as sent (your newer draft is preserved):\n'+draft))
+        else:self.messages.append(('Status','Prompt nicht als gesendet bestätigt (dein neuerer Entwurf bleibt erhalten):\n'+draft))
 
     def message_not_sent(self,text):
         # Idle/history/errors are independent of this particular submission.
@@ -522,12 +522,12 @@ class Window(QWidget):
         self.submitted_draft=None
         if self.editing and not self.composer.toPlainText():
             self.composer.setPlainText(self.editing['draft'])
-        self.editing=None;self.edit_bar.hide();self.send_button.setToolTip('Send · Enter (Shift+Enter for a new line)')
+        self.editing=None;self.edit_bar.hide();self.send_button.setToolTip('Senden · Enter (Umschalt+Enter für neue Zeile)')
 
     def cancel_edit(self):
         if self.editing:
             self.composer.setPlainText(self.editing['draft'])
-            self.editing=None;self.edit_bar.hide();self.send_button.setToolTip('Send · Enter (Shift+Enter for a new line)')
+            self.editing=None;self.edit_bar.hide();self.send_button.setToolTip('Senden · Enter (Umschalt+Enter für neue Zeile)')
             self.rendered_messages=None;self.render_messages()
 
     def can_change_message(self):
@@ -545,7 +545,7 @@ class Window(QWidget):
     def message_action(self,url):
         action=url.scheme();index_text=url.path()
         if action in ('http','https','mailto','tel','ftp','ssh','sftp'):
-            if not QDesktopServices.openUrl(url):self.set_status('Could not open link in the default application')
+            if not QDesktopServices.openUrl(url):self.set_status('Link konnte nicht in der Standardanwendung geöffnet werden')
             return
         if action=='augmentor-code' and re.fullmatch(r'\d+:\d+',index_text):
             index,block=map(int,index_text.split(':'))
@@ -553,9 +553,9 @@ class Window(QWidget):
             codes=code_blocks(text)
             if block<len(codes):
                 clipboard=QApplication.clipboard();clipboard.setText(codes[block])
-                if clipboard.text()!=codes[block]:self.set_status('Could not copy');return
+                if clipboard.text()!=codes[block]:self.set_status('Kopieren fehlgeschlagen');return
                 self.copied_code=(self.message_key(index),block);self.copy_feedback_timer.start()
-                self.rendered_messages=None;self.render_messages();self.set_status('Copied')
+                self.rendered_messages=None;self.render_messages();self.set_status('Kopiert')
             return
         if action=='augmentor-think' and index_text.isdigit():
             index=int(index_text)
@@ -573,9 +573,9 @@ class Window(QWidget):
         if role not in ('You','Augmentor'):return
         if action=='augmentor-copy':
             clipboard=QApplication.clipboard();clipboard.setText(text)
-            if clipboard.text()!=text:self.set_status('Could not copy message');return
+            if clipboard.text()!=text:self.set_status('Nachricht konnte nicht kopiert werden');return
             self.copied_message=self.message_key(index);self.copy_feedback_timer.start()
-            self.rendered_messages=None;self.render_messages();self.set_status('Copied message');return
+            self.rendered_messages=None;self.render_messages();self.set_status('Nachricht kopiert');return
         event=self.message_events.get(index)
         if not event or not self.can_change_message():return
         if not getattr(self.controller,'capabilities',{'branch':True,'edit':True}).get(action.removeprefix('augmentor-')):return
@@ -585,8 +585,8 @@ class Window(QWidget):
         elif action=='augmentor-edit' and role=='You' and index==max(i for i,(r,_) in enumerate(self.messages) if r=='You'):
             self.editing={'sessionId':self.controller.session,'seq':event['seq'],'draft':self.composer.toPlainText()}
             self.composer.setPlainText(text);self.composer.setFocus();self.edit_bar.show()
-            self.send_button.setToolTip('Resubmit edited message · Enter')
-            self.set_status('Edit your message, then send. The previous conversation stays in History.')
+            self.send_button.setToolTip('Bearbeitete Nachricht erneut senden · Enter')
+            self.set_status('Bearbeite deine Nachricht und sende dann. Die bisherige Unterhaltung bleibt im Verlauf.')
             self.rendered_messages=None;self.render_messages()
 
     def message_actions(self,index,role,accent):
@@ -631,12 +631,12 @@ class Window(QWidget):
             content=render_markdown(text,self.preferences.values['theme'],accent,tuple(sorted(self.preferences.values.get('format_colours',{}).items())),str(index),self.copied_code[1] if self.copied_code and self.copied_code[0]==self.message_key(index) else None) if role!='Status' and (role!='Thinking' or index in self.expanded_thinking) else '<p>'+html.escape(text).replace(chr(10),'<br>')+'</p>'
             if role=='Thinking':
                 expanded=index in self.expanded_thinking
-                label='▾ Thinking' if expanded else '▸ Thinking'
-                blocks.append(f'<table width="100%" border="0" cellspacing="0" cellpadding="0" bgcolor="{ "#293238" if self.preferences.values["theme"]=="dark" else "#edf1f7" }"><tr><td style="padding-top:7px;padding-bottom:7px;padding-left:12px;padding-right:12px;"><p style="margin:0"><a name="thinking-{index}" href="augmentor-think:{index}" style="color:{accent};text-decoration:none">{label}</a></p>'+(content+f'<p style="margin:8px 0 0"><a href="augmentor-think:{index}" style="color:{accent};text-decoration:none">▴ Collapse thinking</a></p>' if expanded else '')+'</td></tr></table>')
+                label='▾ Denken' if expanded else '▸ Denken'
+                blocks.append(f'<table width="100%" border="0" cellspacing="0" cellpadding="0" bgcolor="{ "#293238" if self.preferences.values["theme"]=="dark" else "#edf1f7" }"><tr><td style="padding-top:7px;padding-bottom:7px;padding-left:12px;padding-right:12px;"><p style="margin:0"><a name="thinking-{index}" href="augmentor-think:{index}" style="color:{accent};text-decoration:none">{label}</a></p>'+(content+f'<p style="margin:8px 0 0"><a href="augmentor-think:{index}" style="color:{accent};text-decoration:none">▴ Denken einklappen</a></p>' if expanded else '')+'</td></tr></table>')
                 continue
             actions=self.message_actions(index,role,accent)
             if role=='You':
-                blocks.append(f'<table width="86%" align="right" border="0" cellspacing="0" cellpadding="10"><tr><td><p align="right" style="margin:0 0 5px 0;color:{accent};"><b>You</b></p>{content}{actions}</td></tr></table>')
+                blocks.append(f'<table width="86%" align="right" border="0" cellspacing="0" cellpadding="10"><tr><td><p align="right" style="margin:0 0 5px 0;color:{accent};"><b>Du</b></p>{content}{actions}</td></tr></table>')
             else:blocks.append(f'<p style="color:{accent}"><b>{html.escape(role)}</b></p>{content}{actions}')
         from PySide6.QtGui import QTextCursor
         same_history=self.rendered_messages==self.messages and getattr(self,'partial_start',None) is not None
@@ -649,7 +649,7 @@ class Window(QWidget):
             tail.movePosition(QTextCursor.MoveOperation.End,QTextCursor.MoveMode.KeepAnchor)
             tail.removeSelectedText()
         if self.pending_prompt:
-            tail.insertHtml(f'<table width="86%" align="right" border="0" cellspacing="0" cellpadding="10"><tr><td><p align="right" style="color:{accent}"><b>You</b> · Sending…</p><p>'+html.escape(self.pending_prompt).replace('\n','<br>')+'</p></td></tr></table>')
+            tail.insertHtml(f'<table width="86%" align="right" border="0" cellspacing="0" cellpadding="10"><tr><td><p align="right" style="color:{accent}"><b>Du</b> · Sende …</p><p>'+html.escape(self.pending_prompt).replace('\n','<br>')+'</p></td></tr></table>')
         if self.partial:
             tail.insertHtml(f'<p style="color:{accent}"><b>Augmentor</b></p>'+render_markdown(self.partial,self.preferences.values['theme'],accent,tuple(sorted(self.preferences.values.get('format_colours',{}).items())),str(len(self.messages)),self.copied_code[1] if self.copied_code and self.copied_code[0]==self.message_key(len(self.messages)) else None))
         self.rendered_messages=list(self.messages);self.rendered_partial=self.partial
@@ -743,13 +743,13 @@ class Window(QWidget):
                 'Harness: Saved reasoning: minimal; requested reasoning: xhigh '
                 '(request policy). Backend enforcement is provider-dependent.'
             ):return False
-            self.messages.append(('DSH',data.get('text') or ('Command completed.' if data.get('kind')=='success' else 'Command failed.')))
+            self.messages.append(('DSH',data.get('text') or ('Befehl abgeschlossen.' if data.get('kind')=='success' else 'Befehl fehlgeschlagen.')))
             return True
         if kind=='assistant/chunk':
             chunk=data.get('chunk',{})
             if chunk.get('type')=='text-delta':self.partial+=chunk.get('text','');return True
             if chunk.get('type')=='reasoning-delta':
-                self.add_reasoning(chunk.get('text',''));self.set_status('Thinking…');return True
+                self.add_reasoning(chunk.get('text',''));self.set_status('Denkt …');return True
         elif kind=='assistant/message':
             if any(p.get('type')=='tool-call' and p.get('name') in ('resonant_voice_reply','resonant_voice_demo') for p in data.get('message',{}).get('content',[])):
                 self.partial='';return True
@@ -761,16 +761,16 @@ class Window(QWidget):
                 self.message_events[len(self.messages)]=event
                 self.messages.append(('Augmentor',text))
             self.partial='';return True
-        elif kind=='tool/call':self.set_status('Using '+str(data.get('name','a tool'))[:60])
+        elif kind=='tool/call':self.set_status('Verwendet '+str(data.get('name','ein Werkzeug'))[:60])
         elif kind=='turn/end':
             self.reasoning_index=None
             reason=data.get('reason',{}).get('kind')
             if reason=='max-tokens':
-                self.set_status('Output limit — review result')
-                self.messages.append(('Status','This turn reached a model output limit. Any recovery is recorded above. Check the deliverables; this end-of-turn does not establish task completion.'))
+                self.set_status('Ausgabelimit — Ergebnis prüfen')
+                self.messages.append(('Status','Dieser Durchlauf hat ein Modell-Ausgabelimit erreicht. Etwaige Wiederherstellung ist oben verzeichnet. Prüfe die Ergebnisse; dieses Durchlaufende bestätigt keine Aufgabenerfüllung.'))
                 return True
-            self.set_status('Stopped' if reason=='aborted' else 'Interrupted' if reason=='interrupted' else 'Ready')
-            if reason=='interrupted':self.messages.append(('Status',data.get('message','Runtime interrupted.')));return True
+            self.set_status('Gestoppt' if reason=='aborted' else 'Unterbrochen' if reason=='interrupted' else 'Bereit')
+            if reason=='interrupted':self.messages.append(('Status',data.get('message','Laufzeit unterbrochen.')));return True
         elif kind=='session/title':
             title=data.get('title')
             if title:self.title_text=title;self.title.setText(title)
@@ -783,7 +783,7 @@ class Window(QWidget):
     def on_problem(self,message):
         self.update_controls()
         self.rendered_messages=None
-        self.set_status('Needs attention');self.messages.append(('Status',message));self.render_messages()
+        self.set_status('Erfordert Aufmerksamkeit');self.messages.append(('Status',message));self.render_messages()
 
     def toggle_save(self):
         if self.controller:self.controller.toggle_saved()
@@ -823,15 +823,15 @@ class Window(QWidget):
 
     def open_menu(self):
         menu=QMenu(self)
-        menu.addAction('Settings',self.open_settings).setEnabled(bool(self.controller))
-        menu.addAction('Colors & skins',self.open_appearance)
-        menu.addAction('Prompt library',self.open_prompt_library).setEnabled(bool(self.controller))
-        menu.addAction('Connect a model',self.open_setup).setEnabled(bool(self.controller))
-        menu.addAction('Models & providers',self.open_pi).setEnabled(bool(self.controller))
-        menu.addAction('Versions & updates',self.open_updates).setEnabled(bool(self.controller))
-        menu.addAction('Approval mode',self.open_access).setEnabled(bool(self.controller))
-        menu.addAction('About & licenses',lambda:LicensesDialog(self).exec())
-        menu.addSeparator();menu.addAction('Quit Augmentor',self.close)
+        menu.addAction('Einstellungen',self.open_settings).setEnabled(bool(self.controller))
+        menu.addAction('Farben & Skins',self.open_appearance)
+        menu.addAction('Prompt-Bibliothek',self.open_prompt_library).setEnabled(bool(self.controller))
+        menu.addAction('Modell verbinden',self.open_setup).setEnabled(bool(self.controller))
+        menu.addAction('Modelle & Anbieter',self.open_pi).setEnabled(bool(self.controller))
+        menu.addAction('Versionen & Updates',self.open_updates).setEnabled(bool(self.controller))
+        menu.addAction('Freigabemodus',self.open_access).setEnabled(bool(self.controller))
+        menu.addAction('Über & Lizenzen',lambda:LicensesDialog(self).exec())
+        menu.addSeparator();menu.addAction('Augmentor beenden',self.close)
         menu.exec(self.more_button.mapToGlobal(self.more_button.rect().bottomLeft()))
 
     def open_updates(self):
@@ -935,7 +935,7 @@ class Window(QWidget):
         if QApplication.platformName() == 'cocoa':
             from .macos_windows import pin_spaces
             try:pin_spaces(self,self.preferences.values['pinned'])
-            except (OSError,RuntimeError):self.set_status('Workspace pin could not be applied')
+            except (OSError,RuntimeError):self.set_status('Arbeitsflächen-Pin konnte nicht angewendet werden')
             return
         if QApplication.platformName() not in ('offscreen','minimal') and pin_kwin(self.preferences.values['pinned']):return
         if QApplication.platformName() not in ('xcb','x11'):
@@ -950,7 +950,7 @@ class Window(QWidget):
                 current=next(line.split()[0] for line in desktops.splitlines() if '*' in line.split()[:2])
                 subprocess.run(['wmctrl','-ir',wid,'-b','remove,sticky'],check=True,timeout=2,capture_output=True)
                 subprocess.run(['wmctrl','-ir',wid,'-t',current],check=True,timeout=2,capture_output=True)
-        except (OSError,subprocess.SubprocessError,StopIteration):self.set_status('Workspace pin could not be applied')
+        except (OSError,subprocess.SubprocessError,StopIteration):self.set_status('Arbeitsflächen-Pin konnte nicht angewendet werden')
 
     def showEvent(self,event):
         super().showEvent(event);QTimer.singleShot(100,self.apply_pin)
@@ -1003,10 +1003,10 @@ class Window(QWidget):
         self.morph_animation.valueChanged.connect(step);self.morph_animation.finished.connect(finish);self.morph_animation.finished.connect(self.morph_animation.deleteLater);self.morph_animation.start()
 
     def orb_menu(self,point):
-        menu=QMenu(self);menu.addAction('Expand conversation',self.toggle_compact)
-        pin=menu.addAction('Follow all workspaces',self.toggle_pin);pin.setCheckable(True);pin.setChecked(self.preferences.values['pinned'])
-        menu.addAction('Colors & skins',self.open_appearance)
-        menu.addAction('Stop',self.stop);menu.addAction('Hide',self.hide);menu.addAction('Quit',self.close)
+        menu=QMenu(self);menu.addAction('Unterhaltung erweitern',self.toggle_compact)
+        pin=menu.addAction('Auf allen Arbeitsflächen folgen',self.toggle_pin);pin.setCheckable(True);pin.setChecked(self.preferences.values['pinned'])
+        menu.addAction('Farben & Skins',self.open_appearance)
+        menu.addAction('Stopp',self.stop);menu.addAction('Ausblenden',self.hide);menu.addAction('Beenden',self.close)
         menu.exec(self.orb.mapToGlobal(point))
 
     def surface_rect(self):
@@ -1047,9 +1047,9 @@ class Window(QWidget):
         payload = frame['payload']
         if frame['method'] == 'approval/requested':
             box = QMessageBox(self)
-            box.setWindowTitle('Augmentor · approval')
+            box.setWindowTitle('Augmentor · Freigabe')
             box.setTextFormat(Qt.TextFormat.PlainText)
-            box.setText('Allow this action once?\n\n' + payload.get('toolName', 'Tool') + '\n' + payload.get('reason', ''))
+            box.setText('Diese Aktion einmal erlauben?\n\n' + payload.get('toolName', 'Werkzeug') + '\n' + payload.get('reason', ''))
             box.setStandardButtons(QMessageBox.StandardButton.Yes | QMessageBox.StandardButton.No)
             box.setDefaultButton(QMessageBox.StandardButton.No)
             if not hasattr(self,'interaction_dialogs'):self.interaction_dialogs={}
@@ -1090,7 +1090,7 @@ class Window(QWidget):
         if self.controller and self.controller.running:
             self.close_pending = True
             self.controller.stop()
-            self.set_status('Stopping before closing…')
+            self.set_status('Wird vor dem Schließen gestoppt …')
             event.ignore()
             return
         if self.controller:

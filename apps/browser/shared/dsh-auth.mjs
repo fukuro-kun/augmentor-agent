@@ -11,7 +11,7 @@ export function createDshClient(base, actionToken) {
   if (!['http:', 'https:'].includes(origin.protocol) ||
       !['127.0.0.1', 'localhost', '[::1]'].includes(origin.hostname) ||
       origin.username || origin.password || origin.pathname !== '/' || origin.search || origin.hash) {
-    throw new Error('DSH_AUGMENTOR_URL must be a loopback HTTP(S) origin')
+    throw new Error('DSH_AUGMENTOR_URL muss ein Loopback-HTTP(S)-Origin sein')
   }
   let cookie = ''
   let authenticating = null
@@ -27,24 +27,24 @@ export function createDshClient(base, actionToken) {
       const probe = await request('/', { headers: headers() })
       await probe.body?.cancel()
       if (probe.status === 200) return
-      if (probe.status !== 401) throw new Error(`DSH authentication probe failed (HTTP ${probe.status})`)
+      if (probe.status !== 401) throw new Error(`DSH-Authentifizierungsprüfung fehlgeschlagen (HTTP ${probe.status})`)
       cookie = ''
       const bootstrap = await request('/api/augmentor/auth', {
         method: 'POST', headers: { 'x-augmentor-token': actionToken },
       })
       if (!bootstrap.ok) {
         await bootstrap.body?.cancel()
-        throw new Error(`DSH authentication failed (HTTP ${bootstrap.status}); update both the Augmentor plugin and extension, restart DSH, and check that they use the same DSH_HOME`)
+        throw new Error(`DSH-Authentifizierung fehlgeschlagen (HTTP ${bootstrap.status}); aktualisiere Augmentor-Plugin und -Extension, starte DSH neu und prüfe, dass beide dasselbe DSH_HOME verwenden`)
       }
       const { token } = await bootstrap.json()
       if (typeof token !== 'string' || !/^[A-Za-z0-9_-]+$/.test(token)) {
-        throw new Error('DSH plugin did not supply a valid authentication token')
+        throw new Error('Das DSH-Plugin hat kein gültiges Authentifizierungs-Token geliefert')
       }
       const exchange = await request(`/?token=${encodeURIComponent(token)}`)
       const sessionCookie = exchange.headers.getSetCookie()
         .find(value => /^dsh-auth-[A-Za-z0-9_-]+=/.test(value))?.split(';')[0]
       await exchange.body?.cancel()
-      if (exchange.status !== 303 || !sessionCookie) throw new Error('DSH rejected the authentication token exchange')
+      if (exchange.status !== 303 || !sessionCookie) throw new Error('DSH hat den Authentifizierungs-Token-Austausch abgelehnt')
       cookie = sessionCookie
     })().finally(() => { authenticating = null })
     return authenticating
@@ -52,7 +52,7 @@ export function createDshClient(base, actionToken) {
 
   return {
     async fetch(route, options = {}) {
-      if (!route.startsWith('/api/') || route.includes('..') || route.includes('://')) throw new Error('Invalid DSH API route')
+      if (!route.startsWith('/api/') || route.includes('..') || route.includes('://')) throw new Error('Ungültige DSH-API-Route')
       const send = () => request(route, { ...options, headers: { ...options.headers, ...headers() } })
       const response = await send()
       if (response.status !== 401) return response

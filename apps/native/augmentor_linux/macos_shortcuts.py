@@ -24,7 +24,7 @@ def current_keys():
     path=configuration()
     if not path.exists():return []
     sequence=QKeySequence(json.loads(path.read_text())['sequence'],QKeySequence.SequenceFormat.PortableText)
-    if sequence.isEmpty() or sequence.count()!=1:raise ValueError('The saved shortcut is invalid.')
+    if sequence.isEmpty() or sequence.count()!=1:raise ValueError('Der gespeicherte Shortcut ist ungültig.')
     return [sequence[0].toCombined()]
 
 class ShortcutManager(QObject):
@@ -35,7 +35,7 @@ class ShortcutManager(QObject):
         self.helper=Path(os.environ.get('AUGMENTOR_MACOS_HOTKEY',str(ROOT/'native/augmentor-hotkey')))
 
     def command(self,sequence):
-        if sequence.isEmpty() or sequence.count()!=1:raise ValueError('Choose one key combination.')
+        if sequence.isEmpty() or sequence.count()!=1:raise ValueError('Wähle eine Tastenkombination.')
         combination=sequence[0];key=int(combination.key());modifiers=combination.keyboardModifiers()
         # Qt intentionally maps ControlModifier to Command and MetaModifier to
         # Control on macOS; use its semantics rather than the displayed names.
@@ -43,15 +43,15 @@ class ShortcutManager(QObject):
             (Qt.KeyboardModifier.ShiftModifier,512),(Qt.KeyboardModifier.AltModifier,2048),
             (Qt.KeyboardModifier.MetaModifier,4096)] if modifiers&flag)
         if not mask or modifiers&Qt.KeyboardModifier.KeypadModifier:
-            raise ValueError('Choose a modified shortcut outside the numeric keypad.')
+            raise ValueError('Wähle einen Shortcut mit Modifikator außerhalb des Ziffernblocks.')
         names=('Left','Right','Up','Down','Home','End','PageUp','PageDown','Escape','Tab','Return','Backspace','Delete')
         special={int(getattr(Qt.Key,'Key_'+name)):'@'+name for name in names}
         special.update({int(Qt.Key.Key_F1)+n:'@F'+str(n+1) for n in range(20)})
         symbol=special.get(key,chr(key) if 32<=key<0x1000000 else None)
-        if symbol is None:raise ValueError('That key is not supported for macOS shortcuts.')
+        if symbol is None:raise ValueError('Diese Taste wird für macOS-Shortcuts nicht unterstützt.')
         result=subprocess.run([str(self.helper),'--resolve',symbol],capture_output=True,text=True,timeout=5)
         response=json.loads(result.stdout)
-        if result.returncode:raise ValueError(response.get('error','Could not resolve this shortcut.'))
+        if result.returncode:raise ValueError(response.get('error','Dieser Shortcut konnte nicht aufgelöst werden.'))
         return [str(self.helper),str(response['keyCode']),str(mask)]
 
     @staticmethod
@@ -64,16 +64,16 @@ class ShortcutManager(QObject):
 
     def save(self,sequence,persist=True):
         with self.lock:
-            if self.closed:raise RuntimeError('The shortcut owner has closed.')
+            if self.closed:raise RuntimeError('Der Shortcut-Besitzer wurde geschlossen.')
             command=self.command(sequence);key=sequence[0].toCombined()
             if self.key==key and self.binding==command and self.process and self.process.poll() is None:return key
             child=subprocess.Popen(command,stdin=subprocess.PIPE,stdout=subprocess.PIPE,stderr=subprocess.DEVNULL)
             try:
                 with selectors.DefaultSelector() as selector:
                     selector.register(child.stdout,selectors.EVENT_READ)
-                    if not selector.select(5):raise RuntimeError('macOS shortcut registration timed out.')
+                    if not selector.select(5):raise RuntimeError('Zeitüberschreitung bei der macOS-Shortcut-Registrierung.')
                     ready=json.loads(child.stdout.readline())
-                if ready.get('event')!='ready':raise ValueError(ready.get('error','Shortcut registration failed.'))
+                if ready.get('event')!='ready':raise ValueError(ready.get('error','Shortcut-Registrierung fehlgeschlagen.'))
                 if persist:
                     path=configuration();path.parent.mkdir(parents=True,exist_ok=True,mode=0o700)
                     fd,temporary=tempfile.mkstemp(prefix='.shortcut-',dir=path.parent)
@@ -103,9 +103,9 @@ class ShortcutManager(QObject):
                     with self.lock:
                         if child is self.process:
                             self.process=None;self.binding=None;self.stop(child)
-                    self.problem.emit('Keyboard layout changed; save your shortcut again: '+str(error))
+                    self.problem.emit('Tastaturlayout geändert; speichere deinen Shortcut erneut: '+str(error))
         child.stdout.close()
-        if child is self.process and not self.closed:self.problem.emit('The macOS shortcut stopped. Save it again in Settings.')
+        if child is self.process and not self.closed:self.problem.emit('Der macOS-Shortcut wurde gestoppt. Speichere ihn in den Einstellungen erneut.')
 
     def restore(self):
         keys=current_keys()
@@ -153,22 +153,22 @@ class ManagedShortcutManager(RemoteShortcutManager):
         except OSError as error:
             if error.errno not in (errno.ENOENT,errno.ECONNREFUSED):raise
         else:
-            if status.get('protocol')!=1:raise RuntimeError('Unsupported shortcut service version.')
+            if status.get('protocol')!=1:raise RuntimeError('Nicht unterstützte Version des Shortcut-Dienstes.')
             return
         application=ROOT.parents[2]
         result=subprocess.run([sys.executable,'-I','-B',str(ROOT/'scripts/register-macos-shortcut.py'),
                                str(application),'install'],capture_output=True,text=True,timeout=45)
         if result.returncode:
-            raise RuntimeError('Could not start the login shortcut service: '+(result.stderr.strip() or result.stdout.strip()))
+            raise RuntimeError('Der Anmelde-Shortcut-Dienst konnte nicht gestartet werden: '+(result.stderr.strip() or result.stdout.strip()))
         deadline=time.monotonic()+15
         while True:
             try:
                 status=request({'operation':'status'})
-                if status.get('protocol')!=1:raise RuntimeError('Unsupported shortcut service version.')
+                if status.get('protocol')!=1:raise RuntimeError('Nicht unterstützte Version des Shortcut-Dienstes.')
                 return
             except OSError as error:
                 if error.errno not in (errno.ENOENT,errno.ECONNREFUSED):raise
-                if time.monotonic()>=deadline:raise RuntimeError('The login shortcut service did not become ready. Try saving again.') from error
+                if time.monotonic()>=deadline:raise RuntimeError('Der Anmelde-Shortcut-Dienst wurde nicht bereit. Versuche das Speichern erneut.') from error
                 time.sleep(0.1)
 
     def save(self,sequence):
@@ -203,9 +203,9 @@ def select_manager(parent=None):
         if error.errno not in (errno.ENOENT,errno.ECONNREFUSED):raise
         registration=Path.home()/'Library/LaunchAgents/com.augmentor.Agent.shortcut.plist'
         if registration.exists() or registration.is_symlink():
-            raise RuntimeError('The login shortcut service is not ready. Start it before saving a shortcut.')
+            raise RuntimeError('Der Anmelde-Shortcut-Dienst ist nicht bereit. Starte ihn, bevor du einen Shortcut speicherst.')
         return ShortcutManager(parent)
-    if status.get('protocol')!=1:raise RuntimeError('Unsupported shortcut service version.')
+    if status.get('protocol')!=1:raise RuntimeError('Nicht unterstützte Version des Shortcut-Dienstes.')
     return RemoteShortcutManager(parent)
 
 
@@ -213,7 +213,7 @@ def initialize(window):
     global manager
     try:manager=select_manager(window)
     except Exception as error:
-        window.set_status('Could not connect to the shortcut service: '+str(error))
+        window.set_status('Verbindung zum Shortcut-Dienst fehlgeschlagen: '+str(error))
         return
     manager.pressed.connect(window.toggle_visibility)
     manager.problem.connect(window.set_status)
@@ -225,5 +225,5 @@ def initialize(window):
     threading.Thread(target=restore,daemon=True).start()
 
 def save_shortcut(sequence):
-    if manager is None:raise RuntimeError('Open the desktop app before saving its shortcut.')
+    if manager is None:raise RuntimeError('Öffne die Desktop-App, bevor du ihren Shortcut speicherst.')
     return manager.save(sequence)

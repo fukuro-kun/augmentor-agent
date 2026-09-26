@@ -16,7 +16,7 @@ PALETTES = {
 
 
 FORMAT_ROLES=('heading','link','emphasis','keyword','string','number','name','comment','operator')
-FORMAT_LABELS=('Headings','Links','Bold text','Code keywords','Code strings','Code numbers','Code functions','Code comments','Code operators')
+FORMAT_LABELS=('Überschriften','Links','Fetter Text','Code-Schlüsselwörter','Code-Strings','Code-Zahlen','Code-Funktionen','Code-Kommentare','Code-Operatoren')
 
 def format_defaults(theme='dark',accent='#a6d6c8'):
     return dict(zip(FORMAT_ROLES,(accent,accent,'#edf3f3' if theme=='dark' else '#152b2c',*PALETTES[theme][:6])))
@@ -136,7 +136,7 @@ def render_markdown(text, theme='dark', accent='#a6d6c8', colours=(), code_prefi
         fmt=fragment.charFormat();cursor=QTextCursor(doc)
         cursor.setPosition(fragment.position());cursor.setPosition(fragment.position()+fragment.length(),QTextCursor.MoveMode.KeepAnchor)
         if fmt.isImageFormat():
-            alt=fmt.property(QTextFormat.Property.ImageAltText) or 'Image'
+            alt=fmt.property(QTextFormat.Property.ImageAltText) or 'Bild'
             cursor.insertText(str(alt))
         elif fmt.isAnchor():
             href=fmt.anchorHref()
@@ -162,7 +162,7 @@ def render_markdown(text, theme='dark', accent='#a6d6c8', colours=(), code_prefi
             index=starts.get(next(line_index))
             if index is not None:
                 finish();parts=[]
-                label='✓ Copied' if index==copied_block else '▣ Copy'
+                label='✓ Kopiert' if index==copied_block else '▣ Kopieren'
                 parts.append(f'<p align="right" style="margin:0 0 8px 0"><a href="augmentor-code:{code_prefix}:{index}" style="color:{accent};text-decoration:none">{label}</a></p>')
             pre=pre.replace('<pre style="','<p style="white-space:pre-wrap; ').replace('</pre>','</p>')
             parts.append(pre)

@@ -38,7 +38,7 @@ test('guided setup verifies a literal credential without tools, saves privately 
     assert.deepEqual(saved.selection,{provider:'augmentor-my-model',model:'fixture'});
     assert.equal(statSync(file).mode&0o777,0o600);assert.deepEqual(host.settings.defaultModel,saved.selection);
     const auth=await host.modelRuntime.getAuth('augmentor-my-model');assert.equal(auth.auth.apiKey,secret);
-    await assert.rejects(host.dispatch('setup.save',{token:checked.token,approvalMode:'workspace-write'},'again'),/check again/);
+    await assert.rejects(host.dispatch('setup.save',{token:checked.token,approvalMode:'workspace-write'},'again'),/erneut aus/);
     const another=await host.setup.test({...input,name:'Second model',images:true});
     assert.deepEqual(another.verified,['text','image-input']);
     const image=calls[1].body.messages[0].content.find(p=>p.type==='image_url');
@@ -47,10 +47,10 @@ test('guided setup verifies a literal credential without tools, saves privately 
     for(let offset=8;offset<png.length;){const length=png.readUInt32BE(offset);assert.equal(crc32(png.subarray(offset+4,offset+8+length)),png.readUInt32BE(offset+8+length));offset+=12+length}
     assert.deepEqual(host.setup.checked(another.token).config.providers['augmentor-second-model'].models[0].input,['text','image']);
     writeFileSync(file,readFileSync(file,'utf8')+'\n');
-    await assert.rejects(host.dispatch('setup.save',{token:another.token,approvalMode:'workspace-write'},'stale'),/settings changed/);
+    await assert.rejects(host.dispatch('setup.save',{token:another.token,approvalMode:'workspace-write'},'stale'),/während des Setups geändert/);
     const snapshot=readFileSync(file,'utf8');fail=true;
     await assert.rejects(host.setup.test({...input,name:'Rejected model'}),error=>{
-      assert.match(error.message,/rejected the credentials/);assert.equal(error.message.includes(secret),false);assert.equal(error.message.includes('private-response-body'),false);return true;
+      assert.match(error.message,/Zugangsdaten abgelehnt/);assert.equal(error.message.includes(secret),false);assert.equal(error.message.includes('private-response-body'),false);return true;
     });
     assert.equal(readFileSync(file,'utf8'),snapshot);assert.equal(calls.length,3,'No automatic model request retries');
   }finally{await host?.close();server.closeAllConnections();await new Promise(resolve=>server.close(resolve));process.env=previous;rmSync(root,{recursive:true,force:true});}
@@ -72,8 +72,8 @@ test('cancelling a connection check prevents saving and does not replay the requ
   try{
     const setup=new SetupConnections(join(root,'models.json'));
     const checking=setup.test({name:'cancel',model:'fixture',api:'openai-completions',baseUrl:`http://127.0.0.1:${server.address().port}/v1`,contextWindow:32768,maxTokens:4096});
-    const assertion=assert.rejects(checking,/cancelled or timed out/);
+    const assertion=assert.rejects(checking,/abgebrochen oder Zeitüberschreitung/);
     await seen;setup.cancel();await assertion;
-    assert.throws(()=>setup.checked('anything'),/check again/);assert.equal(requests,1);assert.equal(existsSync(join(root,'models.json')),false);
+    assert.throws(()=>setup.checked('anything'),/erneut aus/);assert.equal(requests,1);assert.equal(existsSync(join(root,'models.json')),false);
   }finally{server.closeAllConnections();await new Promise(resolve=>server.close(resolve));rmSync(root,{recursive:true,force:true});}
 });

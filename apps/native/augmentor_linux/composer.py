@@ -16,8 +16,8 @@ class Composer(QTextEdit):
     def __init__(self, parent=None):
         super().__init__(parent)
         self.setAcceptRichText(False)
-        self.setPlaceholderText('Ask Augmentor…')
-        self.setAccessibleName('Message draft')
+        self.setPlaceholderText('Frage Augmentor …')
+        self.setAccessibleName('Nachrichtenentwurf')
         self.setHorizontalScrollBarPolicy(Qt.ScrollBarPolicy.ScrollBarAlwaysOff)
         self.setVerticalScrollBarPolicy(Qt.ScrollBarPolicy.ScrollBarAsNeeded)
         self.document().setDocumentMargin(2)
@@ -28,7 +28,7 @@ class Composer(QTextEdit):
         self.roll_colours=(QColor('#1e3033'),QColor('#edf3f3'),QColor('#a6d6c8'))
         self.setViewportMargins(0,0,47,0)
         self.improve_button=QPushButton('✦',self);self.improve_button.setFixedSize(24,24)
-        self.improve_button.setAccessibleName('Improve prompt');self.improve_button.setToolTip('Improve prompt')
+        self.improve_button.setAccessibleName('Prompt verbessern');self.improve_button.setToolTip('Prompt verbessern')
         self.improve_button.setStyleSheet('QPushButton {padding:0;border:0;background:transparent;border-radius:5px;font-size:16px;} QPushButton:hover {background:rgba(127,150,150,45);}')
         self.improve_button.clicked.connect(self.improve_clicked)
         self.textChanged.connect(self.draft_changed)
@@ -50,7 +50,7 @@ class Composer(QTextEdit):
     def refresh_improve_button(self):
         self.improve_button.setEnabled(self.improving or bool(self.improvement_undo) or (self.improvement_available and bool(self.toPlainText().strip()) and not self.preedit_active))
         self.improve_button.setText("×" if self.improving else "↶" if self.improvement_undo else "✦")
-        label="Cancel prompt improvement" if self.improving else "Undo prompt improvement" if self.improvement_undo else "Improve prompt"
+        label="Prompt-Verbesserung abbrechen" if self.improving else "Prompt-Verbesserung rückgängig" if self.improvement_undo else "Prompt verbessern"
         self.improve_button.setToolTip(label);self.improve_button.setAccessibleName(label)
 
     def draft_changed(self):
@@ -75,7 +75,7 @@ class Composer(QTextEdit):
         if self.toPlainText()!=self.improvement_original:self.cancel_improvement();return
         if error or not isinstance(result,dict) or result.get("kind")!="rewrite":
             self.cancel_improvement()
-            message=error or (result or {}).get("text","Could not improve the prompt.")
+            message=error or (result or {}).get("text","Der Prompt konnte nicht verbessert werden.")
             self.improve_button.setToolTip(message);QToolTip.showText(self.improve_button.mapToGlobal(QPoint(0,0)),message,self.improve_button)
             return
         replacement=result.get("text","")

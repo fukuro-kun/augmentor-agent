@@ -23,7 +23,7 @@ test('sidebar keeps shared control order and composer position without redundant
  assert.deepEqual([...d.querySelector('#strip').children].map(b=>b.id),['model','connection-dot','voice-seat','top','send','stop'])
  assert.equal(d.querySelector('#input').closest('footer'),null)
  assert.equal(d.querySelectorAll('#stats,#site,#brand,#pin,#compact,#activity-orb').length,0)
- assert.equal(d.querySelector('#input').placeholder,'Ask Augmentor…')
+ assert.equal(d.querySelector('#input').placeholder,'Augmentor fragen…')
 })
 test('More menu and keyboard dismissal retain the draft',async t=>{
  const {$,dom,opened,input}=setup(t);input('Unsent text');$('more').click();assert.equal($('more-menu').hidden,false)
@@ -56,7 +56,7 @@ test('rolling preview preserves the actual draft and settles before committing w
  assert.equal(dom.window.document.querySelector('.prompt-letter-preview'),null)
  assert.equal($('input').hasAttribute('aria-busy'),false)
  assert.equal($('input').value,'Improved draft')
- assert.equal($('improve').getAttribute('aria-label'),'Undo prompt improvement')
+ assert.equal($('improve').getAttribute('aria-label'),'Prompt-Verbesserung rückgängig')
  await $('improve').onclick();assert.equal($('input').value,'Original café 👩🏽‍💻 <draft> 123')
 })
 test('Escape cancels rolling, Enter cannot submit, and late replies cannot restore the preview',async t=>{

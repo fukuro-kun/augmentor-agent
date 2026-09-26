@@ -6,14 +6,14 @@ test('DSH browser boundary fixes the role and cwd, shares personal chats, hides 
  const b=new DshBoundary(async()=>({items:rows}),async()=>({chatCwd:'/browser'}));
  assert.deepEqual(await b.guard('session.create',{sessionId:'new',cwd:'/private',agentPreset:'default'}),{sessionId:'new',cwd:'/browser',agentPreset:'augmentor-browser-product'});
  assert.deepEqual((await b.sessions()).items,rows.slice(0,2));
- for(const method of ['session.prompt','session.cancel','session.branch','session.history','session.rename','augmentor/save'])await assert.rejects(b.guard(method,{sessionId:'home'}),/another Augmentor role/);
- for(const method of ['workspace.create','session.delete','host.shutdown','updates/download','augmentor/update-plugin','augmentor/update-status','trace/fence-probe'])await assert.rejects(b.guard(method,{}),/unavailable/);
+ for(const method of ['session.prompt','session.cancel','session.branch','session.history','session.rename','augmentor/save'])await assert.rejects(b.guard(method,{sessionId:'home'}),/anderen Augmentor-Rolle/);
+ for(const method of ['workspace.create','session.delete','host.shutdown','updates/download','augmentor/update-plugin','augmentor/update-status','trace/fence-probe'])await assert.rejects(b.guard(method,{}),/nicht verfügbar/);
  for(const sessionId of ['web','os'])for(const method of ['session.prompt','augmentor/voice','augmentor/voice/start','augmentor/voice/control','augmentor/interaction'])assert.deepEqual(await b.guard(method,{sessionId}),{sessionId});
- await assert.rejects(b.guard('augmentor/voice',{sessionId:'child'}),/another Augmentor role/);
- rows[1].agentPreset='default';await assert.rejects(b.guard('session.prompt',{sessionId:'web'}),/another Augmentor role/);
- await assert.rejects(b.guard('settings.describe',{}),/Only Augmentor/);
- await assert.rejects(b.guard('settings.mutate',{ns:'permission',ops:[{op:'set',path:['overrides'],value:[]}]}),/Unsupported/);
- await assert.rejects(b.guard('settings.mutate',{ns:'permission',ops:[{op:'set',path:['defaultPreset'],value:'unknown'}]}),/Unsupported/);
+ await assert.rejects(b.guard('augmentor/voice',{sessionId:'child'}),/anderen Augmentor-Rolle/);
+ rows[1].agentPreset='default';await assert.rejects(b.guard('session.prompt',{sessionId:'web'}),/anderen Augmentor-Rolle/);
+ await assert.rejects(b.guard('settings.describe',{}),/nur Augmentor/);
+ await assert.rejects(b.guard('settings.mutate',{ns:'permission',ops:[{op:'set',path:['overrides'],value:[]}]}),/unterstützt/);
+ await assert.rejects(b.guard('settings.mutate',{ns:'permission',ops:[{op:'set',path:['defaultPreset'],value:'unknown'}]}),/unterstützt/);
  assert.equal((await b.guard('settings.mutate',{ns:'permission',ops:[{op:'set',path:['defaultPreset'],value:'read-only'}]})).ns,'permission');
 });
 test('DSH transport only contacts numeric loopback and refuses redirects and oversized replies',async t=>{
@@ -21,5 +21,5 @@ test('DSH transport only contacts numeric loopback and refuses redirects and ove
  assert.equal(loopbackEndpoint('http://[::1]:3080/'),'http://[::1]:3080');
  let redirected=0;const server=http.createServer((req,res)=>{if(req.url==='/start'){res.writeHead(302,{location:'/destination'});res.end()}else{redirected++;res.end(JSON.stringify({value:'x'.repeat(100)}))}});await new Promise(r=>server.listen(0,'127.0.0.1',r));t.after(()=>server.close());const base='http://127.0.0.1:'+server.address().port;
  await assert.rejects(boundedJson(base+'/start'));assert.equal(redirected,0);
- await assert.rejects(boundedJson(base+'/big',{},50),/size limit/);
+ await assert.rejects(boundedJson(base+'/big',{},50),/Größenlimit/);
 });

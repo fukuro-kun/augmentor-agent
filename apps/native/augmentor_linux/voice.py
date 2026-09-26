@@ -71,7 +71,7 @@ class VoiceSession(QObject):
         self.capture_timer.setInterval(50)
         self.capture_timer.timeout.connect(self.update_recording)
         self.state = 'connecting'
-        self.status_text = 'Connecting to speech models…'
+        self.status_text = 'Verbinde mit Sprachmodellen …'
         self.playback_timer=QTimer(self);self.playback_timer.setInterval(100);self.playback_timer.timeout.connect(self.update_playback_status);self.playback_timer.start()
         self.received.connect(self.handle)
         threading.Thread(target=self.connect_voice, daemon=True).start()
@@ -104,7 +104,7 @@ class VoiceSession(QObject):
         try:
             self.sender_queue.put_nowait(message)
         except queue.Full:
-            self.received.emit({'type': 'error', 'message': 'Audio input fell behind. Reopen Voice.'})
+            self.received.emit({'type': 'error', 'message': 'Audioeingabe hinkt hinterher. Öffne Voice erneut.'})
             self.shutdown()
 
     def connect_voice(self):
@@ -139,12 +139,12 @@ class VoiceSession(QObject):
                     break
                 if isinstance(frame, bytes):
                     if len(frame) < 8 or len(frame) % 2:
-                        raise ValueError('Invalid audio packet')
+                        raise ValueError('Ungültiges Audiopaket')
                     generation = int.from_bytes(frame[:4], 'little')
                     with self.audio_lock:
                         if generation == self.generation:
                             if len(self.pending) + len(frame)-8 > 384000:
-                                raise ValueError('Playback fell behind. Reopen Voice.')
+                                raise ValueError('Wiedergabe hinkt hinterher. Öffne Voice erneut.')
                             self.pending.extend(frame[8:])
                 else:
                     value = json.loads(frame)
@@ -152,7 +152,7 @@ class VoiceSession(QObject):
                     self.playback_event(value)
                     self.received.emit(value)
         except ImportError as error:
-            self.received.emit({'type': 'error', 'message': 'A voice dependency is missing: '+str(error)})
+            self.received.emit({'type': 'error', 'message': 'Eine Sprach-Abhängigkeit fehlt: '+str(error)})
         except Exception as error:
             if not self.closed:
                 self.received.emit({'type': 'error', 'message': str(error)})
@@ -174,7 +174,7 @@ class VoiceSession(QObject):
                     self.ws.send(json.dumps(value))
         except Exception:
             if not self.closed:
-                self.received.emit({'type': 'error', 'message': 'Voice connection lost; no audio will be replayed.'})
+                self.received.emit({'type': 'error', 'message': 'Sprachverbindung verloren; es wird kein Audio wiedergegeben.'})
             self.shutdown()
 
     def playback_event(self, event):
@@ -223,7 +223,7 @@ class VoiceSession(QObject):
                                                   callback=self.microphone)
             self.capture.start()
             self.capture_timer.start()
-            self.set_status('Release to send · Slide left to lock', 'listening')
+            self.set_status('Loslassen zum Senden · Nach links schieben zum Sperren', 'listening')
         except Exception as error:
             self.set_status(str(error))
             self.shutdown()
@@ -238,22 +238,22 @@ class VoiceSession(QObject):
             if self.early_input:self.early_input.attach(self.hands_free_microphone)
             else:self.capture.start()
             self.capture_timer.start()
-            self.set_status('Starting microphone…', 'connecting')
+            self.set_status('Mikrofon startet …', 'connecting')
         except Exception as error:
-            self.set_status('Hands-free unavailable: '+str(error))
+            self.set_status('Freisprechen nicht verfügbar: '+str(error))
             self.shutdown()
 
     def hands_free_microphone(self, data, _frames, _time, status):
         if self.closed:return
         if status:
             self.microphone_receiving=False
-            self.received.emit({'type':'error', 'message':'Microphone lost audio. Restart hands-free to continue.'})
+            self.received.emit({'type':'error', 'message':'Mikrofon hat Audio verloren. Starte Freisprechen neu, um fortzufahren.'})
             return
         try:
             self.vad_queue.put_nowait((self.vad_epoch if self.vad_enabled.is_set() else None, bytes(data)))
             self.note_microphone_frame()
         except queue.Full:
-            self.received.emit({'type':'error', 'message':'Microphone buffer filled while speech recognition was unavailable. Restart hands-free to continue.'})
+            self.received.emit({'type':'error', 'message':'Mikrofonpuffer voll, während die Spracherkennung nicht verfügbar war. Starte Freisprechen neu, um fortzufahren.'})
 
     def vad_loop(self):
         from .voice_vad import EndpointDetector, levels
@@ -278,7 +278,7 @@ class VoiceSession(QObject):
                     if kind == 'end':self.vad_enabled.clear()
                     self.received.emit({'type':'vad-'+kind, 'value':value, 'epoch':epoch})
         except Exception as error:
-            self.received.emit({'type':'error', 'message':'Speech detector stopped: '+str(error)})
+            self.received.emit({'type':'error', 'message':'Spracherkennung gestoppt: '+str(error)})
 
     def resume_detection(self):
         if not self.hands_free or self.closed:return
@@ -296,7 +296,7 @@ class VoiceSession(QObject):
             self.control({'type':'begin'})
             self.recorded_bytes=0;self.recording_started=time.monotonic()
             self.accepting_audio=True;self.utterance_open=True
-            self.set_status('Listening · Pause to send · Tap to stop', 'listening')
+            self.set_status('Hört zu · Pause zum Senden · Tippen zum Stoppen', 'listening')
         elif kind=='vad-pcm' and self.accepting_audio:
             self.microphone(event['value'])
         elif kind=='vad-end' and self.accepting_audio:
@@ -347,7 +347,7 @@ class VoiceSession(QObject):
             self.accepting_audio=False;self.recognizing=True;self.vad_enabled.clear()
             self.recording_started=None
             if send:self.control({'type':'end'})
-            self.set_status('Transcribing…', 'recognizing')
+            self.set_status('Transkribiert …', 'recognizing')
             return
         if self.capture:
             self.accepting_audio=False
@@ -357,7 +357,7 @@ class VoiceSession(QObject):
             self.capture = None
             self.recognizing=True
             if send:self.control({'type': 'end'})
-            self.set_status('Recording limit reached · transcribing…' if automatic else 'Transcribing…', 'recognizing')
+            self.set_status('Aufnahmelimit erreicht · transkribiert …' if automatic else 'Transkribiert …', 'recognizing')
 
     def interrupt(self):
         with self.audio_lock:
@@ -371,7 +371,7 @@ class VoiceSession(QObject):
         self.control({'type': 'interrupt'})
         self.speech_idle = True
         if self.connected and not self.closed and not self.recognizing and not self.capture:
-            self.set_status('Ready · previous speech stopped', 'ready')
+            self.set_status('Bereit · vorherige Sprache gestoppt', 'ready')
 
     def observe(self, event):
         if self.closed:return
@@ -394,14 +394,14 @@ class VoiceSession(QObject):
                     self.drained_generation = self.generation
                     self.control({'type':'playback-drained','generation':self.generation})
                 if self.state in ('speaking','thinking'):
-                    self.set_status('Listening · Tap to stop', 'listening')
-            elif self.state=='speaking':self.set_status('Ready', 'ready')
+                    self.set_status('Hört zu · Tippen zum Stoppen', 'listening')
+            elif self.state=='speaking':self.set_status('Bereit', 'ready')
 
     def submission_result(self, result):
         request=result.get('id','')
         if self.closed or not request.startswith('resonant-voice:') or request.split(':',1)[1] not in self.submitted:return
         if not result.get('accepted'):
-            self.set_status('Follow-up was not confirmed. '+result.get('error','Check the conversation before retrying.'))
+            self.set_status('Folgefrage wurde nicht bestätigt. '+result.get('error','Prüfe die Unterhaltung vor einem erneuten Versuch.'))
             if self.hands_free:self.shutdown()
 
     def handle(self, event):
@@ -422,7 +422,7 @@ class VoiceSession(QObject):
             self.start_hands_free();return
         if event['type']=='microphone-ready':
             if self.hands_free and self.state in ('connecting','ready'):
-                self.set_status('Listening · Tap to stop' if self.connected else 'Listening · Speech recognition is warming up', 'listening')
+                self.set_status('Hört zu · Tippen zum Stoppen' if self.connected else 'Hört zu · Spracherkennung wird bereit', 'listening')
             else:self.changed.emit()
             return
         if event['type'].startswith('vad-'):
@@ -433,29 +433,29 @@ class VoiceSession(QObject):
             self.recognizer_ready.set()
             if self.hands_free:
                 self.start_hands_free()
-                if self.microphone_receiving:self.set_status('Listening · Tap to stop', 'listening')
-            else:self.set_status('Ready', 'ready')
+                if self.microphone_receiving:self.set_status('Hört zu · Tippen zum Stoppen', 'listening')
+            else:self.set_status('Bereit', 'ready')
         elif event['type'] == 'listening':
             self.input_request_id = event.get('requestId')
         elif event['type'] == 'transcript-partial':
             # Provisional recognition never goes to the controller or composer.
             if (event.get('requestId') == self.input_request_id and event.get('sessionId') == self.session_id
                     and self.accepting_audio and event.get('text')):
-                self.set_status('Listening · Transcribing as you speak', 'listening')
+                self.set_status('Hört zu · Transkribiert während du sprichst', 'listening')
         elif event['type'] == 'recording-ended':
             self.end(send=False,automatic=True)
         elif event['type'] == 'transcript':
             if self.closed or event['requestId'] in self.submitted:return
             self.recognizing=False
             self.submitted.add(event['requestId'])
-            self.set_status('Thinking…', 'thinking')
+            self.set_status('Denkt …', 'thinking')
             self.waiting_request='resonant-voice:'+event['requestId']
             self.turn_complete=False
             self.transcript.emit(event)
             self.resume_detection()
         elif event['type']=='speaking':
             self.speech_idle=False
-            if not self.accepting_audio and not self.recognizing:self.set_status('Speaking… · Speak to interrupt' if self.hands_free else 'Speaking…', 'speaking')
+            if not self.accepting_audio and not self.recognizing:self.set_status('Spricht … · Sprich zum Unterbrechen' if self.hands_free else 'Spricht …', 'speaking')
         elif event['type']=='speech-idle':
             if event.get('generation',self.generation)==self.generation:self.speech_idle=True
         elif event['type']=='turn-complete':
@@ -463,7 +463,7 @@ class VoiceSession(QObject):
         elif event['type'] == 'empty-transcript':
             self.recognizing=False
             self.turn_complete=True
-            self.set_status('Listening · Tap to stop' if self.hands_free else 'No speech recognized · hold to retry', 'listening' if self.hands_free else 'ready')
+            self.set_status('Hört zu · Tippen zum Stoppen' if self.hands_free else 'Keine Sprache erkannt · halte zum Wiederholen', 'listening' if self.hands_free else 'ready')
             self.resume_detection()
         elif event['type'] == 'error':
             if not event.get('recoverable'):self.connected=False
@@ -471,7 +471,7 @@ class VoiceSession(QObject):
             if self.hands_free:self.shutdown()
         elif event['type'] == 'disconnected':
             self.connected=False
-            if self.state!='error':self.set_status('Voice disconnected · click to reconnect', 'disconnected')
+            if self.state!='error':self.set_status('Sprache getrennt · Klicken zum Wiederverbinden', 'disconnected')
 
     def shutdown(self):
         self.accepting_audio = False

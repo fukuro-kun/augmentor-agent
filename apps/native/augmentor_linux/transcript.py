@@ -62,7 +62,7 @@ class Transcript(QTextBrowser):
         if position is not None:
             href=self.anchorAt(position)
             if QUrl(href).scheme() in ('http','https','mailto','tel','ftp','ssh','sftp'):
-                action=menu.addAction('Open link in default application')
+                action=menu.addAction('Link in Standardanwendung öffnen')
                 action.triggered.connect(lambda checked=False,url=QUrl(href):self.anchorClicked.emit(url))
         return menu
 

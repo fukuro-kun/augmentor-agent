@@ -6,6 +6,6 @@ import {promptCall} from '../../../dist/prompt-library/src/client.js'
 const actions=new Set(['dual.describe','dual.configure','dual.recall','describe','check','configure','disable','recall','retain','operations','operation','documents','document','delete','exportPage'])
 export async function memoryRequest(request={}){
   const {action='describe',requestId,...params}=request
-  if(!actions.has(action))throw new Error('Unsupported memory action')
+  if(!actions.has(action))throw new Error('Nicht unterstützte Speicheraktion')
   return promptCall('memory.'+action,params,requestId)
 }

@@ -16,7 +16,7 @@ export async function submitDraft({input, ui, send, prepare, onAccepted}) {
     await prepare?.()
     const result = await send('prompt', {text})
     if (!result?.accepted && !pending.confirmed)
-      throw Error(result?.error ?? 'Message was not accepted.')
+      throw Error(result?.error ?? 'Die Nachricht wurde nicht angenommen.')
     onAccepted?.()
   } catch (error) {
     // A durable message can arrive before a lost/late RPC acknowledgment.
@@ -26,8 +26,8 @@ export async function submitDraft({input, ui, send, prepare, onAccepted}) {
       input.value = draft
       input.dispatchEvent(new input.ownerDocument.defaultView.Event('input', {bubbles:true}))
     }
-    else ui.sendFail('Prompt not confirmed as sent (your newer draft is preserved):\n' + draft)
-    ui.sendFail(error.message + ' Check chat before retrying; nothing was resent automatically.')
+    else ui.sendFail('Das Senden des Prompts wurde nicht bestätigt (dein neuerer Entwurf bleibt erhalten):\n' + draft)
+    ui.sendFail(error.message + ' Prüfe den Chat vor einem erneuten Versuch; es wurde nichts automatisch erneut gesendet.')
   } finally {
     ui.setState({submitting:false})
   }

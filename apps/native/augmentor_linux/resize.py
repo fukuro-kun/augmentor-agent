@@ -9,7 +9,7 @@ class ResizeHandle(QWidget):
         super().__init__(window)
         self.edges = edges
         self.setCursor(cursor)
-        self.setAccessibleName('Resize window')
+        self.setAccessibleName('Fenstergröße ändern')
         self.setFocusPolicy(Qt.FocusPolicy.NoFocus)
 
     def mousePressEvent(self, event):

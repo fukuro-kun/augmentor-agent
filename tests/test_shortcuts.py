@@ -26,14 +26,14 @@ class ShortcutTests(unittest.TestCase):
             for path in paths:path.unlink()
             paths[0].write_text('Original launcher\n');paths[0].chmod(0o644)
             with patch('augmentor_linux.shortcuts.PACKAGED',True),patch('augmentor_linux.shortcuts.SYSTEM_DESKTOP',template),patch('augmentor_linux.shortcuts.current_keys',return_value=[]),patch('augmentor_linux.shortcuts.call',side_effect=['(true,)','()','(@ai [],)','(@ai [],)']):
-                with self.assertRaisesRegex(RuntimeError,'previous shortcut'):save_shortcut(sequence)
+                with self.assertRaisesRegex(RuntimeError,'vorherige Shortcut'):save_shortcut(sequence)
             self.assertEqual(paths[0].read_text(),'Original launcher\n')
             self.assertEqual(paths[0].stat().st_mode & 0o777,0o644)
             self.assertFalse(paths[1].exists(),'Failed registration left a new launcher behind')
 
     def test_conflict_keeps_existing_binding_and_does_not_register(self):
         with patch('augmentor_linux.shortcuts.current_keys',return_value=[123]),patch('augmentor_linux.shortcuts.call',return_value='(false,)') as call:
-            with self.assertRaisesRegex(ValueError,'already assigned'):save_shortcut(QKeySequence('Ctrl+Alt+J'))
+            with self.assertRaisesRegex(ValueError,'bereits vergeben'):save_shortcut(QKeySequence('Ctrl+Alt+J'))
             self.assertEqual([c.args[0] for c in call.call_args_list],['isGlobalShortcutAvailable'])
 
     def test_existing_owned_key_can_be_saved_and_persisted(self):
@@ -52,7 +52,7 @@ class ShortcutTests(unittest.TestCase):
 
     def test_failed_assignment_restores_previous_binding(self):
         with patch('augmentor_linux.shortcuts.current_keys',return_value=[123]),patch('augmentor_linux.shortcuts.call',side_effect=['(true,)','()','(@ai [],)','([123],)']) as call:
-            with self.assertRaisesRegex(RuntimeError,'previous shortcut'):save_shortcut(QKeySequence('Ctrl+Alt+J'))
+            with self.assertRaisesRegex(RuntimeError,'vorherige Shortcut'):save_shortcut(QKeySequence('Ctrl+Alt+J'))
             self.assertEqual(call.call_args.args[0],'setShortcut')
             self.assertEqual(call.call_args.args[2],'[123]')
             self.assertTrue(int(call.call_args.args[3]) & 2,'Rollback must reactivate the previous shortcut')

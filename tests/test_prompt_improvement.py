@@ -34,6 +34,6 @@ class ImprovementSettingsTests(unittest.TestCase):
   owner=SimpleNamespace(call_in_background=lambda work,done:done(work()))
   panel=ImprovementSettings(owner,Client());panel.receive({'content':'Saved instructions','revision':2,'defaultContent':'Original instructions'})
   panel.editor.setPlainText('My unsaved revision');panel.receive({'content':'External change','revision':3,'defaultContent':'Original instructions'})
-  self.assertEqual(panel.editor.toPlainText(),'My unsaved revision');self.assertIn('changed elsewhere',panel.note.text())
+  self.assertEqual(panel.editor.toPlainText(),'My unsaved revision');self.assertIn('anderweitig geändert',panel.note.text())
   panel.save();self.assertEqual(calls,[('prompts.improvement.save',{'content':'My unsaved revision','expectedRevision':2})]);self.assertEqual(panel.current['revision'],4)
   panel.use_default();self.assertEqual(panel.editor.toPlainText(),'Original instructions');self.assertEqual(len(calls),1);panel.deleteLater()

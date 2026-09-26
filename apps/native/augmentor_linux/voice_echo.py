@@ -29,8 +29,8 @@ def _pactl(*args):
                                 env={**os.environ, 'LC_ALL': 'C.UTF-8'})
         return result.stdout.strip()
     except (OSError, subprocess.SubprocessError) as error:
-        raise EchoRouteError('Hands-free echo cancellation is unavailable. '
-                             'Check the microphone and PipeWire, or use hold-to-talk.') from error
+        raise EchoRouteError('Freisprechen-Echounterdrückung ist nicht verfügbar. '
+                             'Prüfe Mikrofon und PipeWire oder nutze Halten-zum-Sprechen.') from error
 
 
 def _listing(kind):
@@ -40,7 +40,7 @@ def _listing(kind):
             raise ValueError('Expected a list')
         return value
     except (ValueError, TypeError) as error:
-        raise EchoRouteError('Could not verify the hands-free audio route.') from error
+        raise EchoRouteError('Die Freisprechen-Audioroute konnte nicht geprüft werden.') from error
 
 
 @contextmanager
@@ -78,8 +78,8 @@ class EchoRoute:
         if (not valid.fullmatch(source) or not valid.fullmatch(sink)
                 or source.endswith('.monitor') or source.startswith('resonant_aec_')
                 or sink.startswith('resonant_aec_')):
-            raise EchoRouteError('Select a physical microphone and speaker output '
-                                 'in desktop sound settings before using hands-free.')
+            raise EchoRouteError('Wähle ein physisches Mikrofon und einen Lautsprecherausgang '
+                                 'in den Desktop-Soundeinstellungen, bevor du Freisprechen nutzt.')
         name = f'resonant_aec_{os.getpid()}_{uuid.uuid4().hex[:8]}'
         source_name, sink_name = name + '_mic', name + '_speaker'
         module_id = _pactl(
@@ -90,7 +90,7 @@ class EchoRoute:
             'source_properties=device.description=Resonant-Microphone priority.session=0',
             'sink_properties=device.description=Resonant-Speaker priority.session=0')
         if not module_id.isdecimal():
-            raise EchoRouteError('PipeWire did not return a valid echo cancellation module.')
+            raise EchoRouteError('PipeWire hat kein gültiges Echounterdrückungsmodul zurückgegeben.')
         route = cls(module_id, source_name, sink_name)
         try:
             deadline = time.monotonic() + 2
@@ -99,7 +99,7 @@ class EchoRoute:
                         and route._device_index('sinks', sink_name) is not None):
                     return route
                 if time.monotonic() >= deadline:
-                    raise EchoRouteError('The hands-free audio devices did not become available.')
+                    raise EchoRouteError('Die Freisprechen-Audiogeräte wurden nicht verfügbar.')
                 time.sleep(.05)
         except Exception:
             route.close()
@@ -117,7 +117,7 @@ class EchoRoute:
 
     def _open(self, sd, direction, kwargs):
         if self.closed:
-            raise EchoRouteError('The hands-free audio route is closed.')
+            raise EchoRouteError('Die Freisprechen-Audioroute ist geschlossen.')
         is_input = direction == 'input'
         name = self.source if is_input else self.sink
         kind = 'source-outputs' if is_input else 'sink-inputs'
@@ -125,7 +125,7 @@ class EchoRoute:
         relation = 'source' if is_input else 'sink'
         index = self._device_index(device_kind, name)
         if index is None:
-            raise EchoRouteError('The hands-free audio route disappeared. Reopen voice.')
+            raise EchoRouteError('Die Freisprechen-Audioroute ist verschwunden. Öffne die Sprache erneut.')
         previous = {item['index'] for item in self._process_streams(kind)}
         stream = None
         try:
@@ -136,8 +136,8 @@ class EchoRoute:
             # the raw microphone or a different speaker. Fail closed if it does.
             opened = [item for item in self._process_streams(kind) if item['index'] not in previous]
             if not opened or any(item.get(relation) != index for item in opened):
-                raise EchoRouteError('Could not confirm echo-cancelled audio routing. '
-                                     'Use hold-to-talk or reopen voice.')
+                raise EchoRouteError('Echo-freies Audio-Routing konnte nicht bestätigt werden. '
+                                     'Nutze Halten-zum-Sprechen oder öffne die Sprache erneut.')
             return stream
         except Exception:
             if stream is not None:

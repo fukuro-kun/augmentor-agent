@@ -99,7 +99,7 @@ class MessageActionTests(unittest.TestCase):
         help_event=QHelpEvent(QEvent.Type.ToolTip,point,self.window.transcript.viewport().mapToGlobal(point))
         self.app.sendEvent(self.window.transcript.viewport(),help_event)
         tooltip=self.window.transcript.action_tooltip
-        self.assertTrue(tooltip.isVisible());self.assertEqual(tooltip.text(),'Copy');tooltip.hide()
+        self.assertTrue(tooltip.isVisible());self.assertEqual(tooltip.text(),'Kopieren');tooltip.hide()
     def test_icon_gestures_do_not_select_and_dragging_away_cancels(self):
         transcript=self.window.transcript;viewport=transcript.viewport();point=self.icon_point()
         self.app.clipboard().setText('Unchanged clipboard')
@@ -155,5 +155,5 @@ class MessageActionTests(unittest.TestCase):
             self.click('branch',1);self.click('edit',2);self.click('copy',1)
             self.assertEqual(self.calls,[]);self.assertIsNone(self.window.editing)
             actions=self.window.message_actions(1,'Augmentor','#ffffff')
-            self.assertIn('Copy',actions);self.assertNotIn('Branch',actions)
+            self.assertIn('Kopieren',actions);self.assertNotIn('Verzweigen',actions)
         self.window.controller.running=False

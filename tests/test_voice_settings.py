@@ -30,7 +30,7 @@ class VoiceSettingsTests(unittest.TestCase):
         with patch.object(VoiceSettingsDialog,'work',lambda *args:None):
             window=Window(preview=True);dialog=VoiceSettingsDialog(window)
             window.voice_dialog=SimpleNamespace(capture=True)
-            dialog.play_preview();self.assertIn('Finish recording',dialog.note.text())
+            dialog.play_preview();self.assertIn('Beende die Aufnahme',dialog.note.text())
             self.assertFalse(dialog.previewing)
             dialog.preview_stop.clear();dialog.close();self.assertTrue(dialog.preview_stop.is_set())
             window.voice_dialog=None;window.close()
@@ -39,7 +39,7 @@ class VoiceSettingsTests(unittest.TestCase):
         from augmentor_linux.panels import SettingsDialog
         window=Window(preview=True);dialog=SettingsDialog(window)
         buttons=dialog.findChildren(QPushButton)
-        labelled=[b for b in buttons if b.text() in ('Resonant Voice','Connect DSH','Recover connection','Save','Colours && visual effects','Prompt library','Memory','Support report','Done')]
+        labelled=[b for b in buttons if b.text() in ('Resonant Voice','DSH verbinden','Verbindung wiederherstellen','Speichern','Farben && visuelle Effekte','Prompt-Bibliothek','Gedächtnis','Support-Bericht','Fertig')]
         self.assertEqual(len(labelled),10)
         self.assertTrue(all(not b.icon().isNull() for b in labelled))
         dialog.close();window.close()

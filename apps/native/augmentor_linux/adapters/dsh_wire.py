@@ -29,13 +29,13 @@ def loopback_url(value):
     except ValueError:
         local = False
     if parsed.scheme != 'http' or not local or parsed.username or parsed.password or parsed.query or parsed.fragment:
-        raise ContractError('A numeric loopback HTTP endpoint is required.')
+        raise ContractError('Ein numerischer Loopback-HTTP-Endpunkt ist erforderlich.')
     return value.rstrip('/')
 
 
 class NoRedirect(urllib.request.HTTPRedirectHandler):
     def redirect_request(self, *args, **kwargs):
-        raise ContractError('DSH endpoint redirects are disabled.')
+        raise ContractError('DSH-Endpunkt-Weiterleitungen sind deaktiviert.')
 
 
 class DshClient:
@@ -54,19 +54,19 @@ class DshClient:
         with self.opener.open(req, timeout=20) as response:
             data = response.read(limit + 1)
         if len(data) > limit:
-            raise ContractError('DSH response exceeded the adapter size limit.')
+            raise ContractError('Die DSH-Antwort hat das Adapter-Größenlimit überschritten.')
         return json.loads(data)
 
     def call(self, method, payload=None):
         if not re.fullmatch(r'[a-zA-Z][a-zA-Z0-9]*(?:\.[a-zA-Z][a-zA-Z0-9]*)+', method):
-            raise ContractError('Invalid DSH method')
+            raise ContractError('Ungültige DSH-Methode')
         try:return self.remote.call(method,payload)
         except ValueError as error:raise ContractError(str(error)) from error
 
     def respond(self, rpc_id, value):
         interactions=self.interactions
         if interactions is None:
-            raise ContractError('No native DSH interaction connection is active.')
+            raise ContractError('Keine native DSH-Interaktionsverbindung ist aktiv.')
         return interactions.respond(rpc_id,value)
 
     def local_models(self):
@@ -87,15 +87,15 @@ class DshClient:
             if group.get('id') in allowed:
                 rows.extend({'provider': group['id'], 'model': model['id'], 'name': model.get('name', model['id'])} for model in group.get('models', []))
         if not rows:
-            raise ContractError('No DSH model with a verified localhost endpoint is configured.')
+            raise ContractError('Es ist kein DSH-Modell mit verifiziertem Localhost-Endpunkt konfiguriert.')
         return rows
 
     def validate_model(self, selection):
         if not isinstance(selection, dict) or not all(isinstance(selection.get(k), str) and selection[k] for k in ('provider', 'model')):
-            raise ContractError('Choose a DSH model before sending a message.')
+            raise ContractError('Wähle ein DSH-Modell, bevor du eine Nachricht sendest.')
         catalog = self.call('llm.models')
         if not any(group['id'] == selection['provider'] and any(m['id'] == selection['model'] for m in group.get('models', [])) for group in catalog.get('groups', [])):
-            raise ContractError('The selected model is no longer in the DSH catalog. Refresh the model picker.')
+            raise ContractError('Das ausgewählte Modell ist nicht mehr im DSH-Katalog. Aktualisiere die Modellauswahl.')
 
     def model_catalog(self):
         catalog = self.call('llm.models')
@@ -138,17 +138,17 @@ class DshClient:
         try:
             token = (self.home / 'augmentor-linux-token').read_text().strip()
         except OSError as exc:
-            raise ContractError('The updated Linux chat plugin has not loaded in DSH yet.') from exc
+            raise ContractError('Das aktualisierte Linux-Chat-Plugin wurde noch nicht in DSH geladen.') from exc
         body = {'action':action, 'sessionId':session}
         req = urllib.request.Request(self.base + '/api/augmentor-linux/chats', data=json.dumps(body).encode(), headers={'Content-Type':'application/json','x-augmentor-linux-token':token})
         try:
             with self.opener.open(req, timeout=12) as response:
                 value=json.loads(response.read(1024*1024))
         except urllib.error.HTTPError as exc:
-            try: message=json.loads(exc.read(8192)).get('error','Chat operation failed')
-            except Exception: message='Chat operation failed; verify the Linux plugin version.'
+            try: message=json.loads(exc.read(8192)).get('error','Chat-Operation fehlgeschlagen')
+            except Exception: message='Chat-Operation fehlgeschlagen; prüfe die Linux-Plugin-Version.'
             raise ContractError(message) from exc
-        if not value.get('ok'):raise ContractError(value.get('error','Chat operation failed'))
+        if not value.get('ok'):raise ContractError(value.get('error','Chat-Operation fehlgeschlagen'))
         return value.get('saved',[])
 
 
@@ -170,7 +170,7 @@ class EventStream:
         threading.Thread(target=self._run, daemon=True, name='augmentor-events').start()
         if not self.ready.wait(6):
             self.close()
-            raise ContractError('DSH event connection timed out.')
+            raise ContractError('Zeitüberschreitung bei der DSH-Ereignisverbindung.')
         if self.failure:
             raise ContractError(self.failure)
 
@@ -180,7 +180,7 @@ class EventStream:
                 self.client.remote.authorize();self.ready.set();self.closed.wait();return
             self.status_socket = self.client.remote.stream('$events',{})
             status_ready=self.client.remote.item(self.status_socket)
-            if status_ready.get('type')!='ready':raise ContractError('DSH status stream did not open.')
+            if status_ready.get('type')!='ready':raise ContractError('Der DSH-Statusstream konnte nicht geöffnet werden.')
             self.status_client=status_ready['clientId']
             self.status_socket.settimeout(1)
             rows=self.client.call('session.list')['items']
@@ -189,11 +189,11 @@ class EventStream:
             threading.Thread(target=self.status_loop,daemon=True,name='augmentor-status').start()
             self.socket = self.client.remote.stream('session/follow',{'request':{'address':{'kind':'session','sessionId':self.session},'maxMessages':1,'assistantStream':True}})
             opening=self.client.remote.item(self.socket)
-            if opening.get('type')!='snapshot':raise ContractError('DSH session stream did not open.')
+            if opening.get('type')!='snapshot':raise ContractError('Der DSH-Sitzungsstream konnte nicht geöffnet werden.')
             cursor=opening['cursor'];self.socket.settimeout(1)
             self.control_socket=self.client.remote.stream('session/control',{})
             baseline=self.client.remote.item(self.control_socket)
-            if baseline.get('type')!='baseline':raise ContractError('DSH queue stream did not open.')
+            if baseline.get('type')!='baseline':raise ContractError('Der DSH-Warteschlangenstream konnte nicht geöffnet werden.')
             self.queue_frame(baseline.get('value',{}).get('queues',{}).get(self.session,[]))
             self.control_socket.settimeout(1)
             if getattr(self.client,'native_interactions',False):

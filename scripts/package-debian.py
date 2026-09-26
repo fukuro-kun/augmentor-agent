@@ -164,6 +164,7 @@ def build(output):
 Type=Application
 Name=Augmentor Agent
 Comment=Work with your Linux desktop using Augmentor
+Comment[de]=Arbeite mit deinem Linux-Desktop über Augmentor
 Exec=augmentor-agent
 Icon=com.augmentor.Agent
 Terminal=false

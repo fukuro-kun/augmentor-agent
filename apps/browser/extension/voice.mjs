@@ -5,35 +5,35 @@ export function attachVoice({send,onError,isHistory}){
   const button=document.createElement('button'),icon=document.createElement('span'),status=document.createElement('span')
   icon.className='voice-shape';icon.setAttribute('aria-hidden','true')
   button.type='button';button.className='voice-orb';button.append(icon)
-  button.setAttribute('aria-label','Voice: hold to talk, slide left to lock, slide right for hands-free')
+  button.setAttribute('aria-label','Sprache: halten zum Sprechen, nach links schieben zum Sperren, nach rechts für Freisprechen')
   status.className='voice-status sr-only';status.setAttribute('role','status');status.setAttribute('aria-live','polite')
   const seat=document.getElementById('voice-seat');if(seat)seat.append(button,status);else document.getElementById('send').before(button,status)
   const drawing=typeof MutationObserver==='function'?attachVoiceIcon(button):null
   let lease=null,opening=null,epoch=0,held=false,locked=false,handsFree=false,timer=null,startX=0,heartbeat=null,voiceState='closed'
   let maxSeconds=600,elapsed=0,defaultHandsFree=false,voiceEnabled=true,nextPreferences=0
   const label=text=>{status.textContent=text;button.title=text;button.setAttribute('aria-description',text)}
-  label('Hold to talk · Slide left to lock · Slide right for hands-free')
+  label('Halten zum Sprechen · Nach links schieben zum Sperren · Nach rechts für Freisprechen')
   async function control(action,current=lease){
     if(!current)return
     const result=await send('voice/control',{...current,action})
-    if(!result?.ok&&action!=='close'){onError(result?.error??'Voice disconnected');close()}
+    if(!result?.ok&&action!=='close'){onError(result?.error??'Sprachverbindung getrennt');close()}
   }
   function close(){
     ++epoch;clearTimeout(timer);clearInterval(heartbeat);heartbeat=null
     held=false;locked=false;handsFree=false;voiceState='closed';opening=null
     const old=lease;lease=null;const closing=control('close',old)
     button.dataset.state='closed';button.dataset.mode='';button.style.removeProperty('--voice-level')
-    label('Voice off · Hold to talk · Slide right for hands-free')
+    label('Sprache aus · Halten zum Sprechen · Nach rechts für Freisprechen')
     return closing
   }
   async function open(free=false){
-    if(isHistory())throw Error('Open the current conversation to use Voice.')
+    if(isHistory())throw Error('Öffne die aktuelle Unterhaltung, um Sprache zu nutzen.')
     if(lease)return lease
     if(opening)return opening
-    const ownEpoch=epoch,id=crypto.randomUUID();handsFree=free;label('Preparing speech models…')
+    const ownEpoch=epoch,id=crypto.randomUUID();handsFree=free;label('Sprachmodelle werden vorbereitet…')
     opening=(async()=>{
       const result=await send('voice/start',{id,handsFree:free})
-      if(!result?.ok)throw Error(result?.error??'Voice could not start')
+      if(!result?.ok)throw Error(result?.error??'Sprache konnte nicht starten')
       const current=result.voice
       if(epoch!==ownEpoch){await control('close',current);return null}
       lease=current;heartbeat=setInterval(()=>void control('heartbeat'),2000)
@@ -66,7 +66,7 @@ export function attachVoice({send,onError,isHistory}){
     if(!held||locked||handsFree)return
     const delta=event.clientX-startX
     button.style.transform=`translateX(${Math.max(-12,Math.min(12,delta))}px)`
-    if(delta<=-24){clearTimeout(timer);timer=null;locked=true;button.dataset.mode='locked';label('Recording locked · Tap to send');void begin()}
+    if(delta<=-24){clearTimeout(timer);timer=null;locked=true;button.dataset.mode='locked';label('Aufnahme gesperrt · Tippen zum Senden');void begin()}
     else if(delta>=24){const closing=close(),ownEpoch=epoch;handsFree=true;button.dataset.mode='hands-free';void closing.then(()=>{if(epoch===ownEpoch)return open(true)})}
   }
   button.oncontextmenu=event=>{event.preventDefault();void send('settings/open',{section:'voice'})}
@@ -89,13 +89,13 @@ export function attachVoice({send,onError,isHistory}){
       voiceState=event.state;button.dataset.state=voiceState
       if(event.closed){close();return}
       button.dataset.recording=String(event.recordingAvailable)
-      label(locked&&event.recording?'Recording locked · Tap to send':event.status)
+      label(locked&&event.recording?'Aufnahme gesperrt · Tippen zum Senden':event.status)
     }else if(event.type==='progress'){
       elapsed=event.elapsed;maxSeconds=event.maximum
       drawing?.levels(event.levels)
       button.style.setProperty('--voice-level',String(Math.max(0,...event.levels)))
       button.dataset.limit=elapsed>=maxSeconds*.9?'red':elapsed>=maxSeconds*.8?'orange':''
-      if(event.elapsed>0)status.textContent=`${locked?'Recording locked':handsFree?'Listening':'Release to send'} · ${Math.floor(elapsed/60)}:${String(Math.floor(elapsed%60)).padStart(2,'0')}`
+      if(event.elapsed>0)status.textContent=`${locked?'Aufnahme gesperrt':handsFree?'Zuhören':'Loslassen zum Senden'} · ${Math.floor(elapsed/60)}:${String(Math.floor(elapsed%60)).padStart(2,'0')}`
     }
   })
   window.addEventListener('pagehide',close)
@@ -109,6 +109,6 @@ export function attachVoice({send,onError,isHistory}){
     }
     button.disabled=state.harness!=='dsh'||state.phase!=='ready'||history||!voiceEnabled
     if((lease||opening)&&(button.disabled||lease&&state.sessionId&&lease.sessionId!==state.sessionId))close()
-    if(button.disabled&&state.harness==='pi')button.title='Voice uses the shared DSH harness. Select DSH in Settings → Harnesses.'
+    if(button.disabled&&state.harness==='pi')button.title='Sprache nutzt den gemeinsamen DSH-Harness. Wähle DSH unter Einstellungen → Harnesses.'
   }}
 }

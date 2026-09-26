@@ -22,11 +22,11 @@ export function registerImproveComposer(ctx,React){
    if(active.current){cancel();return}
    const original=latest.current;
    if(!original?.draft.trim()||original.phase!=='plain'||original.occurrences?.length)return;
-   const request=new AbortController();request.revision=original.draftRev;const timeout=setTimeout(()=>{if(active.current===request){cancel();setNote('Prompt improvement timed out. Try again.')}},75000);active.current=request;setBusy(true);setPreview(original.draft);setSettling(false);setNote('');setUndo(null);
+   const request=new AbortController();request.revision=original.draftRev;const timeout=setTimeout(()=>{if(active.current===request){cancel();setNote('Zeitüberschreitung bei der Prompt-Verbesserung. Versuche es erneut.')}},75000);active.current=request;setBusy(true);setPreview(original.draft);setSettling(false);setNote('');setUndo(null);
    try{
-    const model=await directory.load();if(!model.current)throw Error('Select a model first.');
+    const model=await directory.load();if(!model.current)throw Error('Wähle zuerst ein Modell.');
     const response=await fetch('/api/augmentor-prompts',{method:'POST',headers:{'content-type':'application/json'},body:JSON.stringify({action:'improve',text:original.draft,provider:model.current.provider,model:model.current.model}),signal:request.signal});
-    const result=await response.json();if(!response.ok||!result.ok)throw Error(result.error||'Could not improve the prompt.');
+    const result=await response.json();if(!response.ok||!result.ok)throw Error(result.error||'Der Prompt konnte nicht verbessert werden.');
     if(active.current!==request)return;
     if(latest.current.draftRev!==original.draftRev){cancel();return;}
     if(result.kind!=='rewrite'){setNote(result.text);cancel();return}
@@ -44,7 +44,7 @@ export function registerImproveComposer(ctx,React){
   const disabled=!inputActions||!input?.draft.trim()||input.phase!=='plain'||Boolean(input.occurrences?.length);
   return h(React.Fragment,null,
    h('style',null,`.augmentor-improve{position:absolute;right:8px;top:8px;z-index:12;pointer-events:auto;width:24px;height:24px;border:0;border-radius:5px;background:transparent;color:inherit;font-size:16px;cursor:pointer}.augmentor-improve:hover{background:rgba(127,150,150,.18)}.augmentor-improve:disabled{opacity:.35;cursor:default}[data-composer-card]:has(.augmentor-improve) [contenteditable]{padding-right:42px!important}[data-composer-card]:has(.augmentor-improve-busy) [contenteditable]{color:transparent!important;caret-color:transparent!important}.augmentor-letter-preview{position:absolute;z-index:10;pointer-events:none;white-space:pre-wrap;overflow-wrap:anywhere;overflow:hidden;box-sizing:border-box}.augmentor-letter-cell{display:inline-block;position:relative;height:1.3em;vertical-align:bottom;overflow:hidden}.augmentor-letter-width{visibility:hidden}.augmentor-letter-wheel{position:absolute;inset:0;animation:augmentor-letter-roll var(--speed) linear infinite;animation-delay:var(--delay)}.augmentor-letter-wheel span{display:block;height:1.3em}.augmentor-letter-preview.settle .augmentor-letter-wheel{animation:none;transform:translateY(0);transition:transform .3s}.augmentor-improve-status{position:absolute;width:1px;height:1px;overflow:hidden;clip-path:inset(50%);white-space:nowrap}@keyframes augmentor-letter-roll{from{transform:translateY(0)}to{transform:translateY(-2.6em)}}@media(prefers-reduced-motion:reduce){.augmentor-letter-wheel{animation:none}}`),
-   h('button',{ref:button,type:'button',className:'augmentor-improve'+(busy?' augmentor-improve-busy':''),'aria-label':busy?'Cancel prompt improvement':canUndo?'Undo prompt improvement':'Improve prompt',disabled:!busy&&!canUndo&&disabled,onClick:canUndo&&!busy?undoImprovement:improve},busy?'×':canUndo?'↶':note?'!':'✦'),
+   h('button',{ref:button,type:'button',className:'augmentor-improve'+(busy?' augmentor-improve-busy':''),'aria-label':busy?'Prompt-Verbesserung abbrechen':canUndo?'Prompt-Verbesserung rückgängig':'Prompt verbessern',disabled:!busy&&!canUndo&&disabled,onClick:canUndo&&!busy?undoImprovement:improve},busy?'×':canUndo?'↶':note?'!':'✦'),
    busy&&geometry&&h('div',{className:'augmentor-letter-preview'+(settling?' settle':''),style:geometry,'aria-hidden':true},Array.from(preview).map((char,i)=>/\s/.test(char)?char:h('span',{key:i,className:'augmentor-letter-cell',style:{'--speed':`${.28+(i%7)*.05}s`,'--delay':`${-i*.071}s`}},h('span',{className:'augmentor-letter-width'},char),h('span',{className:'augmentor-letter-wheel'},[char,String.fromCharCode(97+(i*13)%26),char].map((c,j)=>h('span',{key:j},c)))))),
    note&&h('span',{className:'augmentor-improve-status',role:'status'},note));
  }

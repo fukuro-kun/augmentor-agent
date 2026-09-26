@@ -39,7 +39,7 @@ test('slash menu inserts a draft and opens the shared editor',async t=>{
   input.dispatchEvent(new dom.window.KeyboardEvent('keydown',{key:'Enter',bubbles:true,cancelable:true}));assert.equal(sent,1)
   doc.querySelector('#settings').click();assert.equal(opened,0)
   assert.ok(doc.querySelector('dialog'))
-  assert.match(doc.querySelector('#settings').title,/Prompt library/)
+  assert.match(doc.querySelector('#settings').title,/Prompt-Bibliothek/)
 })
 
 
@@ -58,8 +58,8 @@ test('clipboard expands once and the editor saves its literal token',async t=>{
   const dialog=doc.querySelector('dialog'),body=dialog.querySelector('textarea'),name=dialog.querySelector('input')
   name.value='new';body.value='Rewrite: ';body.setSelectionRange(9,9)
   const button=text=>[...dialog.querySelectorAll('button')].find(b=>b.textContent===text)
-  button('Insert clipboard').click();assert.equal(body.value,'Rewrite: [clipboard]')
-  button('Save').click();await new Promise(r=>setTimeout(r,10))
+  button('Zwischenablage einfügen').click();assert.equal(body.value,'Rewrite: [clipboard]')
+  button('Speichern').click();await new Promise(r=>setTimeout(r,10))
   assert.equal(calls.at(-2)[1].request.content,'Rewrite: [clipboard]')
 })
 
@@ -71,10 +71,10 @@ test('improvement settings are independent and preserve drafts while switching s
   const dialog=promptEditor(dom.window.document,async p=>{calls.push(p);return value},()=>{})
   await new Promise(r=>setTimeout(r,10))
   const button=label=>[...dialog.querySelectorAll('button')].find(b=>b.textContent===label)
-  button('Improve prompt').click();const editor=dialog.querySelector('[aria-label="Prompt improvement instructions"]');assert.equal(editor.value,'Initial instructions')
-  editor.value='My edited instructions';button('Saved prompts').click();button('Improve prompt').click();assert.equal(editor.value,'My edited instructions')
-  button('Save instructions').click();await new Promise(r=>setTimeout(r,10));assert.deepEqual(calls.at(-1),{action:'improvement.save',content:'My edited instructions',expectedRevision:2})
-  button('Use default').click();assert.equal(editor.value,'Default instructions');assert.equal(calls.filter(c=>c.action==='improvement.save').length,1)
+  button('Prompt verbessern').click();const editor=dialog.querySelector('[aria-label="Anweisungen zur Prompt-Verbesserung"]');assert.equal(editor.value,'Initial instructions')
+  editor.value='My edited instructions';button('Gespeicherte Prompts').click();button('Prompt verbessern').click();assert.equal(editor.value,'My edited instructions')
+  button('Anweisungen speichern').click();await new Promise(r=>setTimeout(r,10));assert.deepEqual(calls.at(-1),{action:'improvement.save',content:'My edited instructions',expectedRevision:2})
+  button('Standard verwenden').click();assert.equal(editor.value,'Default instructions');assert.equal(calls.filter(c=>c.action==='improvement.save').length,1)
 })
 
 

@@ -69,7 +69,7 @@ class VoiceTests(unittest.TestCase):
             panel.observe({'type':'assistant/message','seq':7,'data':{'message':{'content':[{'type':'text','text':'Already streamed'}]}}})
             self.assertTrue(panel.sender_queue.empty())
             panel.handle({'type':'ready'});panel.handle({'type':'speaking'})
-            self.assertEqual(panel.status_text,'Speaking…')
+            self.assertEqual(panel.status_text,'Spricht …')
             panel.close()
 
     def test_settings_disable_disconnects_hides_and_persists(self):
@@ -82,7 +82,7 @@ class VoiceTests(unittest.TestCase):
         self.assertEqual(calls,['saved','closed','controls'])
         fake.set_status=lambda message:calls.append(message)
         Window.open_voice(fake)
-        self.assertIn('Enable Resonant Voice',calls[-1])
+        self.assertIn('Aktiviere Resonant Voice',calls[-1])
 
     def test_voice_toggle_controls_robot_visibility(self):
         from augmentor_linux.window import Window

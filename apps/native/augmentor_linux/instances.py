@@ -8,7 +8,7 @@ from pathlib import Path
 
 def validate_name(value):
     if not re.fullmatch(r'[a-z][a-z0-9-]{0,31}', value):
-        raise ValueError('Window name must contain 1–32 lowercase letters, digits or hyphens, starting with a letter.')
+        raise ValueError('Fenstername muss 1–32 Kleinbuchstaben, Ziffern oder Bindestriche enthalten und mit einem Buchstaben beginnen.')
     return value
 
 
@@ -34,7 +34,7 @@ def desktop_component(base):
 
 
 def window_label():
-    return 'Augmentor Agent' if current_name() == 'main' else 'Augmentor Agent · ' + ('Second window' if current_name() == 'secondary' else current_name())
+    return 'Augmentor Agent' if current_name() == 'main' else 'Augmentor Agent · ' + ('Zweites Fenster' if current_name() == 'secondary' else current_name())
 
 
 def load_session(path):

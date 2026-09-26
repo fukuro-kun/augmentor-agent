@@ -263,7 +263,7 @@ class HandsFreeTests(unittest.TestCase):
         voice.handle({'type':'listening','requestId':'current'})
         voice.handle({'type':'transcript-partial','requestId':'current','sessionId':voice.session_id,'text':'provisional words'})
         self.assertEqual(submitted,[]);self.assertEqual(voice.state,'listening')
-        self.assertIn('Transcribing as you speak',voice.status_text)
+        self.assertIn('Transkribiert während du sprichst',voice.status_text)
         voice.handle({'type':'timing','stage':'asr-progress','passes':3,'decodedThroughSeconds':6,'decodeMs':120})
         self.assertEqual(voice.timings['asrPasses'],3)
         self.assertEqual(voice.timings['asrProcessedSeconds'],6)

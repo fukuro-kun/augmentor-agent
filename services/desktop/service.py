@@ -44,9 +44,9 @@ class Banner(QWidget):
     update=Signal(bool,str)
     def __init__(self):
         super().__init__(None,Qt.WindowType.Tool|Qt.WindowType.FramelessWindowHint|Qt.WindowType.WindowStaysOnTopHint|Qt.WindowType.WindowDoesNotAcceptFocus)
-        self.setAttribute(Qt.WidgetAttribute.WA_ShowWithoutActivating);self.setWindowTitle('Augmentor desktop control')
+        self.setAttribute(Qt.WidgetAttribute.WA_ShowWithoutActivating);self.setWindowTitle('Augmentor Desktop-Steuerung')
         self.setStyleSheet('QWidget {background:#283638;color:#f0f4f4;} QPushButton {background:#703b3b;color:white;padding:8px;border-radius:6px;}')
-        row=QHBoxLayout(self);self.label=QLabel();row.addWidget(self.label);self.stop=QPushButton('Stop desktop control');row.addWidget(self.stop)
+        row=QHBoxLayout(self);self.label=QLabel();row.addWidget(self.label);self.stop=QPushButton('Desktop-Steuerung stoppen');row.addWidget(self.stop)
         self.update.connect(self.changed)
     def changed(self,active,message):
         self.label.setText(message)

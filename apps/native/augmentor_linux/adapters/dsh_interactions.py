@@ -22,7 +22,7 @@ class NativeInteractions:
     def claim(self):
         with self.lock:
             if self.closed:
-                raise ContractError('This interaction connection is closed.')
+                raise ContractError('Diese Interaktionsverbindung ist geschlossen.')
             self.request('claim')
 
     def poll(self):
@@ -39,7 +39,7 @@ class NativeInteractions:
                     continue
                 kind = row['kind']
                 if kind not in ('approval', 'question'):
-                    raise ContractError('Unsupported DSH interaction.')
+                    raise ContractError('Nicht unterstützte DSH-Interaktion.')
                 payload = {**row['payload'], 'sessionId': self.session}
                 if kind == 'approval':
                     payload['approvalId'] = identifier
@@ -52,10 +52,10 @@ class NativeInteractions:
         with self.lock:
             row = self.pending.get(identifier)
             if self.closed or identifier in self.attempted or row is None or value.get('sessionId') != self.session:
-                raise ContractError('This DSH interaction is no longer pending.')
+                raise ContractError('Diese DSH-Interaktion ist nicht mehr ausstehend.')
             if row['kind'] == 'approval':
                 if value.get('approvalId') != identifier:
-                    raise ContractError('The approval identifier does not match.')
+                    raise ContractError('Die Freigabe-Kennung stimmt nicht überein.')
                 answer = value.get('outcome')
             else:
                 answer = value.get('answer')

@@ -174,9 +174,9 @@ export async function handleBrowserAction(id, params) {
     // model gets the full message in the response either way.
     try {
       let msg = String(e?.message ?? e)
-      if (/no element matches selector/i.test(msg)) msg = "couldn't find that element on the page"
-      else if (/new tab page/i.test(msg)) msg = 'this tab is empty — ask me to open a page first'
-      else if (/DSH session/i.test(msg)) msg = 'this tab is your DSH session — I open a new tab for browser work'
+      if (/no element matches selector/i.test(msg)) msg = 'konnte das Element auf der Seite nicht finden'
+      else if (/new tab page/i.test(msg)) msg = 'dieser Tab ist leer — bitte mich zuerst, eine Seite zu öffnen'
+      else if (/DSH session/i.test(msg)) msg = 'dieser Tab ist deine DSH-Sitzung — ich öffne einen neuen Tab für Browser-Arbeit'
       overlayShow(state.workTabId ?? state.overlayTabId, `⚠ ${msg.slice(0, 70)}`)
     } catch {}
     return { ok: false, error: String(e?.message ?? e), ms: Date.now() - t0 }

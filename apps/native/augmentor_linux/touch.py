@@ -33,15 +33,15 @@ class TouchLayout(QObject):
         for button in self.buttons:
             button.setFixedSize(TARGET, TARGET)
         window.model_picker.setFixedHeight(TARGET)
-        window.voice_button.setToolTip('Voice uses the computer microphone and speakers. Phone audio is not connected yet.')
-        window.voice_button.setAccessibleName('Voice using computer audio')
+        window.voice_button.setToolTip('Sprache nutzt Mikrofon und Lautsprecher des Computers. Telefon-Audio ist noch nicht verbunden.')
+        window.voice_button.setAccessibleName('Sprache über Computer-Audio')
         window.composer.touch_mode=True
         window.composer.fit()
         window.composer.improve_button.setFixedSize(TARGET, TARGET)
         window.composer.setViewportMargins(0, 0, 62, 0)
         window.composer.installEventFilter(self)
         window.transcript.touch_targets = True
-        window.title.setToolTip('Tap to rename this conversation')
+        window.title.setToolTip('Tippen, um diese Unterhaltung umzubenennen')
         window.title.mouseReleaseEvent = lambda event: window.rename_chat() if event.button() == Qt.MouseButton.LeftButton else None
         window.title_editor.setFixedHeight(TARGET)
         QScroller.grabGesture(window.transcript.viewport(), QScroller.ScrollerGestureType.TouchGesture)
@@ -69,7 +69,7 @@ class TouchLayout(QObject):
             if original:
                 last=original.itemAt(original.count()-1) if original.count() else None
                 existing_close=last.widget() if last else None
-                if not isinstance(existing_close,QPushButton) or existing_close.text().replace('&','') not in ('Done','Close'):
+                if not isinstance(existing_close,QPushButton) or existing_close.text().replace('&','') not in ('Fertig','Schließen'):
                     existing_close=None
                 if existing_close:original.removeWidget(existing_close)
                 content = QWidget(); content.setLayout(original)
@@ -78,7 +78,7 @@ class TouchLayout(QObject):
                 outer.addWidget(scroll)
                 if existing_close:outer.addWidget(existing_close)
                 else:
-                    close = QPushButton('Done'); close.clicked.connect(dialog.reject); outer.addWidget(close)
+                    close = QPushButton('Fertig'); close.clicked.connect(dialog.reject); outer.addWidget(close)
                 QScroller.grabGesture(scroll.viewport(), QScroller.ScrollerGestureType.TouchGesture)
                 outer.setSizeConstraint(QLayout.SizeConstraint.SetNoConstraint)
             dialog.setMinimumSize(0, 0)

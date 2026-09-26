@@ -14,17 +14,17 @@ MAX_IMAGE_BYTES = 4 * 1024 * 1024
 @lru_cache(maxsize=4)
 def decode_background(encoded):
     if not isinstance(encoded,str) or len(encoded)>MAX_IMAGE_BYTES*4//3+4:
-        raise ValueError('Background image is too large.')
+        raise ValueError('Das Hintergrundbild ist zu groß.')
     try:raw=base64.b64decode(encoded,validate=True)
-    except (ValueError,binascii.Error) as error:raise ValueError('Invalid background image data.') from error
-    if not raw or len(raw)>MAX_IMAGE_BYTES:raise ValueError('Invalid background image size.')
+    except (ValueError,binascii.Error) as error:raise ValueError('Ungültige Hintergrundbild-Daten.') from error
+    if not raw or len(raw)>MAX_IMAGE_BYTES:raise ValueError('Ungültige Hintergrundbild-Größe.')
     buffer=QBuffer();buffer.setData(QByteArray(raw));buffer.open(QIODevice.OpenModeFlag.ReadOnly)
     reader=QImageReader(buffer)
     size=reader.size()
     if bytes(reader.format()).lower() not in (b'jpeg',b'jpg',b'png',b'webp') or size.width()<=0 or size.height()<=0 or max(size.width(),size.height())>1600:
-        raise ValueError('Shared backgrounds must be PNG, JPEG, or WebP up to 1600 pixels per side.')
+        raise ValueError('Geteilte Hintergründe müssen PNG, JPEG oder WebP mit maximal 1600 Pixeln pro Seite sein.')
     image=reader.read()
-    if image.isNull():raise ValueError('Cannot decode the background image.')
+    if image.isNull():raise ValueError('Das Hintergrundbild kann nicht dekodiert werden.')
     return image
 
 
@@ -54,23 +54,23 @@ def palette_from_image(image, dark=True):
 
 def upload_background(path, dark=True):
     path=Path(path)
-    if path.stat().st_size>20*1024*1024:raise ValueError('Choose an image smaller than 20 MiB.')
+    if path.stat().st_size>20*1024*1024:raise ValueError('Wähle ein Bild kleiner als 20 MiB.')
     reader=QImageReader(str(path));reader.setAutoTransform(True)
     size=reader.size()
     if bytes(reader.format()).lower() not in (b'jpeg',b'jpg',b'png',b'webp'):
-        raise ValueError('Choose a PNG, JPEG, or WebP image.')
+        raise ValueError('Wähle ein PNG-, JPEG- oder WebP-Bild.')
     if size.width()<=0 or size.height()<=0 or size.width()*size.height()>32_000_000:
-        raise ValueError('Choose an image with no more than 32 megapixels.')
+        raise ValueError('Wähle ein Bild mit höchstens 32 Megapixeln.')
     if max(size.width(),size.height())>1600:
         reader.setScaledSize(size.scaled(QSize(1600,1600),Qt.AspectRatioMode.KeepAspectRatio))
     image=reader.read()
-    if image.isNull():raise ValueError('This image could not be opened.')
+    if image.isNull():raise ValueError('Dieses Bild konnte nicht geöffnet werden.')
     if max(image.width(),image.height())>1600:
         image=image.scaled(1600,1600,Qt.AspectRatioMode.KeepAspectRatio,Qt.TransformationMode.SmoothTransformation)
     opaque=QImage(image.size(),QImage.Format.Format_RGB32);opaque.fill(QColor('#223038'))
     painter=QPainter(opaque);painter.drawImage(0,0,image);painter.end()
     output=QByteArray();buffer=QBuffer(output);buffer.open(QIODevice.OpenModeFlag.WriteOnly)
-    if not opaque.save(buffer,'JPEG',88):raise ValueError('Could not prepare this background.')
+    if not opaque.save(buffer,'JPEG',88):raise ValueError('Dieser Hintergrund konnte nicht vorbereitet werden.')
     encoded=base64.b64encode(bytes(output)).decode('ascii')
     decode_background(encoded)
     return {**palette_from_image(opaque,dark),'background':'uploaded','background_image':encoded}

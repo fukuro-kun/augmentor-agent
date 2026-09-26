@@ -28,7 +28,7 @@ class Connection:
             self.file = self.socket.makefile('rb')
             value = self.call('host.hello', {'protocol': protocol})
             if value.get('protocol') != protocol:
-                raise ContractError('Incompatible Augmentor runtime')
+                raise ContractError('Inkompatible Augmentor-Laufzeit')
         except Exception:
             self.socket.close()
             raise
@@ -36,19 +36,19 @@ class Connection:
     def read(self):
         raw = self.file.readline(MAX_FRAME+1)
         if not raw:
-            raise ContractError('Pi runtime connection closed')
+            raise ContractError('Pi-Laufzeitverbindung geschlossen')
         if len(raw)>MAX_FRAME or not raw.endswith(b'\n'):
-            raise ContractError('Pi runtime frame exceeded limit')
+            raise ContractError('Pi-Laufzeit-Frame hat das Limit überschritten')
         return json.loads(raw)
 
     def call(self, method, params=None):
         identity = uuid.uuid4().hex
         raw = (json.dumps({'id':identity,'method':method,'params':params or {}})+'\n').encode()
-        if len(raw)>MAX_FRAME: raise ContractError('Request exceeded size limit')
+        if len(raw)>MAX_FRAME: raise ContractError('Anfrage hat das Größenlimit überschritten')
         self.socket.sendall(raw)
         result=self.read()
-        if result.get('id')!=identity: raise ContractError('Invalid Pi response correlation')
-        if 'error' in result: raise ContractError(result['error'].get('message','Pi request failed'))
+        if result.get('id')!=identity: raise ContractError('Ungültige Pi-Antwortkorrelation')
+        if 'error' in result: raise ContractError(result['error'].get('message','Pi-Anfrage fehlgeschlagen'))
         return result.get('result')
 
     def close(self):
@@ -73,7 +73,7 @@ class PiClient:
                 connection=Connection(self.base)
             return connection.call(method,payload)
         except (OSError,ValueError) as exc:
-            raise ContractError('Cannot reach the Pi runtime: '+str(exc)) from exc
+            raise ContractError('Pi-Laufzeit ist nicht erreichbar: '+str(exc)) from exc
         finally:
             if connection:connection.close()
 
@@ -96,7 +96,7 @@ class EventStream:
     def start(self):
         threading.Thread(target=self._run,daemon=True,name='augmentor-pi-events').start()
         if not self.ready.wait(6):
-            self.close();raise ContractError('Pi event connection timed out')
+            self.close();raise ContractError('Zeitüberschreitung bei der Pi-Ereignisverbindung')
         if self.failure:raise ContractError(self.failure)
 
     def _run(self):

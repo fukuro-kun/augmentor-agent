@@ -29,7 +29,7 @@ async function request(method,p={},id){
   if(method==='augmentor/dsh')return dshSetup(p)
   if(method==='augmentor/diagnostics')return supportReport()
   if(method==='augmentor/onboarding')return startOnboarding(p)
-  if(method==='augmentor/surface'){if(p.action!=='appearance')throw Error('Prompt improvement requires DSH');return surfaceRequest(p)}
+  if(method==='augmentor/surface'){if(p.action!=='appearance')throw Error('Prompt-Verbesserung erfordert DSH');return surfaceRequest(p)}
   if(method==='augmentor/home')return homeConnection(p)
   if(method==='augmentor/memory')return memoryRequest(p)
   if(method==='augmentor/prompts')return promptLibrary(p)
@@ -38,8 +38,8 @@ async function request(method,p={},id){
   if(p.sessionId){
     const rows=await c.call('session.list')
     const row=rows.items.find(r=>r.sessionId===p.sessionId)
-    if(row&&row.agentPreset!==preset)throw new Error('This browser connection cannot access a Linux chat.')
-    if(!row&&method!=='session.create')throw new Error('Browser conversation not found.')
+    if(row&&row.agentPreset!==preset)throw new Error('Diese Browser-Verbindung kann nicht auf eine Linux-Unterhaltung zugreifen.')
+    if(!row&&method!=='session.create')throw new Error('Browser-Unterhaltung nicht gefunden.')
   }
   if(method==='augmentor/models')return c.call('models.list')
   if(method==='initialize'){
@@ -56,7 +56,7 @@ async function request(method,p={},id){
   if(['augmentor/save','augmentor/unsave','augmentor/state'].includes(method)){const action=method.split('/')[1];const result=await c.call('chats.saved',{action,sessionId:p.sessionId});return {ok:true,...result}}
   if(method==='shutdown'){connection?.close();setTimeout(()=>process.exit(0),30);return {ok:true}}
   if(['session.cancel','session.rename','session.models','settings.describe','settings.mutate','models.pin'].includes(method))return c.call(method,p,id)
-  if(method.startsWith('updates/'))throw new Error('Update this unified installation with its installer.')
+  if(method.startsWith('updates/'))throw new Error('Aktualisiere diese Unified-Installation mit ihrem Installer.')
   throw new Error('Unsupported harness browser operation: '+method)
 }
 let buffer=Buffer.alloc(0)

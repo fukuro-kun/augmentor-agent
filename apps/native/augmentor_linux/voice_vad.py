@@ -19,7 +19,7 @@ class SileroVad:
         import onnxruntime as ort
         path = Path(path or Path.home()/'.local/share/resonant-voice/vad/silero-v6.2.1.onnx')
         if hashlib.sha256(path.read_bytes()).hexdigest() != MODEL_SHA256:
-            raise RuntimeError('Hands-free speech detector is missing or has changed. Reinstall its pinned model.')
+            raise RuntimeError('Der Freisprechen-Sprachdetektor fehlt oder wurde geändert. Installiere sein gepinntes Modell neu.')
         options = ort.SessionOptions()
         options.inter_op_num_threads = 1
         options.intra_op_num_threads = 1
@@ -61,7 +61,7 @@ class EndpointDetector:
 
     def feed(self, pcm, probability, speaking=False):
         if len(pcm) != self.FRAME_BYTES:
-            raise ValueError('VAD expects one 32 ms frame')
+            raise ValueError('VAD erwartet einen 32-ms-Frame')
         if not self.active:
             self.pre.append(pcm)
             self.onset = self.onset+1 if probability >= (.65 if speaking else .55) else 0

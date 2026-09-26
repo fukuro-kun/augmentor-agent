@@ -9,18 +9,18 @@ class RecoveryDialog(QDialog):
         super().__init__(owner)
         self.controller = owner.controller
         self.active = False
-        self.setWindowTitle('Recover connection')
+        self.setWindowTitle('Verbindung wiederherstellen')
         self.setMinimumSize(500, 340)
         layout = QVBoxLayout(self)
-        note = QLabel('Checks your connection, starts a stopped runtime, and repairs verified history conflicts with a backup. Your messages will not be resent.')
+        note = QLabel('Prüft deine Verbindung, startet eine gestoppte Laufzeitumgebung und repariert verifizierte Verlaufskonflikte mit einem Backup. Deine Nachrichten werden nicht erneut gesendet.')
         note.setWordWrap(True); layout.addWidget(note)
         self.progress = QPlainTextEdit()
         self.progress.setReadOnly(True)
-        self.progress.setAccessibleName('Recovery progress')
+        self.progress.setAccessibleName('Wiederherstellungsverlauf')
         layout.addWidget(self.progress)
-        self.retry = QPushButton('Run recovery')
+        self.retry = QPushButton('Wiederherstellung starten')
         self.retry.clicked.connect(self.start); layout.addWidget(self.retry)
-        self.close_button = QPushButton('Close')
+        self.close_button = QPushButton('Schließen')
         self.close_button.clicked.connect(self.accept); layout.addWidget(self.close_button)
         self.controller.repair_progress.connect(self.progress.appendPlainText)
         self.controller.repair_finished.connect(self.finished_repair)
@@ -32,18 +32,18 @@ class RecoveryDialog(QDialog):
         if self.active: return
         self.progress.clear()
         previous = self.controller.last_connection_error
-        if previous: self.progress.appendPlainText('Last connection error: '+previous)
+        if previous: self.progress.appendPlainText('Letzter Verbindungsfehler: '+previous)
         if not self.controller.repair_connection():
-            self.progress.appendPlainText('Finish the current action before running recovery, then try again.')
+            self.progress.appendPlainText('Beende die aktuelle Aktion vor der Wiederherstellung und versuche es dann erneut.')
             return
         self.active = True
         self.retry.setEnabled(False); self.close_button.setEnabled(False)
-        self.retry.setText('Recovering…')
+        self.retry.setText('Stellt wieder her …')
 
     def finished_repair(self, ok, message):
         self.active = False
         self.progress.appendPlainText(message)
-        self.retry.setText('Check again' if ok else 'Try recovery again')
+        self.retry.setText('Erneut prüfen' if ok else 'Wiederherstellung erneut versuchen')
         self.retry.setEnabled(True); self.close_button.setEnabled(True)
 
     def disconnect_controller(self, *_):

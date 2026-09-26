@@ -66,8 +66,8 @@ class ReplyCompletionTests(unittest.TestCase):
         self.window.on_event(USER)
         self.window.on_event(event)
         QTest.qWait(70)
-        self.assertTrue(any(role=='Status' and 'output limit' in text for role,text in self.window.messages))
-        self.assertIn('does not establish task completion',self.window.transcript.toPlainText())
+        self.assertTrue(any(role=='Status' and 'Ausgabelimit' in text for role,text in self.window.messages))
+        self.assertIn('bestätigt keine Aufgabenerfüllung',self.window.transcript.toPlainText())
 
     def test_incomplete_harness_notice_survives_completed_end_and_history_reload(self):
         text='Harness: Task incomplete. The model stopped without a public answer or tool action and the recovery limit was reached.'

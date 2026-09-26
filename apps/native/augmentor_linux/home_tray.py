@@ -30,11 +30,11 @@ def validate_url(value):
             or parsed.username is not None or parsed.password is not None
             or parsed.query or parsed.fragment or any(c.isspace() for c in value)
             or any(ord(c) < 32 for c in value)):
-        raise ValueError('Enter an http:// or https:// dashboard address, without a key, password or query string.')
+        raise ValueError('Gib eine http://- oder https://-Dashboard-Adresse ein, ohne Schlüssel, Passwort oder Query-String.')
     try:
         parsed.port
     except ValueError as error:
-        raise ValueError('The dashboard address has an invalid port.') from error
+        raise ValueError('Die Dashboard-Adresse hat einen ungültigen Port.') from error
     return value
 
 
@@ -75,7 +75,7 @@ def manage_window(url, action):
     result = subprocess.run(['/usr/bin/python3', str(helper), url, action],
                             capture_output=True, text=True, timeout=8)
     if result.returncode:
-        raise RuntimeError('Could not check the Home window. Please try again.')
+        raise RuntimeError('Das Home-Fenster konnte nicht geprüft werden. Bitte versuche es erneut.')
     return json.loads(result.stdout)['found'] > 0
 
 
@@ -90,16 +90,16 @@ class HomeTray:
         if icon.isNull():
             icon = app.style().standardIcon(QStyle.StandardPixmap.SP_DirHomeIcon)
         self.tray = QSystemTrayIcon(icon, app)
-        self.tray.setToolTip('Augmentor Home — click to open or close')
+        self.tray.setToolTip('Augmentor Home — Klicken zum Öffnen oder Schließen')
         self.menu = QMenu()
-        self.open_action = QAction('Open Home', self.menu)
+        self.open_action = QAction('Home öffnen', self.menu)
         self.open_action.triggered.connect(self.open_home)
         self.menu.addAction(self.open_action)
-        self.settings_action = QAction('Connection settings…', self.menu)
+        self.settings_action = QAction('Verbindungseinstellungen …', self.menu)
         self.settings_action.triggered.connect(self.show_settings)
         self.menu.addAction(self.settings_action)
         self.menu.addSeparator()
-        quit_action = QAction('Quit launcher', self.menu)
+        quit_action = QAction('Launcher beenden', self.menu)
         quit_action.triggered.connect(app.quit)
         self.menu.addAction(quit_action)
         self.tray.setContextMenu(self.menu)
@@ -120,7 +120,7 @@ class HomeTray:
         else:
             ok = QDesktopServices.openUrl(QUrl(url))
         if not ok:
-            raise RuntimeError('Could not open your browser. Check that a browser is installed.')
+            raise RuntimeError('Dein Browser konnte nicht geöffnet werden. Prüfe, ob ein Browser installiert ist.')
 
     def open_home(self, checked=False, *, toggle=False):
         try:
@@ -137,14 +137,14 @@ class HomeTray:
         if self.dialog is not None:
             self.dialog.show(); self.dialog.raise_(); self.dialog.activateWindow(); return
         dialog = QDialog()
-        dialog.setWindowTitle('Augmentor Home — connection')
+        dialog.setWindowTitle('Augmentor Home — Verbindung')
         dialog.setMinimumWidth(460)
         layout = QVBoxLayout(dialog)
-        note = QLabel('Open the dashboard hosted by your NAS. Use your usual Home Assistant login in the browser; no API key or pairing code is needed here.')
+        note = QLabel('Öffne das Dashboard deines NAS. Nutze dein übliches Home-Assistant-Login im Browser; hier sind weder API-Schlüssel noch Kopplungscode nötig.')
         note.setWordWrap(True); layout.addWidget(note)
-        layout.addWidget(QLabel('Dashboard address'))
-        field = QLineEdit(); field.setAccessibleName('Dashboard address')
-        field.setPlaceholderText('http://your-nas:8123/home-lighting/lights')
+        layout.addWidget(QLabel('Dashboard-Adresse'))
+        field = QLineEdit(); field.setAccessibleName('Dashboard-Adresse')
+        field.setPlaceholderText('http://dein-nas:8123/home-lighting/lights')
         try:
             field.setText(load_url())
         except (ValueError, KeyError, OSError):
@@ -152,8 +152,8 @@ class HomeTray:
         layout.addWidget(field)
         status = QLabel(); status.setWordWrap(True); layout.addWidget(status)
         buttons = QHBoxLayout(); layout.addLayout(buttons)
-        save = QPushButton('Save and open'); buttons.addWidget(save)
-        close = QPushButton('Close'); close.clicked.connect(dialog.close); buttons.addWidget(close)
+        save = QPushButton('Speichern und öffnen'); buttons.addWidget(save)
+        close = QPushButton('Schließen'); close.clicked.connect(dialog.close); buttons.addWidget(close)
         def accept():
             try:
                 save_url(field.text())

@@ -11,7 +11,7 @@ from augmentor_linux.controller import Controller
 
 class ControllerTests(unittest.TestCase):
     def test_retired_harness_is_rejected_before_a_client_can_start(self):
-        with self.assertRaisesRegex(ValueError,'retired'):
+        with self.assertRaisesRegex(ValueError,'eingestellt'):
             Controller(harness='opencode')
 
     def test_last_session_is_restored_from_private_metadata_only(self):
@@ -59,7 +59,7 @@ class ControllerTests(unittest.TestCase):
             failed=[];sent=[]
             controller.submission_failed.connect(failed.append);controller.sent.connect(sent.append)
             if outcome=='reject':
-                with self.assertRaisesRegex(Exception,'did not accept'):controller.send('Fixture prompt',{'provider':'test','model':'test'})
+                with self.assertRaisesRegex(Exception,'nicht angenommen'):controller.send('Fixture prompt',{'provider':'test','model':'test'})
             else:controller.send('Fixture prompt',{'provider':'test','model':'test'})
             self.assertEqual(failed,[] if outcome=='accept' else ['Fixture prompt'])
             self.assertEqual(sent,['Fixture prompt'] if outcome=='accept' else [])
@@ -147,7 +147,7 @@ class ControllerTests(unittest.TestCase):
             def call(self,*_):raise AssertionError('No session mutation expected')
         controller=Controller(client=Client());controller.session='new-chat';controller.task=lambda fn:fn()
         from augmentor_linux.pi_client import ContractError
-        with self.assertRaisesRegex(ContractError,'conversation changed'):
+        with self.assertRaisesRegex(ContractError,'Unterhaltung hat sich geändert'):
             controller.send('Revised',{},edit_from={'sessionId':'old-chat','seq':1})
         self.assertFalse(controller.running)
 

@@ -9,38 +9,38 @@ class SetupDialog(QDialog):
         super().__init__(window)
         self.owner=window;self.controller=window.controller;self.client=self.controller.client
         self.token=None;self.busy=False;self.saving=False;self.finished_setup=False;self.dismissed=False
-        self.setWindowTitle('Connect a model · Pi');self.setModal(True);self.setMinimumWidth(470)
+        self.setWindowTitle('Modell verbinden · Pi');self.setModal(True);self.setMinimumWidth(470)
         layout=QVBoxLayout(self)
-        intro=QLabel('Connect your own OpenAI-compatible model endpoint. You can manage other provider formats in Models & providers, or choose DSH in Settings.')
+        intro=QLabel('Verbinde deinen eigenen OpenAI-kompatiblen Modell-Endpunkt. Andere Anbieterformate verwaltest du unter „Modelle & Anbieter", oder wähle DSH in den Einstellungen.')
         intro.setWordWrap(True);layout.addWidget(intro)
         form=QFormLayout();layout.addLayout(form)
-        self.name=QLineEdit('My model');self.name.setMaxLength(64)
-        self.endpoint=QLineEdit();self.endpoint.setPlaceholderText('https://your-provider.example/v1')
-        self.key=QLineEdit();self.key.setEchoMode(QLineEdit.EchoMode.Password);self.key.setPlaceholderText('Optional for a model on this computer')
-        self.model=QLineEdit();self.model.setPlaceholderText('Exact model ID from your provider')
+        self.name=QLineEdit('Mein Modell');self.name.setMaxLength(64)
+        self.endpoint=QLineEdit();self.endpoint.setPlaceholderText('https://dein-anbieter.example/v1')
+        self.key=QLineEdit();self.key.setEchoMode(QLineEdit.EchoMode.Password);self.key.setPlaceholderText('Optional für ein Modell auf diesem Computer')
+        self.model=QLineEdit();self.model.setPlaceholderText('Genaue Modell-ID deines Anbieters')
         self.context=QSpinBox();self.context.setRange(1024,10000000);self.context.setValue(32768)
         self.output=QSpinBox();self.output.setRange(32,1000000);self.output.setValue(4096)
-        for label,field in [('Connection name',self.name),('Endpoint URL',self.endpoint),('API key',self.key),('Model ID',self.model),('Context limit (tokens)',self.context),('Response limit (tokens)',self.output)]:
+        for label,field in [('Verbindungsname',self.name),('Endpunkt-URL',self.endpoint),('API-Schlüssel',self.key),('Modell-ID',self.model),('Kontextlimit (Tokens)',self.context),('Antwortlimit (Tokens)',self.output)]:
             field.setAccessibleName(label);form.addRow(label,field)
             (field.textChanged if isinstance(field,QLineEdit) else field.valueChanged).connect(self.invalidate)
-        self.images=QCheckBox('Model accepts images');self.images.setAccessibleName('Model accepts images');self.images.toggled.connect(self.invalidate);form.addRow(self.images)
-        self.mode=QComboBox();self.mode.addItem('Ask before changes','workspace-write');self.mode.addItem('Read only','read-only');self.mode.addItem('Allow actions without asking','danger-full-access')
-        self.mode.setAccessibleName('Approval mode');form.addRow('Approval mode',self.mode)
+        self.images=QCheckBox('Modell akzeptiert Bilder');self.images.setAccessibleName('Modell akzeptiert Bilder');self.images.toggled.connect(self.invalidate);form.addRow(self.images)
+        self.mode=QComboBox();self.mode.addItem('Vor Änderungen fragen','workspace-write');self.mode.addItem('Nur lesen','read-only');self.mode.addItem('Aktionen ohne Rückfrage erlauben','danger-full-access')
+        self.mode.setAccessibleName('Freigabemodus');form.addRow('Freigabemodus',self.mode)
         self.permission=QLabel();self.permission.setWordWrap(True);layout.addWidget(self.permission)
         self.mode.currentIndexChanged.connect(self.describe_mode);self.describe_mode()
-        privacy=QLabel('Check connection sends one short message and, if selected, a generated test image to this endpoint. Your provider may charge for it. No tools, files or chat history are sent. Save stores the key in your private user configuration, without encryption. Optional long-term memory is managed separately in Memory settings.')
+        privacy=QLabel('„Verbindung prüfen" sendet eine kurze Nachricht und, falls ausgewählt, ein erzeugtes Testbild an diesen Endpunkt. Dein Anbieter kann dafür Kosten berechnen. Es werden keine Werkzeuge, Dateien oder Chatverläufe gesendet. „Speichern" legt den Schlüssel unverschlüsselt in deiner privaten Benutzerkonfiguration ab. Optionales Langzeitgedächtnis wird separat in den Gedächtnis-Einstellungen verwaltet.')
         privacy.setWordWrap(True);layout.addWidget(privacy)
-        self.note=QLabel('Enter the model limits published by your provider. Select image input for desktop screenshots. The check verifies accepted input formats; visual reasoning needs separate testing.');self.note.setWordWrap(True);layout.addWidget(self.note)
+        self.note=QLabel('Gib die von deinem Anbieter veröffentlichten Modelllimits ein. Wähle Bildeingabe für Desktop-Screenshots. Die Prüfung verifiziert akzeptierte Eingabeformate; visuelles Reasoning erfordert separate Tests.');self.note.setWordWrap(True);layout.addWidget(self.note)
         buttons=QHBoxLayout();layout.addLayout(buttons)
-        self.later=QPushButton('Later');self.later.clicked.connect(self.reject);buttons.addWidget(self.later)
-        self.check=QPushButton('Check connection');self.check.clicked.connect(self.test);buttons.addWidget(self.check)
-        self.save=QPushButton('Save and use model');self.save.setEnabled(False);self.save.clicked.connect(self.commit);buttons.addWidget(self.save)
+        self.later=QPushButton('Später');self.later.clicked.connect(self.reject);buttons.addWidget(self.later)
+        self.check=QPushButton('Verbindung prüfen');self.check.clicked.connect(self.test);buttons.addWidget(self.check)
+        self.save=QPushButton('Speichern und Modell verwenden');self.save.setEnabled(False);self.save.clicked.connect(self.commit);buttons.addWidget(self.save)
         self.fields=[self.name,self.endpoint,self.key,self.model,self.context,self.output,self.images,self.mode]
 
     def describe_mode(self):
-        self.permission.setText({'workspace-write':'Routine checks run directly. Augmentor asks before actions that can change files or applications.',
-            'read-only':'Tools that can change state are blocked. This is a tool policy, not an operating-system sandbox.',
-            'danger-full-access':'Tools can act with your user account’s access without further approval. Stop remains available.'}[self.mode.currentData()])
+        self.permission.setText({'workspace-write':'Routineprüfungen laufen direkt. Augmentor fragt vor Aktionen, die Dateien oder Anwendungen ändern können.',
+            'read-only':'Werkzeuge, die Zustand ändern können, sind blockiert. Dies ist eine Werkzeug-Richtlinie, keine Betriebssystem-Sandbox.',
+            'danger-full-access':'Werkzeuge können ohne weitere Freigabe mit den Rechten deines Benutzerkontos handeln. „Stopp" bleibt verfügbar.'}[self.mode.currentData()])
 
     def invalidate(self,*_):
         self.token=None
@@ -65,21 +65,21 @@ class SetupDialog(QDialog):
 
     def test(self):
         if self.busy:return
-        self.invalidate();self.set_busy(True);self.note.setText('Checking the model connection…')
+        self.invalidate();self.set_busy(True);self.note.setText('Die Modellverbindung wird geprüft …')
         payload={'name':self.name.text(),'baseUrl':self.endpoint.text(),'apiKey':self.key.text(),
                  'model':self.model.text(),'api':'openai-completions','contextWindow':self.context.value(),'maxTokens':self.output.value(),'images':self.images.isChecked()}
         def checked(result):
-            self.token=result['token'];self.save.setEnabled(True);self.note.setText('Connection verified. Save to use this model.')
+            self.token=result['token'];self.save.setEnabled(True);self.note.setText('Verbindung geprüft. Speichern, um dieses Modell zu verwenden.')
         self.request('setup.test',payload,checked)
 
     def commit(self):
         if self.busy or not self.token:return
         self.saving=True;self.later.setEnabled(False)
-        self.set_busy(True);self.note.setText('Saving your model connection…')
+        self.set_busy(True);self.note.setText('Deine Modellverbindung wird gespeichert …')
         def saved(result):
             if self.owner.controller is not self.controller:return
             self.owner.set_models(result['catalog']);self.controller.choose_model(result['selection']);self.owner.set_selection(result['selection'])
-            self.key.clear();self.finished_setup=True;self.owner.set_status('Model connected');self.accept()
+            self.key.clear();self.finished_setup=True;self.owner.set_status('Modell verbunden');self.accept()
         self.request('setup.save',{'token':self.token,'approvalMode':self.mode.currentData()},saved)
 
     def reject(self):

@@ -118,25 +118,25 @@ class X11Desktop:
         if 'XTEST' not in self.display.list_extensions():
             raise RuntimeError('The XTEST extension is not available. No input can be sent.')
         self.read(self.cancel)  # Establish scene access before asking for consent.
-        self.notify(True,'Waiting for desktop consent')
+        self.notify(True,'Warte auf Desktop-Freigabe')
         try:
             allowed=self._consent()
             if not allowed:raise RuntimeError('Desktop sharing was declined or cancelled. No input was sent.')
-            self.owner=owner;self.last_used=time.monotonic();self.notify(True,'Augmentor controls the desktop')
+            self.owner=owner;self.last_used=time.monotonic();self.notify(True,'Augmentor steuert den Desktop')
             return self.status()
         except Exception:
-            self.notify(False,'Desktop control stopped');raise
+            self.notify(False,'Desktop-Steuerung beendet');raise
 
     def _consent(self):
         # X11 grants every client capture and input; this in-process dialog keeps
         # the user-consent step the Wayland portal would otherwise provide.
         from PySide6.QtWidgets import QMessageBox,QPushButton
         from PySide6.QtCore import QTimer
-        box=QMessageBox();box.setWindowTitle('Remote control requested')
-        box.setText('Augmentor requests control of your desktop.\nShared screenshots go to the selected model.')
+        box=QMessageBox();box.setWindowTitle('Desktop-Steuerung angefordert')
+        box.setText('Augmentor möchte die Kontrolle über deinen Desktop.\nGeteilte Bildschirmfotos gehen an das ausgewählte Modell.')
         box.setIcon(QMessageBox.Icon.Warning)
-        allow=box.addButton(QPushButton('Share'),QMessageBox.ButtonRole.AcceptRole)
-        box.addButton(QPushButton('Decline'),QMessageBox.ButtonRole.RejectRole)
+        allow=box.addButton(QPushButton('Freigeben'),QMessageBox.ButtonRole.AcceptRole)
+        box.addButton(QPushButton('Ablehnen'),QMessageBox.ButtonRole.RejectRole)
         deadline=QTimer(box);deadline.setSingleShot(True);deadline.timeout.connect(box.reject);deadline.start(60000)
         box.exec()
         return box.clickedButton() is allow
@@ -151,7 +151,7 @@ class X11Desktop:
             try:xtest.fake_input(self.display,X.KeyRelease,keycode)
             except Exception:pass
         self.keys=[];self.button=None;self.owner=None;self.display.sync()
-        self.notify(False,'Desktop control stopped');return {'stopped':True}
+        self.notify(False,'Desktop-Steuerung beendet');return {'stopped':True}
 
     def verify(self,owner):
         if self.cancel.is_set() or self.owner!=owner:raise RuntimeError('Connect desktop control before observing or acting.')

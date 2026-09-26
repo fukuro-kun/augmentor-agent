@@ -7,14 +7,14 @@ export const BROWSER_PRESET='augmentor-browser-product'
 export const PERSONAL_PRESETS=new Set([BROWSER_PRESET,'augmentor-linux-product'])
 export function loopbackEndpoint(value){
   const u=new URL(value),host=u.hostname.replace(/^\[|\]$/g,'')
-  if(u.protocol!=='http:'||!isIP(host)||!(host==='::1'||host.startsWith('127.'))||u.username||u.password||u.search||u.hash||u.pathname!=='/')throw Error('Connect DSH at a numeric loopback HTTP URL.')
+  if(u.protocol!=='http:'||!isIP(host)||!(host==='::1'||host.startsWith('127.'))||u.username||u.password||u.search||u.hash||u.pathname!=='/')throw Error('Verbinde DSH über eine numerische Loopback-HTTP-URL.')
   return u.origin
 }
 export async function boundedJson(url,options={},limit=16*1024*1024){
   const response=await fetch(url,{...options,redirect:'error',signal:options.signal??AbortSignal.timeout(15000)})
-  if(!response.ok)throw Error('DSH returned HTTP '+response.status)
+  if(!response.ok)throw Error('DSH meldete HTTP '+response.status)
   const chunks=[];let bytes=0
-  for await(const chunk of response.body){bytes+=chunk.length;if(bytes>limit)throw Error('DSH response exceeds the preview size limit.');chunks.push(chunk)}
+  for await(const chunk of response.body){bytes+=chunk.length;if(bytes>limit)throw Error('Die DSH-Antwort überschreitet das Vorschau-Größenlimit.');chunks.push(chunk)}
   return JSON.parse(Buffer.concat(chunks).toString())
 }
 // Voice controls can only address the bridge's existing nonce-bound lease; they
@@ -28,26 +28,26 @@ export class DshBoundary{
   async owns(sessionId){if(typeof sessionId!=='string')return false;if(this.known.has(sessionId))return true;await this.sessions();return this.known.has(sessionId)}
   async guard(method,p={}){
     if(independent.has(method))return p
-    if(!methods.has(method))throw Error('This operation is unavailable through the Augmentor browser interface.')
+    if(!methods.has(method))throw Error('Diese Operation ist über die Augmentor-Browseroberfläche nicht verfügbar.')
     const info=await this.handshake()
     if(method==='session.create'){
-      if(!/^[A-Za-z0-9_.-]{1,160}$/.test(p.sessionId??''))throw Error('Invalid browser chat identity.')
-      if((await this.call('session.list',{})).items.some(row=>row.sessionId===p.sessionId))throw Error('That chat already exists. Reload before continuing.')
+      if(!/^[A-Za-z0-9_.-]{1,160}$/.test(p.sessionId??''))throw Error('Ungültige Browser-Chat-Identität.')
+      if((await this.call('session.list',{})).items.some(row=>row.sessionId===p.sessionId))throw Error('Dieser Chat existiert bereits. Lade neu, bevor du fortfährst.')
       return {sessionId:p.sessionId,cwd:info.chatCwd,agentPreset:BROWSER_PRESET}
     }
     if((method.startsWith('session.')&&method!=='session.list')||['augmentor/interaction','augmentor/save','augmentor/unsave','augmentor/voice','augmentor/voice/start','augmentor/voice/control'].includes(method)){
       // Refresh on every explicit operation; a removed/replaced session must
       // not inherit a cached permission from its previous identity.
       await this.sessions()
-      if(!this.known.has(p.sessionId))throw Error(this.existing.has(p.sessionId)?'This chat belongs to another Augmentor role.':'Chat not found.')
+      if(!this.known.has(p.sessionId))throw Error(this.existing.has(p.sessionId)?'Dieser Chat gehört zu einer anderen Augmentor-Rolle.':'Chat nicht gefunden.')
     }
     if(method.startsWith('settings.')){
-      if(!settings.has(p.ns))throw Error('Only Augmentor approval and model-picker settings are available here.')
+      if(!settings.has(p.ns))throw Error('Hier sind nur Augmentor-Freigabe- und Modellauswahl-Einstellungen verfügbar.')
       if(method==='settings.mutate'){
         const ops=p.ops
         const allowed=p.ns==='permission'?['defaultPreset']:['pinned','hidden']
-        if(!Array.isArray(ops)||!ops.length||ops.some(o=>o.op!=='set'||!Array.isArray(o.path)||o.path.length!==1||!allowed.includes(o.path[0])))throw Error('Unsupported Augmentor settings change.')
-        if(p.ns==='permission'&&ops.some(o=>!['workspace-write','read-only','danger-full-access'].includes(o.value)))throw Error('Unsupported approval mode.')
+        if(!Array.isArray(ops)||!ops.length||ops.some(o=>o.op!=='set'||!Array.isArray(o.path)||o.path.length!==1||!allowed.includes(o.path[0])))throw Error('Nicht unterstützte Augmentor-Einstellungsänderung.')
+        if(p.ns==='permission'&&ops.some(o=>!['workspace-write','read-only','danger-full-access'].includes(o.value)))throw Error('Nicht unterstützter Freigabemodus.')
       }
     }
     return p

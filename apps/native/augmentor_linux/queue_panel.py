@@ -39,14 +39,14 @@ class QueuePanel(QScrollArea):
         self.pending.clear();self.items=[];self.changing.clear();self.errors.clear();self.delivered.clear();self.render()
 
     def submitted(self, rpc_id, text):
-        self.pending[rpc_id]={'text':text,'state':'Queuing…'};self.render()
+        self.pending[rpc_id]={'text':text,'state':'Wird eingereiht …'};self.render()
 
     def submission_result(self, result):
         if result.get('command') and result.get('accepted'):
             self.consumed(result['id']);return
         entry=self.pending.get(result['id'])
         if entry is not None:
-            entry['state']='Queued' if result.get('accepted') else 'Not confirmed — '+result.get('error','connection failed')
+            entry['state']='Eingereiht' if result.get('accepted') else 'Nicht bestätigt — '+result.get('error','Verbindung fehlgeschlagen')
             entry['failed']=not result.get('accepted')
         self.render()
 
@@ -78,7 +78,7 @@ class QueuePanel(QScrollArea):
         while self.rows.count():
             widget=self.rows.takeAt(0).widget()
             if widget:widget.hide();widget.setParent(None);widget.deleteLater()
-        entries=[(row['id'],'Steering…' if row['placement']=='steering' else 'Queued',
+        entries=[(row['id'],'Steuert …' if row['placement']=='steering' else 'Eingereiht',
                   '\n'.join(p.get('text','') for p in row['message']['content'] if p.get('type')=='text'),row) for row in self.items]
         entries += [(key,row['state'],row['text'],None) for key,row in self.pending.items()]
         for key,state,text,item in entries:
@@ -87,21 +87,21 @@ class QueuePanel(QScrollArea):
             frame.setStyleSheet('QFrame#queuedPrompt {background:rgba(127,150,150,12);border:1px solid rgba(127,160,155,55);border-bottom:0;border-top-left-radius:8px;border-top-right-radius:8px;} QPushButton {background:transparent;border:0;padding:2px 3px;font-size:11px;border-radius:4px;} QPushButton:hover {background:rgba(127,150,150,45);}')
             frame.setFixedHeight(32)
             layout=QHBoxLayout(frame);layout.setContentsMargins(9,3,5,3);layout.setSpacing(5)
-            prefix='' if state=='Queued' else state+' · '
+            prefix='' if state=='Eingereiht' else state+' · '
             label=PromptPreview(prefix+text);label.setToolTip(state+'\n'+text)
             label.setStyleSheet('font-size:12px;')
             label.setTextInteractionFlags(Qt.TextInteractionFlag.TextSelectableByMouse)
             layout.addWidget(label,1)
             if item:
-                steer=QPushButton('Steer');steer.setAccessibleName('Steer queued prompt')
-                steer.setToolTip('Use this prompt at the next step of the current response')
+                steer=QPushButton('Steuern');steer.setAccessibleName('Eingereihten Prompt steuern')
+                steer.setToolTip('Diesen Prompt beim nächsten Schritt der aktuellen Antwort verwenden')
                 steer.setEnabled(self.online and self.running and item['placement']=='queued' and key not in self.changing)
                 steer.clicked.connect(lambda checked=False,k=key:self.act(k,'steer'));layout.addWidget(steer)
-                remove=QPushButton('×');remove.setAccessibleName('Remove queued prompt');remove.setFixedWidth(18);remove.setStyleSheet('padding:0;')
+                remove=QPushButton('×');remove.setAccessibleName('Eingereihten Prompt entfernen');remove.setFixedWidth(18);remove.setStyleSheet('padding:0;')
                 remove.setEnabled(self.online and key not in self.changing)
                 remove.clicked.connect(lambda checked=False,k=key:self.act(k,'remove'));layout.addWidget(remove)
             elif self.pending[key].get('failed'):
-                copy=QPushButton('Copy');copy.clicked.connect(lambda checked=False,t=text:QApplication.clipboard().setText(t));layout.addWidget(copy)
+                copy=QPushButton('Kopieren');copy.clicked.connect(lambda checked=False,t=text:QApplication.clipboard().setText(t));layout.addWidget(copy)
                 remove=QPushButton('×');remove.setFixedWidth(18);remove.setStyleSheet('padding:0;')
                 remove.clicked.connect(lambda checked=False,k=key:self.consumed(k));layout.addWidget(remove)
             self.rows.addWidget(frame)

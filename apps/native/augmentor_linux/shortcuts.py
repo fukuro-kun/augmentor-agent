@@ -21,7 +21,7 @@ SHORTCUT_FLAGS='6'
 
 def call(method,*args):
     result=subprocess.run(['gdbus','call','--session','--dest','org.kde.kglobalaccel','--object-path','/kglobalaccel','--method','org.kde.KGlobalAccel.'+method,*args],capture_output=True,text=True,timeout=5)
-    if result.returncode:raise RuntimeError('KDE shortcut service is unavailable.')
+    if result.returncode:raise RuntimeError('Der KDE-Shortcut-Dienst ist nicht verfügbar.')
     return result.stdout.strip()
 
 
@@ -37,7 +37,7 @@ def target(instance=None):
 def current_keys(instance=None):
     if sys.platform=='darwin':
         from .macos_shortcuts import current_keys as read
-        if instance not in (None,'main'):raise RuntimeError('Second-window shortcuts are currently supported on KDE.')
+        if instance not in (None,'main'):raise RuntimeError('Shortcuts für das zweite Fenster werden derzeit auf KDE unterstützt.')
         return read()
     return [int(value) for value in re.findall(r'-?\d+',call('shortcut',target(instance)[1])) if int(value)>0]
 
@@ -48,10 +48,10 @@ def display_key(key):
 
 
 def shortcut_key(sequence):
-    if sequence.isEmpty() or sequence.count()!=1:raise ValueError('Choose one key combination.')
+    if sequence.isEmpty() or sequence.count()!=1:raise ValueError('Wähle eine Tastenkombination.')
     combination=sequence[0]
     if combination.keyboardModifiers()==Qt.KeyboardModifier.NoModifier and int(combination.key())<0x1000000:
-        raise ValueError('Use Ctrl, Alt or Super with a letter or Space.')
+        raise ValueError('Nutze Strg, Alt oder Super mit einem Buchstaben oder der Leertaste.')
     return combination.toCombined()
 
 
@@ -70,12 +70,12 @@ def write_atomic(path,text):
 def save_shortcut(sequence,instance=None):
     if sys.platform=='darwin':
         from .macos_shortcuts import save_shortcut as save
-        if instance not in (None,'main'):raise RuntimeError('Second-window shortcuts are currently supported on KDE.')
+        if instance not in (None,'main'):raise RuntimeError('Shortcuts für das zweite Fenster werden derzeit auf KDE unterstützt.')
         return save(sequence)
     component,action=target(instance)
     key=shortcut_key(sequence);previous=current_keys(instance)
     if key not in previous and 'true' not in call('isGlobalShortcutAvailable',str(key),component):
-        raise ValueError('That shortcut is already assigned. Choose another combination.')
+        raise ValueError('Dieser Shortcut ist bereits vergeben. Wähle eine andere Kombination.')
     data=Path(os.environ.get('XDG_DATA_HOME',Path.home()/'.local/share'))
     paths=[data/'applications'/component,data/'kglobalaccel'/component]
     backups={path:path.read_text() if path.exists() else None for path in paths}
@@ -103,7 +103,7 @@ def save_shortcut(sequence,instance=None):
         call('doRegister',action)
         result=call('setShortcut',action,f'[{key}]',SHORTCUT_FLAGS)
         assigned=[int(value) for value in re.findall(r'-?\d+',result)]
-        if assigned!=[key]:raise RuntimeError('KDE could not assign that shortcut. The previous shortcut was kept.')
+        if assigned!=[key]:raise RuntimeError('KDE konnte diesen Shortcut nicht zuweisen. Der vorherige Shortcut wurde beibehalten.')
     except (OSError,RuntimeError):
         try:call('setShortcut',action,str(previous),SHORTCUT_FLAGS)
         finally:

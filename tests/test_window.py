@@ -37,11 +37,11 @@ class WindowTests(unittest.TestCase):
         window = Window(); window.show()
         window.messages = [('Thinking', 'A long thought.\n\n' * 200), ('Augmentor', 'Done')]
         window.render_messages()
-        self.assertNotIn('Collapse thinking', window.transcript.toPlainText())
+        self.assertNotIn('Denken einklappen', window.transcript.toPlainText())
         window.message_action(QUrl('augmentor-think:0'))
-        self.assertIn('Collapse thinking', window.transcript.toPlainText())
+        self.assertIn('Denken einklappen', window.transcript.toPlainText())
         from PySide6.QtTest import QTest
-        cursor=window.transcript.document().find('Collapse thinking')
+        cursor=window.transcript.document().find('Denken einklappen')
         self.assertFalse(cursor.isNull())
         window.transcript.setTextCursor(cursor); window.transcript.ensureCursorVisible()
         self.app.processEvents()
@@ -50,7 +50,7 @@ class WindowTests(unittest.TestCase):
         QTest.mouseClick(window.transcript.viewport(),Qt.MouseButton.LeftButton,Qt.KeyboardModifier.NoModifier,point)
         self.app.processEvents()
         self.assertNotIn(0, window.expanded_thinking)
-        self.assertNotIn('Collapse thinking', window.transcript.toPlainText())
+        self.assertNotIn('Denken einklappen', window.transcript.toPlainText())
         self.assertNotIn('A long thought', window.transcript.toPlainText())
         self.assertIn('Done', window.transcript.toPlainText())
         self.assertFalse(window.transcript.textCursor().hasSelection())
@@ -174,7 +174,7 @@ class WindowTests(unittest.TestCase):
         sections = model_sections(catalog)
         self.assertEqual([m['model'] for m in sections[0][1]], ['2','0'])
         self.assertEqual([m['model'] for m in sections[1][1]], ['1'])
-        self.assertEqual(model_sections(catalog, 'model 2'), [('Pinned',[models[2]])])
+        self.assertEqual(model_sections(catalog, 'model 2'), [('Angepinnt',[models[2]])])
         picker=ModelPicker(); picker.set_catalog(catalog,models[1]); picker.set_catalog({'groups':[]})
         self.assertEqual(picker.currentData(),models[1])
 
@@ -183,7 +183,7 @@ class WindowTests(unittest.TestCase):
         models=[{'provider':'test','model':str(i),'name':'Model '+str(i)} for i in range(3)]
         catalog={'groups':[{'provider':'test','name':'Provider','models':models}],
                  'pinned':['test/0','test/1'],'hidden':['test/0','test/2']}
-        self.assertEqual(model_sections(catalog),[('Pinned',[models[1]])])
+        self.assertEqual(model_sections(catalog),[('Angepinnt',[models[1]])])
         self.assertEqual(model_sections(catalog,'model 0'),[])
         self.assertEqual(model_sections(catalog,'model 2'),[])
         from augmentor_linux.surfaces import ModelPicker

@@ -27,7 +27,7 @@ class SupportExportTests(unittest.TestCase):
             QTimer.singleShot(0,choose);QTest.mouseClick(dialog.save,Qt.MouseButton.LeftButton)
             self.assertTrue(chosen);self.assertEqual(json.loads(target.read_text()),report)
             self.assertEqual(target.stat().st_mode&0o777,0o600)
-            self.assertEqual(dialog.save.text(),'Report saved');dialog.close();owner.close()
+            self.assertEqual(dialog.save.text(),'Bericht gespeichert');dialog.close();owner.close()
 
     def test_failed_save_preserves_existing_file_and_cleans_temporary_file(self):
         with tempfile.TemporaryDirectory() as folder,patch('augmentor_linux.support.PromptClient') as client:
@@ -37,4 +37,4 @@ class SupportExportTests(unittest.TestCase):
                 dialog.export()
             self.assertEqual(target.read_text(),'previous report')
             self.assertEqual(list(Path(folder).iterdir()),[target])
-            self.assertEqual(dialog.save.text(),'Could not save report');dialog.close();owner.close()
+            self.assertEqual(dialog.save.text(),'Bericht konnte nicht gespeichert werden');dialog.close();owner.close()

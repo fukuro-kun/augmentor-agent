@@ -42,14 +42,14 @@ class EarlyVoiceInput(QObject):
             stream.start()
         except Exception as error:
             if not self.closed:
-                self.error=str(error);self.failed.emit('Microphone unavailable: '+str(error));self.close()
+                self.error=str(error);self.failed.emit('Mikrofon nicht verfügbar: '+str(error));self.close()
         finally:self.opened.set()
 
     def _frame(self,data,frames,timing,status):
         with self.lock:
             if self.closed:return
             if status:
-                self.receiving=False;self.error='Microphone lost audio. Please restart voice.'
+                self.receiving=False;self.error='Mikrofon hat Audio verloren. Bitte starte die Sprache neu.'
                 self.failed.emit(self.error);return
             self.last_frame=time.monotonic()
             pcm=bytes(data)
@@ -57,18 +57,18 @@ class EarlyVoiceInput(QObject):
             elif len(self.frames)<self.MAX_FRAMES:self.frames.append(pcm)
             else:
                 self.receiving=False;self.frames.clear()
-                self.error='Voice preparation exceeded the recording buffer. Please restart voice.'
+                self.error='Die Sprachvorbereitung hat den Aufnahmepuffer überschritten. Bitte starte die Sprache neu.'
                 self.failed.emit(self.error);return
             if not self.receiving and not self.error:
                 self.receiving=True;self.changed.emit()
 
     def wait_ready(self):
         if not self.opened.wait(10) or self.closed or self.error or self.stream is None:
-            raise RuntimeError(self.error or 'Microphone preparation did not complete.')
+            raise RuntimeError(self.error or 'Mikrofonvorbereitung wurde nicht abgeschlossen.')
 
     def attach(self,consumer):
         with self.lock:
-            if self.closed or self.error:raise RuntimeError(self.error or 'Microphone was closed.')
+            if self.closed or self.error:raise RuntimeError(self.error or 'Mikrofon wurde geschlossen.')
             # Serialize the handoff with the callback: no second input stream,
             # no gap between old buffered samples and the next device frame.
             for pcm in self.frames:consumer(pcm,512,None,None)

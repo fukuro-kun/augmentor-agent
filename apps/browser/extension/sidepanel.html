@@ -5,7 +5,7 @@
      SPDX-License-Identifier: LicenseRef-Augmentor-MIT-Resale-1.0
      License: MIT with Augmentor Resale Restriction — see LICENSE at the repository root. -->
 
-<html lang="en">
+<html lang="de">
 <head>
 <meta charset="utf-8">
 <title>Augmentor Agent</title>
@@ -28,13 +28,13 @@
 <body>
 <div id="app">
   <header>
-    <div class="identity"><span id="title" title="Double-click to rename">New conversation</span></div>
-    <nav id="window-actions" aria-label="Conversation controls">
-      <button id="newchat" class="hbtn" title="New chat · right-click for approval mode" aria-label="New chat">＋</button>
-      <button id="save" class="hbtn" title="Save this chat" aria-label="Save this chat">☆</button>
-      <button id="sessions" class="hbtn" title="Conversation history" aria-label="Conversation history">☰</button>
-      <button id="more" class="hbtn" title="More options" aria-label="More options" aria-haspopup="menu" aria-expanded="false">⋯</button>
-      <button id="hide" class="hbtn" title="Hide Augmentor" aria-label="Hide Augmentor">×</button>
+    <div class="identity"><span id="title" title="Doppelklick zum Umbenennen">Neue Unterhaltung</span></div>
+    <nav id="window-actions" aria-label="Unterhaltungssteuerung">
+      <button id="newchat" class="hbtn" title="Neue Unterhaltung · Rechtsklick für den Freigabemodus" aria-label="Neue Unterhaltung">＋</button>
+      <button id="save" class="hbtn" title="Diese Unterhaltung speichern" aria-label="Diese Unterhaltung speichern">☆</button>
+      <button id="sessions" class="hbtn" title="Unterhaltungsverlauf" aria-label="Unterhaltungsverlauf">☰</button>
+      <button id="more" class="hbtn" title="Weitere Optionen" aria-label="Weitere Optionen" aria-haspopup="menu" aria-expanded="false">⋯</button>
+      <button id="hide" class="hbtn" title="Augmentor ausblenden" aria-label="Augmentor ausblenden">×</button>
     </nav>
   </header>
   <div id="logwrap">
@@ -42,29 +42,29 @@
   </div>
   <div id="composer-dock">
     <div id="composer-field">
-      <textarea id="input" rows="1" placeholder="Ask Augmentor…" aria-label="Message draft"></textarea>
-      <button id="improve" title="Improve prompt" aria-label="Improve prompt" disabled>✦</button>
+      <textarea id="input" rows="1" placeholder="Augmentor fragen…" aria-label="Nachrichtenentwurf"></textarea>
+      <button id="improve" title="Prompt verbessern" aria-label="Prompt verbessern" disabled>✦</button>
     </div>
   </div>
   <footer id="strip">
-    <button id="model" hidden title="Switch model" aria-haspopup="dialog"><span id="model-label"></span><span class="model-chev" aria-hidden="true">▾</span></button>
-    <span id="connection-dot" role="status" aria-label="Connecting" title="Connecting">●</span>
+    <button id="model" hidden title="Modell wechseln" aria-haspopup="dialog"><span id="model-label"></span><span class="model-chev" aria-hidden="true">▾</span></button>
+    <span id="connection-dot" role="status" aria-label="Verbinden" title="Verbinden">●</span>
     <span id="voice-seat"></span>
-    <button id="top" class="hbtn" title="Return to latest message" aria-label="Return to latest message">↓</button>
-    <button id="send" class="hbtn" title="Send · Enter (Shift+Enter for a new line)" aria-label="Send" disabled>↑</button>
-    <button id="stop" class="hbtn" hidden title="Stop current turn" aria-label="Stop current turn">■</button>
+    <button id="top" class="hbtn" title="Zur neuesten Nachricht" aria-label="Zur neuesten Nachricht">↓</button>
+    <button id="send" class="hbtn" title="Senden · Eingabe (Umschalt+Eingabe für eine neue Zeile)" aria-label="Senden" disabled>↑</button>
+    <button id="stop" class="hbtn" hidden title="Aktuellen Durchlauf stoppen" aria-label="Aktuellen Durchlauf stoppen">■</button>
   </footer>
   <div id="surface-status" class="sr-only" role="status" aria-live="polite"></div>
-  <div id="more-menu" hidden role="menu" aria-label="More options">
-    <button id="settings" role="menuitem" data-section="">Settings</button>
-    <button role="menuitem" data-section="appearance">Colors &amp; skins</button>
-    <button role="menuitem" data-section="prompts">Prompt library</button>
-    <button role="menuitem" data-section="harnesses">Connect a model</button>
-    <button role="menuitem" data-section="models">Models &amp; providers</button>
-    <button role="menuitem" data-section="support">Versions &amp; updates</button>
-    <button id="approval-menu-item" role="menuitem">Approval mode</button>
-    <button role="menuitem" data-section="support">About &amp; licenses</button>
-    <hr><button id="hide-menu-item" role="menuitem">Hide Augmentor</button>
+  <div id="more-menu" hidden role="menu" aria-label="Weitere Optionen">
+    <button id="settings" role="menuitem" data-section="">Einstellungen</button>
+    <button role="menuitem" data-section="appearance">Farben &amp; Designs</button>
+    <button role="menuitem" data-section="prompts">Prompt-Bibliothek</button>
+    <button role="menuitem" data-section="harnesses">Modell verbinden</button>
+    <button role="menuitem" data-section="models">Modelle &amp; Anbieter</button>
+    <button role="menuitem" data-section="support">Versionen &amp; Updates</button>
+    <button id="approval-menu-item" role="menuitem">Freigabemodus</button>
+    <button role="menuitem" data-section="support">Info &amp; Lizenzen</button>
+    <hr><button id="hide-menu-item" role="menuitem">Augmentor ausblenden</button>
   </div>
 </div>
 <!-- Model picker popover (opened by the #model chip in the strip): the DSH
@@ -76,24 +76,24 @@
      included): the SW serves the handshake's memory copy otherwise, and the
      DSH app's model set can change while the panel is open (a model added
      to settings.yaml). -->
-<div id="modelpop" hidden role="dialog" aria-label="Choose model">
+<div id="modelpop" hidden role="dialog" aria-label="Modell wählen">
   <div id="modelpop-search">
     <svg width="12" height="12" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" aria-hidden="true"><circle cx="7" cy="7" r="4.5"/><path d="m10.3 10.3 3.7 3.7"/></svg>
-    <input id="modelpop-search-input" type="text" placeholder="Search models…" spellcheck="false" autocomplete="off" aria-label="Search models">
-    <button id="modelpop-search-clear" type="button" aria-label="Clear search" hidden>
+    <input id="modelpop-search-input" type="text" placeholder="Modelle suchen…" spellcheck="false" autocomplete="off" aria-label="Modelle suchen">
+    <button id="modelpop-search-clear" type="button" aria-label="Suche löschen" hidden>
       <svg width="11" height="11" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" aria-hidden="true"><path d="M4.5 4.5l7 7M11.5 4.5l-7 7"/></svg>
     </button>
   </div>
   <div id="modelpop-body"></div>
   <div id="modelpop-foot" class="mp-strip">
     <span id="modelpop-foot-status" role="status"></span>
-    <button id="modelpop-refresh" type="button" title="Re-read the model list from the DSH app">
+    <button id="modelpop-refresh" type="button" title="Modellliste aus der DSH-App neu einlesen">
       <svg width="11" height="11" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M13.65 5.35A6 6 0 1 0 14 8"/><path d="M14 2v3.35h-3.35"/></svg>
-      Refresh
+      Aktualisieren
     </button>
   </div>
 </div>
-<div id="sessionspop" hidden role="dialog" aria-label="DSH app sessions">
+<div id="sessionspop" hidden role="dialog" aria-label="DSH-App-Sitzungen">
   <div id="sessionspop-body"></div>
 </div>
 <script type="module" src="sidepanel.js"></script>

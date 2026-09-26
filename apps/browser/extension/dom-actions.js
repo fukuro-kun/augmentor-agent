@@ -32,9 +32,9 @@
     const al = (e.getAttribute('aria-label') || '').trim()
     if (al) return al
     const ph = (e.getAttribute('placeholder') || '').trim()
-    if (ph) return 'the ' + ph
+    if (ph) return ph
     const tag = e.tagName.toLowerCase()
-    return tag === 'input' || tag === 'textarea' ? 'the input box' : 'the ' + tag
+    return tag === 'input' || tag === 'textarea' ? 'das Eingabefeld' : 'das ' + tag
   }
 
   /**

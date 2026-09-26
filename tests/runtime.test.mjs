@@ -92,7 +92,7 @@ test('Pi host protocol, lifecycle, policy and crash recovery', {timeout:120000},
    await call('initialize',selection);
    for(const method of ['session.history','session.attach','session.prompt','session.cancel','session.rename','session.create']){
     const result=await call(method,{sessionId:'basic',title:'should not change',content:[{type:'text',text:'should not run'}]});
-    assert.match(result.error.message,/cannot access a Linux chat/);
+    assert.match(result.error.message,/nicht auf eine Linux-Unterhaltung/);
    }
    const rows=(await call('session.list')).result;assert.equal(rows.total,rows.items.length);assert(rows.items.every(r=>r.agentPreset==='augmentor-browser-pi'));
    assert((await call('session.history',{sessionId:'browser-contract'})).result.events.length);

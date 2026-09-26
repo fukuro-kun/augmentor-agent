@@ -18,14 +18,14 @@ export function matchPrompts(prompts, query) {
 export function attachPromptLibrary({input, send, settingsButton}) {
   const doc=input.ownerDocument, win=doc.defaultView
   const menu=doc.createElement('div');menu.id='prompt-completions';menu.hidden=true
-  menu.setAttribute('role','listbox');menu.setAttribute('aria-label','Saved prompts');doc.body.append(menu)
+  menu.setAttribute('role','listbox');menu.setAttribute('aria-label','Gespeicherte Prompts');doc.body.append(menu)
   let library={revision:0,prompts:[]}, loaded=false, pending=null, errorText=''
   let choices=[], selected=0, dismissed=null, lastRead=0, rendered=null
   const hide=()=>{menu.hidden=true;input.removeAttribute('aria-activedescendant');input.setAttribute('aria-expanded','false')}
   input.setAttribute('aria-controls',menu.id);input.setAttribute('aria-autocomplete','list')
   const request=async payload=>{
     const result=await send('prompts',{request:payload})
-    if(!result?.ok)throw new Error(result?.error??'Prompt library unavailable. Reload the Augmentor extension to load its update.')
+    if(!result?.ok)throw new Error(result?.error??'Prompt-Bibliothek nicht verfügbar. Lade die Augmentor-Erweiterung neu, um ihr Update zu laden.')
     library=result.library;loaded=true;errorText='';lastRead=Date.now();return library
   }
   const load=()=>pending??(pending=request({action:'list'}).finally(()=>pending=null))
@@ -46,10 +46,10 @@ export function attachPromptLibrary({input, send, settingsButton}) {
       positionMenu();return
     }
     rendered=signature;menu.replaceChildren()
-    if(!choices.length){const note=doc.createElement('p');note.textContent=errorText || (loaded ? (library.prompts.length ? 'No matching prompts' : 'Add prompts in the Prompt library') : 'Loading prompts…');menu.append(note)}
+    if(!choices.length){const note=doc.createElement('p');note.textContent=errorText || (loaded ? (library.prompts.length ? 'Keine passenden Prompts' : 'Füge Prompts in der Prompt-Bibliothek hinzu') : 'Prompts werden geladen…');menu.append(note)}
     choices.forEach((p,index)=>{
       const row=doc.createElement('button');row.type='button';row.id='saved-prompt-'+index;row.setAttribute('role','option');row.setAttribute('aria-selected',String(index===selected))
-      row.textContent='/'+p.name+'  ·  Tab to insert\n'+p.content.replace(/\s+/g,' ').slice(0,75)
+      row.textContent='/'+p.name+'  ·  Tab zum Einfügen\n'+p.content.replace(/\s+/g,' ').slice(0,75)
       row.addEventListener('mousedown',event=>event.preventDefault());row.addEventListener('click',()=>choose(index));menu.append(row)
     })
     if(choices.length){input.setAttribute('aria-activedescendant','saved-prompt-'+selected);menu.children[selected]?.scrollIntoView?.({block:'nearest'})}
@@ -64,7 +64,7 @@ export function attachPromptLibrary({input, send, settingsButton}) {
       try {
         const copied=await win.navigator.clipboard.readText()
         content=expandClipboard(content,copied)
-      }catch(error){errorText=error.message||'Clipboard is unavailable. Paste your text into the draft.';paint();return}
+      }catch(error){errorText=error.message||'Die Zwischenablage ist nicht verfügbar. Füge deinen Text in den Entwurf ein.';paint();return}
     }
     if(input.value!==before||input.selectionStart!==position)return
     input.setRangeText(content,0,end,'end');hide();input.dispatchEvent(new win.Event('input',{bubbles:true}));input.focus()
@@ -91,8 +91,8 @@ export function attachPromptLibrary({input, send, settingsButton}) {
   },true)
   input.addEventListener('blur',hide);win.addEventListener('resize',hide)
   if(settingsButton){
-  settingsButton.title='Prompt library'
-  settingsButton.setAttribute('aria-label','Prompt library')
+  settingsButton.title='Prompt-Bibliothek'
+  settingsButton.setAttribute('aria-label','Prompt-Bibliothek')
   settingsButton.addEventListener('click',()=>{
     hide();promptEditor(doc,request,value=>{library=value;loaded=true;lastRead=Date.now();paint()})
   })

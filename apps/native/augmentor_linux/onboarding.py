@@ -24,11 +24,11 @@ After configuration, verify service health and the saved connection. Offer a har
 
 def start(window, topic, request_id):
     if topic != 'memory':
-        raise RuntimeError('Unknown setup task.')
+        raise RuntimeError('Unbekannte Einrichtungsaufgabe.')
     try:
         uuid.UUID(request_id)
     except (ValueError, TypeError, AttributeError):
-        raise RuntimeError('Invalid setup request.') from None
+        raise RuntimeError('Ungültige Einrichtungsanfrage.') from None
     ledger = window.controller.state_file.parent / 'onboarding-requests.json' if window.controller else None
     previous = {}
     if ledger and ledger.exists():
@@ -38,13 +38,13 @@ def start(window, topic, request_id):
         return {'status': 'opened', 'reused': True}
     controller = window.controller
     if not controller or controller.running or controller.navigating or controller.recovery_lock.locked() or window.editing:
-        raise RuntimeError('Finish or stop the current Linux action, then continue setup.')
+        raise RuntimeError('Beende oder stoppe die aktuelle Linux-Aktion und setze dann die Einrichtung fort.')
     if window.composer.toPlainText().strip():
-        raise RuntimeError('Send or clear your unfinished Linux message, then continue setup.')
+        raise RuntimeError('Sende oder lösche deine unfertige Linux-Nachricht und setze dann die Einrichtung fort.')
     selection = window.model_picker.currentData()
     if not selection:
         window.bring_forward()
-        raise RuntimeError('Connect a model in Augmentor Agent, then continue setup.')
+        raise RuntimeError('Verbinde ein Modell in Augmentor Agent und setze dann die Einrichtung fort.')
     window.new_chat()
     window.bring_forward()
     # Record dispatch before starting: a lost acknowledgment must not replay setup.
@@ -67,7 +67,7 @@ def exchange(path, command):
             chunk = client.recv(4096)
             if not chunk: break
             data += chunk
-            if len(data) > 16384: raise RuntimeError('Invalid desktop response.')
+            if len(data) > 16384: raise RuntimeError('Ungültige Desktop-Antwort.')
         return json.loads(data)
 
 
@@ -85,16 +85,16 @@ def open_memory(request_id):
                 status = exchange(path, 'maintenance.status')
                 break
             except (OSError, ValueError):
-                if time.monotonic() >= deadline: raise RuntimeError('Augmentor Agent did not open. Check that the desktop app is installed.') from None
+                if time.monotonic() >= deadline: raise RuntimeError('Augmentor Agent hat sich nicht geöffnet. Prüfe, ob die Desktop-App installiert ist.') from None
                 time.sleep(.15)
     if status.get('onboardingProtocol') != 1:
-        raise RuntimeError('Update the Augmentor desktop and companion to use guided setup.')
+        raise RuntimeError('Aktualisiere den Augmentor-Desktop und den Begleiter, um die geführte Einrichtung zu nutzen.')
     # A new desktop may still be loading its saved model catalog.
     deadline = time.monotonic() + 10
     while not status.get('modelReady') and time.monotonic() < deadline:
         time.sleep(.15);status = exchange(path, 'maintenance.status')
     result = exchange(path, 'onboarding:' + json.dumps({'topic': 'memory', 'requestId': request_id}))
-    if not result.get('ok'): raise RuntimeError(result.get('error', 'Could not start setup.'))
+    if not result.get('ok'): raise RuntimeError(result.get('error', 'Die Einrichtung konnte nicht gestartet werden.'))
     return result['result']
 
 

@@ -11,16 +11,16 @@ export class Identity {
   }
   hasOwner(){return !!this.db.prepare("SELECT id FROM home_clients WHERE role='owner' AND revoked=0 AND expires>?").get(Date.now());}
   invite(role='member'){
-    if(!['owner','member','viewer'].includes(role))throw Error('Invalid role');
+    if(!['owner','member','viewer'].includes(role))throw Error('Ungültige Rolle');
     const code=secret(),expires=Date.now()+10*60*1000;
     this.db.prepare('DELETE FROM home_invites WHERE expires<?').run(Date.now());
     this.db.prepare('INSERT INTO home_invites VALUES(?,?,?)').run(digest(code),role,expires);
     return {code,expires};
   }
   pair(code,name,kind){
-    if(typeof code!=='string'||typeof name!=='string'||!name.trim()||name.length>80||!['browser','api'].includes(kind))throw Error('Invalid pairing request');
+    if(typeof code!=='string'||typeof name!=='string'||!name.trim()||name.length>80||!['browser','api'].includes(kind))throw Error('Ungültige Kopplungsanfrage');
     const row=this.db.prepare('DELETE FROM home_invites WHERE hash=? AND expires>? RETURNING role').get(digest(code),Date.now());
-    if(!row)throw Error('Pairing code expired or already used');
+    if(!row)throw Error('Kopplungscode abgelaufen oder bereits verwendet');
     const token=secret(),id=randomUUID(),expires=Date.now()+(kind==='browser'?7:90)*86400000;
     this.db.prepare('INSERT INTO home_clients VALUES(?,?,?,?,?,?,0)').run(id,name.trim(),row.role,digest(token),kind,expires);
     return {id,name:name.trim(),role:row.role,token,expires,csrf:digest(token+':csrf')};

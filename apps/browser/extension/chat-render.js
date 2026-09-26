@@ -56,7 +56,7 @@ function md(text) {
   }
   // Match the native view: output cannot trigger external image requests.
   for (const image of template.content.querySelectorAll('img'))
-    image.replaceWith(document.createTextNode(image.alt || 'Image'))
+    image.replaceWith(document.createTextNode(image.alt || 'Bild'))
   for (const code of template.content.querySelectorAll('pre > code')) {
     const language = [...code.classList].find(name => name.startsWith('language-'))?.slice(9) || 'plaintext'
     if (hljs.getLanguage(language) && code.textContent.length <= 100000)
@@ -70,8 +70,8 @@ function md(text) {
 function addCodeButtons(root) {
   for(const code of root.querySelectorAll('pre > code')) {
     const button=makeCopyButton(code.textContent)
-    button.setAttribute('aria-label','Copy code')
-    button.dataset.tooltip='Copy code'
+    button.setAttribute('aria-label','Code kopieren')
+    button.dataset.tooltip='Code kopieren'
     const bar=el('div','code-actions')
     bar.append(el('span','code-language',code.parentElement.dataset.language),button)
     code.parentElement.before(bar)
@@ -158,8 +158,8 @@ import {COPY_ICON,CHECK_ICON,EDIT_ICON,BRANCH_ICON,ACTIONS} from './action-desig
 function makeCopyButton(text) {
   const btn = el('button', 'msgaction')
   btn.type = 'button'
-  btn.dataset.tooltip = 'Copy'
-  btn.setAttribute('aria-label', 'Copy')
+  btn.dataset.tooltip = 'Kopieren'
+  btn.setAttribute('aria-label', 'Kopieren')
   btn.innerHTML = COPY_ICON
   let pending = false
   let timer = null
@@ -175,14 +175,14 @@ function makeCopyButton(text) {
       clearTimeout(timer)
       btn.classList.add('copied')
       btn.innerHTML = CHECK_ICON
-      btn.dataset.tooltip = 'Copy'
-      btn.setAttribute('aria-label', 'Copied')
+      btn.dataset.tooltip = 'Kopieren'
+      btn.setAttribute('aria-label', 'Kopiert')
       timer = setTimeout(() => {
         timer = null
         btn.classList.remove('copied')
         btn.innerHTML = COPY_ICON
-        btn.dataset.tooltip = 'Copy'
-        btn.setAttribute('aria-label', 'Copy')
+        btn.dataset.tooltip = 'Kopieren'
+        btn.setAttribute('aria-label', 'Kopieren')
       }, ACTIONS.copyFeedbackMs)
     })
   })
@@ -378,7 +378,7 @@ export function createChatUI(els) {
     if (summary) {
       const preview = firstLine.length > 90 ? firstLine.slice(0, 90) + '…' : firstLine
       summary.innerHTML = ''
-      summary.append(el('span', 'think-label', 'Think'))
+      summary.append(el('span', 'think-label', 'Denken'))
       if (preview) summary.append(el('span', 'think-preview', preview))
     }
   }
@@ -423,7 +423,7 @@ export function createChatUI(els) {
     const summary = document.createElement('summary')
     d.appendChild(summary)
     d.appendChild(el('pre'))
-    const collapse = el('button', 'think-collapse', '▴ Collapse thinking')
+    const collapse = el('button', 'think-collapse', '▴ Nachdenken einklappen')
     collapse.type = 'button'
     collapse.addEventListener('click', () => {
       d.open = false
@@ -449,9 +449,9 @@ export function createChatUI(els) {
     body.className = 'toolbody'
     const argsPre = el('pre', 'args', prettyArgs(args))
     const outWrap = el('div', 'outwrap')
-    const outLabel = el('div', 'outlabel', 'output')
+    const outLabel = el('div', 'outlabel', 'Ausgabe')
     outWrap.append(outLabel, el('pre', 'out', ''))
-    body.append(el('div', 'outlabel', 'arguments'), argsPre, outWrap)
+    body.append(el('div', 'outlabel', 'Argumente'), argsPre, outWrap)
     row.appendChild(body)
     row.addEventListener('click', () => row.classList.toggle('open'))
     $log.appendChild(row)
@@ -468,10 +468,10 @@ export function createChatUI(els) {
       case 'command/run':
       case 'command/done': {
         const text=ev.type==='command/run'?'/'+data.name+(data.args??''):
-          (data.text??(data.kind==='success'?'Command completed.':'Command failed.'))
+          (data.text??(data.kind==='success'?'Befehl abgeschlossen.':'Befehl fehlgeschlagen.'))
         if(ev.type==='command/run')confirmPrompt(text)
         const message=el('div','msg '+(ev.type==='command/run'?'user':'assistant'))
-        message.append(el('span','who',ev.type==='command/run'?'You':'DSH'))
+        message.append(el('span','who',ev.type==='command/run'?'Du':'DSH'))
         const body=el('div','md');body.innerHTML=md(text);message.append(body);$log.append(message)
         break
       }
@@ -510,7 +510,7 @@ export function createChatUI(els) {
         const text = blockText(data.content)
         confirmPrompt(text)
         const m = el('div', 'msg user')
-        m.append(el('span', 'who', 'You'))
+        m.append(el('span', 'who', 'Du'))
         const stack = el('div', 'userbody')
         const body = el('div', 'md')
         body.innerHTML = md(text)
@@ -633,14 +633,14 @@ export function createChatUI(els) {
         const row = rows[rows.length - 1]
         if (row) {
           const out = row.querySelector('pre.out')
-          if (out) out.textContent = text || '(empty)'
+          if (out) out.textContent = text || '(leer)'
           if (isError) {
             row.classList.add('failed')
-            row.prepend(el('span', 'failed-badge', 'Failed'))
+            row.prepend(el('span', 'failed-badge', 'Fehlgeschlagen'))
           }
         } else {
           const d = el('div', 'toolresult' + (isError ? ' err' : ''))
-          d.appendChild(el('pre', 'out', text || '(empty)'))
+          d.appendChild(el('pre', 'out', text || '(leer)'))
           $log.appendChild(d)
         }
         break
@@ -664,21 +664,21 @@ export function createChatUI(els) {
     if (!$stats) return
     const groups = []
     if (stats.steps > 0) {
-      groups.push(`${stats.turns} turns · ${stats.steps} steps`)
+      groups.push(`${stats.turns} Durchläufe · ${stats.steps} Schritte`)
       const durations = []
       if (stats.llmMs > 0) durations.push(`LLM ${formatDuration(stats.llmMs)}`)
-      if (stats.toolMs > 0) durations.push(`Tool call ${formatDuration(stats.toolMs)}`)
+      if (stats.toolMs > 0) durations.push(`Werkzeugaufruf ${formatDuration(stats.toolMs)}`)
       if (durations.length > 0) groups.push(durations.join(' · '))
       const speeds = []
-      if (stats.ttftN > 0) speeds.push(`TTFT avg ${formatDuration(stats.ttftSum / stats.ttftN)}`)
+      if (stats.ttftN > 0) speeds.push(`TTFT Ø ${formatDuration(stats.ttftSum / stats.ttftN)}`)
       if (stats.decodeMsSum > 0)
         speeds.push(`${Math.round(stats.decodeTokSum / (stats.decodeMsSum / 1_000))} tok/s`)
       if (speeds.length > 0) groups.push(speeds.join(' · '))
     }
     const billedIn = stats.inTok + stats.cacheTok
     if (billedIn > 0 || stats.outTok > 0) {
-      if (billedIn > 0) groups.push(`Cache hit ${Math.round((stats.cacheTok / billedIn) * 100)}%`)
-      groups.push(`Input ${formatTokens(billedIn)} tok · Output ${formatTokens(stats.outTok)} tok`)
+      if (billedIn > 0) groups.push(`Cache-Treffer ${Math.round((stats.cacheTok / billedIn) * 100)}%`)
+      groups.push(`Eingabe ${formatTokens(billedIn)} tok · Ausgabe ${formatTokens(stats.outTok)} tok`)
     }
     const line = groups.join(' | ')
     $stats.textContent = line
@@ -691,16 +691,16 @@ export function createChatUI(els) {
     if ($status) {
       $status.textContent =
         phase === 'ready'
-          ? 'connected'
+          ? 'verbunden'
           : phase === 'connecting'
-            ? 'connecting…'
+            ? 'verbinden…'
             : phase === 'error'
               // No Connect button: the SW retries on a backoff, so an error
               // state is transient — say what is happening, not what to click.
-              ? `reconnecting… (${error ?? 'unknown error'})`
+              ? `verbinde erneut… (${error ?? 'unbekannter Fehler'})`
               : running
-                ? 'working…'
-                : 'disconnected'
+                ? 'arbeitet…'
+                : 'getrennt'
     }
     if ($send) $send.disabled = phase !== 'ready' || running || !!ui.state.submitting
   }
@@ -746,7 +746,7 @@ export function createChatUI(els) {
     applyLog,
     pendingPrompt(text) {
       const node = el('div', 'msg user pending')
-      node.append(el('span', 'who', 'You · Sending…'), el('div', 'userbody', text))
+      node.append(el('span', 'who', 'Du · Senden…'), el('div', 'userbody', text))
       node.style.whiteSpace = 'pre-wrap'
       const pending = {text, node, confirmed:false}
       pendingPrompts.add(pending); $log.append(node); scroll(true)
@@ -756,7 +756,7 @@ export function createChatUI(els) {
       pending.node.remove(); pendingPrompts.delete(pending)
     },
     sendFail(text) {
-      $log.appendChild(el('div', 'toolresult err', `send failed: ${text}`))
+      $log.appendChild(el('div', 'toolresult err', `Senden fehlgeschlagen: ${text}`))
       scroll(true)
     },
     clear({preservePending = false} = {}) {
@@ -775,7 +775,7 @@ export function createChatUI(els) {
       stats.inTok = stats.outTok = stats.cacheTok = 0
       stepStart.clear()
       callStart.clear()
-      if ($title) $title.textContent = 'New conversation'
+      if ($title) $title.textContent = 'Neue Unterhaltung'
       updateStats()
       updateChrome()
     },

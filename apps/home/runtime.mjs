@@ -44,7 +44,7 @@ export async function createRuntime(config,ledger) {
       get busy(){return !!active;},
       cancel(){if(active){active.cancelled=true;handles.get(active.session)?.agent.cancel({kind:'user'});}},
       async ask(id,session,prompt,{readOnly=false,signal}={}){
-        if(active)throw new Error('Home is busy');
+        if(active)throw new Error('Home ist beschäftigt');
         const turn={id,session,readOnly,cancelled:signal?.aborted===true,steps:0,tools:0,trace:[]};active=turn;
         const abort=()=>this.cancel();signal?.addEventListener('abort',abort,{once:true});
         let timer;

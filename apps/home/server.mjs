@@ -38,9 +38,9 @@ export function httpService(config,ledger,runtime,{readiness=async()=>{
   const scoped=(client,id)=>client.id==='operator'?id:digest(client.id+':'+id);
   let draining=false,admitted=false,activeClient=null,directAbort=null;
   async function json(req){
-    if(!req.headers['content-type']?.startsWith('application/json'))throw Error('Use application/json');
+    if(!req.headers['content-type']?.startsWith('application/json'))throw Error('Verwende application/json');
     const size=Number(req.headers['content-length']);
-    if(req.headers['transfer-encoding']||!Number.isSafeInteger(size)||size<=0||size>16384)throw Error('Invalid body size');
+    if(req.headers['transfer-encoding']||!Number.isSafeInteger(size)||size<=0||size>16384)throw Error('Ungültige Anfragegröße');
     let bytes=0,chunks=[];for await(const chunk of req){bytes+=chunk.length;if(bytes>16384)throw Error('Body too large');chunks.push(chunk);}
     const body=JSON.parse(Buffer.concat(chunks));if(!body||Array.isArray(body)||typeof body!=='object')throw Error('Expected JSON object');return body;
   }
@@ -61,10 +61,10 @@ export function httpService(config,ledger,runtime,{readiness=async()=>{
       }
       if(req.method==='POST'&&req.url==='/pair'){
         const origin=browserOrigin(req);
-        if(req.headers.origin&&req.headers.origin!==origin){reply(403,{error:'Origin not allowed'});return;}
+        if(req.headers.origin&&req.headers.origin!==origin){reply(403,{error:'Herkunft nicht erlaubt'});return;}
         const peer=req.socket.remoteAddress??'local',now=Date.now();
         let limit=attempts.get(peer);if(!limit||limit.until<now){limit={count:0,until:now+60000};if(attempts.size>256)attempts.clear();attempts.set(peer,limit);}
-        if(++limit.count>5){reply(429,{error:'Wait a minute before trying another pairing code'});return;}
+        if(++limit.count>5){reply(429,{error:'Warte eine Minute, bevor du einen weiteren Kopplungscode versuchst'});return;}
         const body=await json(req),paired=identities.pair(body.code,body.name,body.kind);
         if(body.kind==='browser'){
           reply(200,{id:paired.id,role:paired.role},{'Set-Cookie':`augmentor_home=${paired.token}; HttpOnly; SameSite=Strict; Path=/; Max-Age=604800${origin.startsWith('https:')?'; Secure':''}`});
@@ -72,39 +72,39 @@ export function httpService(config,ledger,runtime,{readiness=async()=>{
         return;
       }
       const client=identities.authenticate(req,config.token);
-      if(!client){reply(401,{error:'Authentication required'});return;}
+      if(!client){reply(401,{error:'Authentifizierung erforderlich'});return;}
       if(client.kind==='browser'){
         const origin=browserOrigin(req);
-        if(req.headers.origin&&req.headers.origin!==origin||req.method!=='GET'&&(req.headers.origin!==origin||!safeEqual(String(req.headers['x-home-csrf']??''),client.csrf))){reply(403,{error:'Origin or session verification failed'});return;}
-      }else if(req.headers.origin){reply(403,{error:'Browser-origin bearer requests are not enabled'});return;}
+        if(req.headers.origin&&req.headers.origin!==origin||req.method!=='GET'&&(req.headers.origin!==origin||!safeEqual(String(req.headers['x-home-csrf']??''),client.csrf))){reply(403,{error:'Herkunfts- oder Sitzungsprüfung fehlgeschlagen'});return;}
+      }else if(req.headers.origin){reply(403,{error:'Bearer-Anfragen aus dem Browser sind nicht aktiviert'});return;}
       if(req.method==='GET'&&req.url==='/identity'){reply(200,client);return;}
       if(req.method==='GET'&&req.url==='/capabilities'){reply(200,{protocol:'augmentor-home/1',role:client.role,requests:{persistent:true,async:true,scoped:true},model:config.model,capabilities:client.role==='viewer'?['home.read','home.result']:['home.read','home.request','home.result','home.cancel'],devices:runtime.devices?'Owner-selected registered entities':'Assist preview: exposed named lights, switches and helpers'});return;}
-      if(req.method==='GET'&&req.url==='/clients'){if(client.role!=='owner'){reply(403,{error:'Owner access required'});return;}reply(200,{clients:identities.list()});return;}
+      if(req.method==='GET'&&req.url==='/clients'){if(client.role!=='owner'){reply(403,{error:'Besitzerzugriff erforderlich'});return;}reply(200,{clients:identities.list()});return;}
       if(req.method==='POST'&&['/clients/invite','/clients/revoke','/logout'].includes(req.url)){
         const body=await json(req);
         if(req.url==='/logout'){identities.revoke(client.id);if(activeClient===client.id){directAbort?.abort();runtime.cancel();}reply(200,{status:'disconnected'},{'Set-Cookie':'augmentor_home=; HttpOnly; SameSite=Strict; Path=/; Max-Age=0'});return;}
-        if(client.role!=='owner'){reply(403,{error:'Owner access required'});return;}
+        if(client.role!=='owner'){reply(403,{error:'Besitzerzugriff erforderlich'});return;}
         if(req.url==='/clients/invite')reply(200,identities.invite(body.role));
         else{if(typeof body.id!=='string')throw Error('Invalid client');identities.revoke(body.id);if(activeClient===body.id){directAbort?.abort();runtime.cancel();}reply(200,{status:'revoked'});}return;
       }
-      if(req.method==='GET'&&req.url==='/devices/discovered'){if(client.role!=='owner'){reply(403,{error:'Owner access required'});return;}reply(200,readDiscovery(config.stateDir));return;}
+      if(req.method==='GET'&&req.url==='/devices/discovered'){if(client.role!=='owner'){reply(403,{error:'Besitzerzugriff erforderlich'});return;}reply(200,readDiscovery(config.stateDir));return;}
       if(req.method==='GET'&&['/devices','/devices/selected'].includes(req.url)){
-        if(!runtime.devices){reply(409,{error:'Selected-device mode is not enabled'});return;}
+        if(!runtime.devices){reply(409,{error:'Der Modus für ausgewählte Geräte ist nicht aktiviert'});return;}
         reply(200,client.role==='owner'&&req.url==='/devices'?{devices:await runtime.devices.inventory()}:await runtime.devices.list());return;
       }
       if(req.method==='POST'&&req.url==='/devices/select'){
-        if(client.role!=='owner'){reply(403,{error:'Owner access required'});return;}
-        if(admitted||!runtime.devices){reply(409,{error:'Wait until Home is idle in selected-device mode'});return;}
+        if(client.role!=='owner'){reply(403,{error:'Besitzerzugriff erforderlich'});return;}
+        if(admitted||!runtime.devices){reply(409,{error:'Warte, bis Home im Modus für ausgewählte Geräte bereit ist'});return;}
         const body=await json(req);if(body.control===true&&body.effects_reviewed!==true)throw Error('Review what this device and its existing automations can do');
         admitted=true;try{await runtime.devices.select(body.entity_id,body.enabled,body.control);reply(200,{status:'saved'});}finally{admitted=false;}return;
       }
       if(req.method==='GET'&&req.url==='/model'){
-        if(client.role!=='owner'){reply(403,{error:'Owner access required'});return;}
+        if(client.role!=='owner'){reply(403,{error:'Besitzerzugriff erforderlich'});return;}
         reply(200,publicModelSettings(config));return;
       }
       if(req.method==='POST'&&['/model/discover','/model/save'].includes(req.url)){
-        if(client.role!=='owner'){reply(403,{error:'Owner access required'});return;}
-        if(admitted||ledger.pending().length){reply(409,{error:'Wait until Home is idle and uncertain actions have been reviewed'});return;}
+        if(client.role!=='owner'){reply(403,{error:'Besitzerzugriff erforderlich'});return;}
+        if(admitted||ledger.pending().length){reply(409,{error:'Warte, bis Home bereit ist und unsichere Aktionen geprüft wurden'});return;}
         const body=await json(req),previous={...config,key:process.env.HOME_MODEL_KEY??''},selected=modelSettings(body,previous);
         admitted=true;
         try{
@@ -125,37 +125,37 @@ export function httpService(config,ledger,runtime,{readiness=async()=>{
       if(req.method==='GET'&&req.url==='/actions'){reply(200,{pending:ledger.pending().filter(a=>client.role==='owner'||ledger.request(a.request)?.owner===client.id)});return;}
       if(req.method==='GET'&&req.url?.startsWith('/requests/')){
         const id=req.url.slice('/requests/'.length);
-        if(!identity(id)){reply(400,{error:'Invalid request ID'});return;}
-        const result=ledger.request(scoped(client,id));reply(result?200:404,result?{...result,recovery_blocked:ledger.pending().length>0}:{error:'Unknown request'});return;
+        if(!identity(id)){reply(400,{error:'Ungültige Anfrage-ID'});return;}
+        const result=ledger.request(scoped(client,id));reply(result?200:404,result?{...result,recovery_blocked:ledger.pending().length>0}:{error:'Unbekannte Anfrage'});return;
       }
       if(req.method==='GET'&&req.url==='/prompts'){
         const {promptCall}=await import('../../dist/prompt-library/src/client.js');
         reply(200,await promptCall('prompts.list'));return;
       }
-      if(req.method!=='POST'||!['/ask','/device-actions','/cancel','/actions/acknowledge'].includes(req.url)){reply(404,{error:'Unknown endpoint'});return;}
-      if(!req.headers['content-type']?.startsWith('application/json')){reply(415,{error:'Use application/json'});return;}
-      if(req.headers['transfer-encoding']){reply(400,{error:'Content-Length required'});return;}
+      if(req.method!=='POST'||!['/ask','/device-actions','/cancel','/actions/acknowledge'].includes(req.url)){reply(404,{error:'Unbekannter Endpunkt'});return;}
+      if(!req.headers['content-type']?.startsWith('application/json')){reply(415,{error:'Verwende application/json'});return;}
+      if(req.headers['transfer-encoding']){reply(400,{error:'Content-Length erforderlich'});return;}
       const size=Number(req.headers['content-length']);
-      if(!Number.isSafeInteger(size)||size<=0||size>16384){reply(413,{error:'Invalid body size'});return;}
+      if(!Number.isSafeInteger(size)||size<=0||size>16384){reply(413,{error:'Ungültige Anfragegröße'});return;}
       let bytes=0,chunks=[];for await(const chunk of req){bytes+=chunk.length;if(bytes>16384)throw Error('Body too large');chunks.push(chunk);}
-      let body;try{body=JSON.parse(Buffer.concat(chunks));}catch{reply(400,{error:'Invalid JSON'});return;}
-      if(!body||Array.isArray(body)||typeof body!=='object'){reply(400,{error:'Expected a JSON object'});return;}
-      if(req.url==='/cancel'){if(activeClient&&activeClient!==client.id&&client.role!=='owner'){reply(403,{error:'This request belongs to another client'});return;}directAbort?.abort();runtime.cancel();reply(200,{status:'cancellation requested; inspect action outcomes'});return;}
+      let body;try{body=JSON.parse(Buffer.concat(chunks));}catch{reply(400,{error:'Ungültiges JSON'});return;}
+      if(!body||Array.isArray(body)||typeof body!=='object'){reply(400,{error:'Ein JSON-Objekt wird erwartet'});return;}
+      if(req.url==='/cancel'){if(activeClient&&activeClient!==client.id&&client.role!=='owner'){reply(403,{error:'Diese Anfrage gehört zu einem anderen Client'});return;}directAbort?.abort();runtime.cancel();reply(200,{status:'Abbruch angefordert; prüfe die Aktionsergebnisse'});return;}
       if(req.url==='/actions/acknowledge'){
-        if(client.role!=='owner'){reply(403,{error:'Owner access required'});return;}
-        if(admitted){reply(409,{error:'Wait until the active request stops'});return;}
-        if(!Number.isSafeInteger(body.action_id)||body.outcome_reviewed!==true){reply(400,{error:'An action_id and explicit outcome_reviewed=true are required'});return;}
+        if(client.role!=='owner'){reply(403,{error:'Besitzerzugriff erforderlich'});return;}
+        if(admitted){reply(409,{error:'Warte, bis die aktive Anfrage stoppt'});return;}
+        if(!Number.isSafeInteger(body.action_id)||body.outcome_reviewed!==true){reply(400,{error:'Eine action_id und explizites outcome_reviewed=true sind erforderlich'});return;}
         ledger.acknowledge(body.action_id);reply(200,{status:'acknowledged; no action replayed'});return;
       }
       const direct=req.url==='/device-actions';
       if(direct){
-        if(client.role==='viewer'){reply(403,{error:'Read-only Home access'});return;}
-        if(!runtime.devices){reply(409,{error:'Selected-device mode is required'});return;}
-        if(!body.action||typeof body.action!=='object'||Array.isArray(body.action)){reply(400,{error:'Invalid device action'});return;}
+        if(client.role==='viewer'){reply(403,{error:'Home-Zugriff nur lesend'});return;}
+        if(!runtime.devices){reply(409,{error:'Der Modus für ausgewählte Geräte ist erforderlich'});return;}
+        if(!body.action||typeof body.action!=='object'||Array.isArray(body.action)){reply(400,{error:'Ungültige Geräteaktion'});return;}
         body.prompt=JSON.stringify(body.action);
       }
-      if(!identity(body.request_id)||!identity(body.session_id)||typeof body.prompt!=='string'||!body.prompt.trim()||body.prompt.length>4000){reply(400,{error:'Supply request_id, session_id and a non-empty prompt up to 4000 characters'});return;}
-      if(draining||admitted){reply(409,{error:'Home is busy; do not submit a new ID to repeat an uncertain request'});return;}
+      if(!identity(body.request_id)||!identity(body.session_id)||typeof body.prompt!=='string'||!body.prompt.trim()||body.prompt.length>4000){reply(400,{error:'Gib request_id, session_id und eine nicht leere Anfrage mit bis zu 4000 Zeichen an'});return;}
+      if(draining||admitted){reply(409,{error:'Home ist beschäftigt; sende keine neue ID, um eine unsichere Anfrage zu wiederholen'});return;}
       admitted=true;activeClient=client.id;directAbort=new AbortController();
       try {
         let prompt=body.prompt;
@@ -185,7 +185,7 @@ export function httpService(config,ledger,runtime,{readiness=async()=>{
         result={...result,request_id:body.request_id,session_id:body.session_id};
         ledger.finish(requestId,result);if(!asynchronous)reply(200,result);
       } finally {admitted=false;activeClient=null;directAbort=null;}
-    } catch(error){reply(error instanceof Conflict?409:400,{error:error instanceof Conflict?error.message:'Invalid request'});}
+    } catch(error){reply(error instanceof Conflict?409:400,{error:error instanceof Conflict?error.message:"Ungültige Anfrage"});}
   });
   server.requestTimeout=10000;server.headersTimeout=10000;server.timeout=10000;server.maxConnections=16;
   // Once the complete body is read, the bounded harness owns the response wait.

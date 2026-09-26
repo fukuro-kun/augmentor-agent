@@ -39,7 +39,7 @@ test('websocket requires authentication and streams only after pairing',async t=
   const refused=connect();refused.on('error',()=>{});const [,response]=await once(refused,'unexpected-response');assert.equal(response.statusCode,403);refused.terminate();
   const paired=await post('pair',{key});const cookie=paired.headers.get('set-cookie');
   const ws=connect(cookie);ws.on('error',()=>{});const [data]=await once(ws,'message');assert.equal(data.toString(),'RFB test');
-  const occupied=await post('connect',{}, {Cookie:cookie});assert.equal(occupied.status,409);assert.match(occupied.json().error,/Another tab or device/);
+  const occupied=await post('connect',{}, {Cookie:cookie});assert.equal(occupied.status,409);assert.match(occupied.json().error,/anderer Tab oder ein anderes Gerät/);
   const echoed=once(ws,'message');ws.send(Buffer.from('one input'));assert.equal((await echoed)[0].toString(),'one input');
   const rejected=connect(cookie);rejected.on('error',()=>{});const [,busy]=await once(rejected,'unexpected-response');assert.equal(busy.statusCode,409);rejected.terminate();
   const closed=once(ws,'close'),serverClosed=once([...app.wss.clients][0],'close');await post('logout',{}, {Cookie:cookie});await Promise.all([closed,serverClosed]);assert.equal(app.wss.clients.size,0);

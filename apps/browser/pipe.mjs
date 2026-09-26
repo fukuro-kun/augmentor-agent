@@ -201,7 +201,7 @@ const remoteDsh=createRemoteAdapter(DSH_BASE,authenticatedDsh,frame=>{
   }).catch(error=>log(error.message))
 },log)
 async function dsh(method,payload={}) {return remoteDsh.call(method,payload)}
-async function dshRespond() {throw Error('Complete DSH approvals and questions in its authenticated web UI.')}
+async function dshRespond() {throw Error('Schließe DSH-Freigaben und -Fragen in der authentifizierten Weboberfläche ab.')}
 
 // ------------------------------------------------- extension frame I/O
 // 0.1.18: queue + drain-chaining. The old version DROPPED a frame whenever a
@@ -300,12 +300,12 @@ async function productHandshake(){
   if(integrationCheck)return integrationCheck
   integrationCheck=(async()=>{
     const configured=dshConfiguration()
-    if(configured.endpoint!==DSH_BASE||!configured.home)throw Error('Connect DSH from Augmentor settings first.')
+    if(configured.endpoint!==DSH_BASE||!configured.home)throw Error('Verbinde zuerst DSH in den Augmentor-Einstellungen.')
     const token=readFileSync(path.join(configured.home,'augmentor-product-token'),'utf8').trim()
     const product=await boundedJson(`${DSH_BASE}/api/augmentor-product`,{signal:AbortSignal.timeout(3000)})
-    if(product.protocol!=='augmentor-dsh/1'||product.version!==VERSION||product.homeId!==createHash('sha256').update(token).digest('hex'))throw Error('Reconnect the matching DSH integration from Settings.')
+    if(product.protocol!=='augmentor-dsh/1'||product.version!==VERSION||product.homeId!==createHash('sha256').update(token).digest('hex'))throw Error('Verbinde die passende DSH-Integration in den Einstellungen neu.')
     const info=await boundedJson(`${DSH_BASE}/api/augmentor`,{signal:AbortSignal.timeout(3000)})
-    if(info.protocol!==PROTOCOL_EXPECTED||info.version!==VERSION||info.agentPreset!==BROWSER_PRESET||typeof info.chatCwd!=='string'||!path.isAbsolute(info.chatCwd)||typeof info.wsPath!=='string'||!/^\/api\/[a-zA-Z0-9/_-]+$/.test(info.wsPath))throw Error('DSH browser integration is incompatible. Check it in Settings.')
+    if(info.protocol!==PROTOCOL_EXPECTED||info.version!==VERSION||info.agentPreset!==BROWSER_PRESET||typeof info.chatCwd!=='string'||!path.isAbsolute(info.chatCwd)||typeof info.wsPath!=='string'||!/^\/api\/[a-zA-Z0-9/_-]+$/.test(info.wsPath))throw Error('Die DSH-Browser-Integration ist inkompatibel. Prüfe sie in den Einstellungen.')
     return info
   })()
   try{return await integrationCheck}finally{integrationCheck=null}
@@ -524,7 +524,7 @@ const interactions=new BrowserInteractions(async payload=>{
   const configured=dshConfiguration()
   const token=readFileSync(path.join(configured.home,'augmentor-product-token'),'utf8').trim()
   const result=await boundedJson(`${DSH_BASE}/api/augmentor-product`,{method:'POST',headers:{'content-type':'application/json','x-augmentor-product-token':token},body:JSON.stringify(payload)})
-  if(!result.ok)throw Error(result.error??'Interaction failed')
+  if(!result.ok)throw Error(result.error??'Interaktion fehlgeschlagen')
   return result
 },sendToExt)
 const voice=new BrowserVoice({
@@ -544,14 +544,14 @@ const localMethods = {
   'augmentor/interaction':params=>interactions.answer(params.id,params.value),
   'augmentor/voice/control':params=>voice.control(params),
   async 'augmentor/voice'(params){
-    if(!UNIFIED)throw Error('Voice requires the unified Augmentor DSH integration.')
+    if(!UNIFIED)throw Error('Die Sprachfunktion erfordert die Unified-Augmentor-DSH-Integration.')
     await productHandshake()
     const configured=dshConfiguration()
     const token=readFileSync(path.join(configured.home,'augmentor-product-token'),'utf8').trim()
     const row=(await dsh('session.list')).items.find(row=>row.sessionId===params.sessionId)
     const surface=row?.agentPreset==='augmentor-linux-product'?'linux':'browser'
     const result=await boundedJson(`${DSH_BASE}/api/resonant-voice`,{method:'POST',headers:{'content-type':'application/json','x-augmentor-product-token':token},body:JSON.stringify({surface,sessionId:params.sessionId}),signal:AbortSignal.timeout(5000)})
-    if(!result.ok||result.protocol!=='resonant-voice/1')throw Error(result.error||'Incompatible voice service')
+    if(!result.ok||result.protocol!=='resonant-voice/1')throw Error(result.error||'Inkompatibler Sprachdienst')
     return result
   },
   'augmentor/dsh':dshSetup,
@@ -603,7 +603,7 @@ const localMethods = {
   // extension from chrome://extensions; the NEXT pipe spawn (which the
   // extension triggers on port reconnect) picks up the new pipe.mjs.
   async 'updates/download'(params) {
-    if(process.env.AUGMENTOR_UNIFIED==='1')throw new Error('Use the unified Augmentor installer; legacy browser archives cannot replace it.');
+    if(process.env.AUGMENTOR_UNIFIED==='1')throw new Error('Verwende den Unified-Augmentor-Installer; ältere Browser-Archive können ihn nicht ersetzen.');
     const version = typeof params?.version === 'string' ? params.version : ''
     if (!/^\d+\.\d+\.\d+$/.test(version)) throw new Error(`invalid version: ${JSON.stringify(params?.version)}`)
     const url = typeof params?.url === 'string' ? params.url : ''

@@ -23,9 +23,9 @@ process.stdin.on('data',chunk=>{
     let first;try{first=JSON.parse(buffer.subarray(4,n+4))}catch{process.exit(1)}buffer=buffer.subarray(n+4)
     if(first.method==='augmentor/handshake'){
       compatible=first.params?.protocol===PRODUCT_PROTOCOL&&first.params?.version===RELEASE.version
-      reply(compatible?{id:first.id,result:{protocol:PRODUCT_PROTOCOL,version:RELEASE.version}}:{id:first.id,error:{message:'Extension and companion versions differ. Update both Augmentor components, reload the extension, then reconnect.'}});continue
+      reply(compatible?{id:first.id,result:{protocol:PRODUCT_PROTOCOL,version:RELEASE.version}}:{id:first.id,error:{message:'Extension- und Companion-Versionen unterscheiden sich. Aktualisiere beide Augmentor-Komponenten, lade die Extension neu und verbinde dann erneut.'}});continue
     }
-    if(!compatible){reply({id:first.id,error:{message:'Check Augmentor component compatibility before connecting.'}});continue}
+    if(!compatible){reply({id:first.id,error:{message:'Prüfe die Kompatibilität der Augmentor-Komponenten vor dem Verbinden.'}});continue}
     // Shared prompts work even while harness discovery/connection is unavailable.
     if(first.method==='augmentor/surface'){surfaceRequest(first.params??{}).then(result=>reply({id:first.id,result}),error=>reply({id:first.id,error:{message:error.message}}));continue}
     if(first.method==='augmentor/dsh'){dshSetup(first.params??{}).then(result=>reply({id:first.id,result}),error=>reply({id:first.id,error:{message:error.message}}));continue}
@@ -37,7 +37,7 @@ process.stdin.on('data',chunk=>{
     if(first.method==='augmentor/prompts'){
       promptLibrary(first.params??{}).then(result=>reply({id:first.id,result}),error=>reply({id:first.id,error:{message:error.message}}));continue
     }
-    if(first.method!=='harness.select'||!['pi','dsh'].includes(first.params?.harness)){reply({id:first.id,error:{message:'Choose DSH or Pi. Other harnesses are no longer supported; saved data is retained.'}});continue}
+    if(first.method!=='harness.select'||!['pi','dsh'].includes(first.params?.harness)){reply({id:first.id,error:{message:'Wähle DSH oder Pi. Andere Harnesses werden nicht mehr unterstützt; gespeicherte Daten bleiben erhalten.'}});continue}
     child=spawn(process.execPath,[fileURLToPath(new URL(first.params.harness==='dsh'?'./pipe.mjs':'./pi-bridge.mjs',import.meta.url))],{stdio:['pipe','pipe','inherit'],env:{...process.env,AUGMENTOR_UNIFIED:'1',AUGMENTOR_BROWSER_HARNESS:first.params.harness}})
     child.stdout.pipe(process.stdout);child.on('error',()=>process.exit(1));child.on('exit',()=>process.exit(0));child.stdin.on('error',()=>process.exit(1))
     reply({id:first.id,result:{protocol:PRODUCT_PROTOCOL,harness:first.params.harness,capabilities:HARNESS_CAPABILITIES[first.params.harness]}})

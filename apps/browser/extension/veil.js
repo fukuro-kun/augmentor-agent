@@ -840,7 +840,7 @@ void main() {
     const p = S.pal
     S.dot.style.background = rgb(done ? p.dotDone : p.dot)
     S.dot.style.animation = done ? 'none' : '__dshAugPulse 1.2s ease-in-out infinite'
-    S.label.textContent = done ? 'Augmentor — done ✓' : `Augmentor — ${String(text)}`
+    S.label.textContent = done ? 'Augmentor — fertig ✓' : `Augmentor — ${String(text)}`
     S.veil.style.opacity = '1'
     if (done) {
       if (!S.melting) {

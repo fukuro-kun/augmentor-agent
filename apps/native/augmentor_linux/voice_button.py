@@ -13,15 +13,15 @@ class VoiceButton(QPushButton):
     HOLD_MS = 230
     LOCK_DISTANCE = 24
     TIPS = {
-        'off': 'Hold to talk · ← Lock · → Hands-free',
-        'connecting': 'Preparing voice…',
-        'ready': 'Hold to talk · ← Lock · → Hands-free',
-        'speaking': 'Click to stop speech · Hold to reply',
-        'listening': 'Release to send · ← Lock · → Hands-free',
-        'recognizing': 'Recognizing…',
-        'thinking': 'Thinking… · Hold to follow up',
-        'error': 'Voice unavailable · Click to retry',
-        'disconnected': 'Voice disconnected · Click to reconnect',
+        'off': 'Halten zum Sprechen · ← Sperren · → Freisprechen',
+        'connecting': 'Sprache wird vorbereitet …',
+        'ready': 'Halten zum Sprechen · ← Sperren · → Freisprechen',
+        'speaking': 'Klicken zum Stoppen · Halten zum Antworten',
+        'listening': 'Loslassen zum Senden · ← Sperren · → Freisprechen',
+        'recognizing': 'Erkennt …',
+        'thinking': 'Denkt … · Halten für Nachfrage',
+        'error': 'Sprache nicht verfügbar · Klicken zum Wiederholen',
+        'disconnected': 'Sprache getrennt · Klicken zum Wiederverbinden',
     }
 
     def __init__(self, parent=None):
@@ -117,14 +117,14 @@ class VoiceButton(QPushButton):
     def refresh_tip(self):
         tip=self.TIPS[self.state]
         if self.hands_free:
-            tip='Tap to start conversation' if self.state=='off' else ('Hands-free unavailable · Tap to retry' if self.state in ('error','disconnected') else 'Hands-free · Tap or Esc to stop')
+            tip='Tippen, um die Unterhaltung zu starten' if self.state=='off' else ('Freisprechen nicht verfügbar · Tippen zum Wiederholen' if self.state in ('error','disconnected') else 'Freisprechen · Tippen oder Esc zum Stoppen')
         if self.state=='listening' and not self.hands_free:
-            tip=('Locked · Click to send · Esc to cancel' if self.locked else tip)
+            tip=('Gesperrt · Klicken zum Senden · Esc zum Abbrechen' if self.locked else tip)
             remaining=max(0,math.ceil(self.max_seconds-self.elapsed))
             tip+=f' · {int(self.elapsed)//60}:{int(self.elapsed)%60:02d}'
-            if remaining<=120:tip+=f' · {remaining//60}:{remaining%60:02d} left'
+            if remaining<=120:tip+=f' · noch {remaining//60}:{remaining%60:02d}'
         if self.hands_free and self.state not in ('off','error','disconnected'):
-            tip=('Listening · Tap or Esc to stop' if self.recording_available else 'Please wait · Microphone not ready')
+            tip=('Hört zu · Tippen oder Esc zum Stoppen' if self.recording_available else 'Bitte warten · Mikrofon nicht bereit')
         self.setToolTip(tip)
         self.setAccessibleName('Resonant Voice · '+tip)
 

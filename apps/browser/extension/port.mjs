@@ -138,7 +138,7 @@ export function ensurePort() {
     if(state.port!==port)return
     const err = chrome.runtime.lastError?.message
     log('port', { event: 'disconnect', error: err ?? null })
-    fail(err ?? 'native host disconnected')
+    fail(err ?? 'Verbindung zum nativen Host getrennt')
   })
 
   // Handshake: the bridge serves the model catalog before the runtime is
@@ -147,12 +147,12 @@ export function ensurePort() {
   // first-configured model), and only then initialize the runtime with it.
   ;(async () => {
     const hello=await request('augmentor/handshake',{protocol:'augmentor/1',version:chrome.runtime.getManifest().version})
-    if(hello.protocol!=='augmentor/1'||hello.version!==chrome.runtime.getManifest().version)throw Error('Update the Augmentor extension and companion together, then reconnect.')
+    if(hello.protocol!=='augmentor/1'||hello.version!==chrome.runtime.getManifest().version)throw Error('Aktualisiere die Augmentor-Erweiterung und das Begleitprogramm zusammen, dann verbinde erneut.')
     const savedHarness=await new Promise(resolve=>chrome.storage.local.get(['augmentor-harness','augmentor-session-id','augmentor-model-selection'],resolve))
     state.harness=storedHarness(savedHarness)
-    if(!state.harness)throw new Error('The previously selected harness is no longer supported. Choose DSH or Pi in Settings. Saved conversations and model settings are retained.')
+    if(!state.harness)throw new Error('Der zuvor gewählte Harness wird nicht mehr unterstützt. Wähle DSH oder Pi in den Einstellungen. Gespeicherte Unterhaltungen und Modelleinstellungen bleiben erhalten.')
     const adapter=await request('harness.select',{harness:state.harness})
-    if(adapter.protocol!=='augmentor/1')throw new Error('Incompatible Augmentor bridge. Update the extension and host together.')
+    if(adapter.protocol!=='augmentor/1')throw new Error('Inkompatible Augmentor-Bridge. Aktualisiere Erweiterung und Host zusammen.')
     const stored = await loadStoredSelection()
     try {
       const catalog = await request('augmentor/models')
@@ -163,9 +163,9 @@ export function ensurePort() {
       const sel = inCatalog(stored) ? stored : catalog?.default
       if (!sel || !groups.length) {
         if(state.harness!=='dsh'){
-          state.catalog=groups;state.phase='needs-setup';state.error='Connect a model to start using Augmentor.';broadcast();return
+          state.catalog=groups;state.phase='needs-setup';state.error='Verbinde ein Modell, um Augmentor zu nutzen.';broadcast();return
         }
-        state.phase='needs-setup';state.error='Connect DSH and select a model in its settings.';broadcast();return
+        state.phase='needs-setup';state.error='Verbinde DSH und wähle ein Modell in dessen Einstellungen.';broadcast();return
       }
       state.catalog = groups
       // The DSH picker's curation rides the same bridge result (empty lists
@@ -218,9 +218,9 @@ export function ensurePort() {
       broadcast(log('handshake', { serverInfo: result.serverInfo, provider: sel.provider, model: sel.model }))
     } catch (e) {
       if(state.harness==='dsh'){
-        state.phase='needs-setup';state.error='Connect DSH to continue. '+e.message;broadcast();return
+        state.phase='needs-setup';state.error='Verbinde DSH, um fortzufahren. '+e.message;broadcast();return
       }
-      fail(`initialize failed: ${e.message}`)
+      fail(`Initialisierung fehlgeschlagen: ${e.message}`)
     }
   })().catch(e=>fail(e.message))
 }
@@ -236,7 +236,7 @@ function scheduleReconnect(message) {
   // 1s, 2s, 4s, 8s, 16s, then 30s steady — a dead DSH must not spin the
   // native host, but a recovered one must be picked up without user action.
   const delay = Math.min(30000, 1000 * 2 ** Math.min(state.retryCount - 1, 4))
-  state.error = `${message} — retrying in ${delay / 1000}s`
+  state.error = `${message} — neuer Versuch in ${delay / 1000}s`
   broadcast()
   reconnectTimer = setTimeout(() => {
     reconnectTimer = null
@@ -266,7 +266,7 @@ export function post(msg) {
 }
 
 export function request(method, params) {
-  if (!state.port) return Promise.reject(new Error('not connected'))
+  if (!state.port) return Promise.reject(new Error('nicht verbunden'))
   const id = nextClientId()
   log('wire', { dir: 'ext->bridge', msg: { id, method, params: summarizeParams(params) } })
   post({ id, method, params })
@@ -335,7 +335,7 @@ export function onSessionEvent(params) {
       // A user Stop aborts the turn — label it as such, not "Done".
       const reason = ev?.data?.reason
       const stopped = reason?.kind === 'aborted' && reason?.reason?.kind === 'user'
-      overlayShow(state.overlayTabId, stopped ? 'Stopped' : 'Done ✓', true)
+      overlayShow(state.overlayTabId, stopped ? 'Gestoppt' : 'Fertig ✓', true)
     }
   }
   // Full envelope: the panel renders from it and the seq is its dedupe key.
@@ -344,7 +344,7 @@ export function onSessionEvent(params) {
 
 export function resetHarnessPort(){
   if(reconnectTimer){clearTimeout(reconnectTimer);reconnectTimer=null}
-  const old=state.port;state.port=null;old?.disconnect();state.pending.dropAll(new Error('Harness changed'))
+  const old=state.port;state.port=null;old?.disconnect();state.pending.dropAll(new Error('Harness gewechselt'))
   state.phase='disconnected';state.error=null;state.catalog=null;state.selection=null;state.sessionReady=false;state.sessionId='augmentor-'+crypto.randomUUID();state.log=[];state.interactions=[];state.panelViewSession=null;state.capabilities={branch:false,edit:false}
   ensurePort()
 }

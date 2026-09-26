@@ -5,7 +5,7 @@ export class BrowserInteractions {
   constructor(operation,notify){Object.assign(this,{operation,notify});this.owner=randomUUID();this.session=null;this.pending=new Map();this.attempted=new Set();this.timer=null;this.closed=false}
   request(operation,values={},sessionId=this.session){return this.operation({action:'interaction',surface:'browser',sessionId,owner:this.owner,operation,...values})}
   async claim(sessionId){
-    if(this.closed)throw Error('Interaction connection closed')
+    if(this.closed)throw Error('Interaktionsverbindung geschlossen')
     if(this.session===sessionId)return
     if(this.session)await this.release()
     await this.request('claim',{},sessionId)
@@ -29,7 +29,7 @@ export class BrowserInteractions {
   }
   async answer(id,value){
     const row=this.pending.get(id)
-    if(!row||this.attempted.has(id)||this.closed)throw Error('This interaction is no longer pending')
+    if(!row||this.attempted.has(id)||this.closed)throw Error('Diese Interaktion ist nicht mehr ausstehend')
     this.attempted.add(id);this.pending.delete(id)
     const answer=row.kind==='approval'?value.outcome:value.answer
     await this.request('answer',{id,value:answer})

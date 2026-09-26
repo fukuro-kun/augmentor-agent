@@ -17,12 +17,12 @@ export async function refreshDesktopAppearance(){
 }
 const T = globalThis.__dshAugTheme
 export const appearanceFields = [
-  ['neutHue','augmentor-neut-hue','Surface colour',0,360],
-  ['neutBright','augmentor-neut-bright','Surface brightness',-15,15],
-  ['accentHue','augmentor-accent-hue','Accent colour',0,360],
-  ['accentBright','augmentor-accent-bright','Accent brightness',-15,15],
+  ['neutHue','augmentor-neut-hue','Oberflächenfarbe',0,360],
+  ['neutBright','augmentor-neut-bright','Oberflächenhelligkeit',-15,15],
+  ['accentHue','augmentor-accent-hue','Akzentfarbe',0,360],
+  ['accentBright','augmentor-accent-bright','Akzenthelligkeit',-15,15],
 ]
-export const formattingFields=[['heading','Headings'],['link','Links'],['emphasis','Bold text'],['keyword','Code keywords'],['string','Code strings'],['number','Code numbers'],['name','Code functions'],['comment','Code comments'],['operator','Code operators']]
+export const formattingFields=[['heading','Überschriften'],['link','Links'],['emphasis','Fettgedrucktes'],['keyword','Code-Schlüsselwörter'],['string','Code-Zeichenketten'],['number','Code-Zahlen'],['name','Code-Funktionen'],['comment','Code-Kommentare'],['operator','Code-Operatoren']]
 export function formattingDefaults(theme='dark'){
   const code=theme==='light'?['#6639ba','#236b35','#9a4600','#005c85','#596579','#a82c46']:['#c4a7ff','#a6da95','#f5a97f','#8bd5ef','#a5adcb','#ed8796']
   return Object.fromEntries(formattingFields.map(([key],i)=>[key,i===2?(theme==='light'?'#152b2c':'#edf3f3'):i<2?(theme==='light'?'#4176e6':'#5686fe'):code[i-3]]))
@@ -51,7 +51,7 @@ export function applyAppearance() {
 }
 export async function saveAppearance(value) {
   const reply=await chrome.runtime.sendMessage({type:'surface/appearance',settings:value})
-  if(!reply?.ok)throw Error(reply?.error||'Could not save shared appearance')
+  if(!reply?.ok)throw Error(reply?.error||'Geteilte Darstellung konnte nicht gespeichert werden')
   desktopAppearance=reply.result
   const stored={'augmentor-theme':value.theme,'augmentor-format-colours':JSON.stringify(value.formatColours||{})}
   for(const [key,storage] of appearanceFields)stored[storage]=value[key]

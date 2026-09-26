@@ -48,23 +48,23 @@ export function handlePanelMessage(msg, sender, sendResponse) {
   if (!sender || sender.id !== chrome.runtime.id) return
   if (!sender.url || !sender.url.startsWith('chrome-extension://' + chrome.runtime.id)) return
   if(msg?.type==='surface/appearance'||msg?.type==='prompt/improve'){
-    if(msg.type==='prompt/improve'&&(state.harness!=='dsh'||state.phase!=='ready'||state.running||state.panelViewSession)){sendResponse({ok:false,error:'Open an idle DSH conversation first.'});return}
+    if(msg.type==='prompt/improve'&&(state.harness!=='dsh'||state.phase!=='ready'||state.running||state.panelViewSession)){sendResponse({ok:false,error:'Öffne zuerst eine ruhende DSH-Unterhaltung.'});return}
     request('augmentor/surface',msg.type==='surface/appearance'?{action:'appearance',settings:msg.settings}:{action:'improve',text:msg.text,selection:state.selection})
       .then(result=>sendResponse({ok:true,result})).catch(error=>sendResponse({ok:false,error:error.message}));return true
   }
   if(msg?.type==='voice/preferences'){
-    if(state.harness!=='dsh'){sendResponse({ok:false,error:'Voice uses the shared DSH harness.'});return}
+    if(state.harness!=='dsh'){sendResponse({ok:false,error:'Sprache nutzt den gemeinsamen DSH-Harness.'});return}
     request('augmentor/voice/preferences',{action:msg.action??'get',settings:msg.settings})
       .then(result=>sendResponse({ok:true,result})).catch(error=>sendResponse({ok:false,error:error.message}))
     return true
   }
   if(msg?.type==='voice/start'){
-    if(state.harness!=='dsh'||state.phase!=='ready'||state.running||state.mutating||state.panelViewSession){sendResponse({ok:false,error:'Open an idle DSH conversation first.'});return}
+    if(state.harness!=='dsh'||state.phase!=='ready'||state.running||state.mutating||state.panelViewSession){sendResponse({ok:false,error:'Öffne zuerst eine ruhende DSH-Unterhaltung.'});return}
     state.mutating=true
     ;(async()=>{
       if(!state.sessionReady){
         const exists=await sessionHistoryOk(state.sessionId)
-        if(exists!==true&&exists!==false)throw Error('Conversation status is unknown. Reconnect first.')
+        if(exists!==true&&exists!==false)throw Error('Der Unterhaltungsstatus ist unbekannt. Verbinde zuerst neu.')
         if(exists===false){
           state.sessionId='augmentor-'+crypto.randomUUID()
           saveSessionId(state.sessionId)
@@ -79,7 +79,7 @@ export function handlePanelMessage(msg, sender, sendResponse) {
     return true
   }
   if(msg?.type==='voice/control'){
-    if(state.harness!=='dsh'||msg.action!=='close'&&msg.sessionId!==state.sessionId){sendResponse({ok:false,error:'Voice conversation changed.'});return}
+    if(state.harness!=='dsh'||msg.action!=='close'&&msg.sessionId!==state.sessionId){sendResponse({ok:false,error:'Sprach-Unterhaltung gewechselt.'});return}
     request('augmentor/voice/control',{sessionId:msg.sessionId,id:msg.id,action:msg.action})
       .then(result=>sendResponse({ok:true,result})).catch(error=>sendResponse({ok:false,error:error.message}))
     return true
@@ -91,26 +91,26 @@ export function handlePanelMessage(msg, sender, sendResponse) {
     openSettingsTab(msg.section).then(tab=>sendResponse({ok:true,tabId:tab.id})).catch(error=>sendResponse({ok:false,error:error.message}));return true
   }
   if(msg?.type==='harness/select'){
-    if(state.running||state.mutating){sendResponse({ok:false,error:'Finish the current action before switching harness.'});return}
-    if(!['pi','dsh'].includes(msg.harness)){sendResponse({ok:false,error:'Choose DSH or Pi.'});return}
+    if(state.running||state.mutating){sendResponse({ok:false,error:'Beende die aktuelle Aktion, bevor du den Harness wechselst.'});return}
+    if(!['pi','dsh'].includes(msg.harness)){sendResponse({ok:false,error:'Wähle DSH oder Pi.'});return}
     chrome.storage.local.set({'augmentor-harness':msg.harness}).then(()=>{resetHarnessPort();sendResponse({ok:true})});return true
   }
   if(msg?.type==='interaction/respond'){
     const row=state.interactions.find(row=>row.id===msg.id)
-    if(!row){sendResponse({ok:false,error:'This request has expired.'});return}
+    if(!row){sendResponse({ok:false,error:'Diese Anfrage ist abgelaufen.'});return}
     if(state.harness==='dsh'){
       const value=msg.value
       if(value?.outcome==='denied')value.outcome='rejected'
       request('augmentor/interaction',{sessionId:row.params.sessionId,id:msg.id,value}).then(()=>{
         state.interactions=state.interactions.filter(row=>row.id!==msg.id);sendResponse({ok:true});broadcast()
-      }).catch(error=>sendResponse({ok:false,error:'Decision outcome is unknown. Check the conversation before trying again. '+error.message}))
+      }).catch(error=>sendResponse({ok:false,error:'Das Ergebnis der Entscheidung ist unbekannt. Prüfe die Unterhaltung vor einem erneuten Versuch. '+error.message}))
       return true
     }
     state.port?.postMessage({id:msg.id,result:msg.value});state.interactions=state.interactions.filter(row=>row.id!==msg.id);sendResponse({ok:true});return
   }
   if(msg?.type==='message/branch'){
-    if(msg.sourceSession&&msg.sourceSession!==state.sessionId){sendResponse({ok:false,error:'The conversation changed; select the action again.'});return}
-    if(state.running||state.mutating||!state.capabilities.branch){sendResponse({ok:false,error:'Branching is unavailable for this chat.'});return}
+    if(msg.sourceSession&&msg.sourceSession!==state.sessionId){sendResponse({ok:false,error:'Die Unterhaltung hat sich geändert; wähle die Aktion erneut.'});return}
+    if(state.running||state.mutating||!state.capabilities.branch){sendResponse({ok:false,error:'Verzweigen ist für diesen Chat nicht verfügbar.'});return}
     state.mutating=true
     request('session.branch',{sessionId:state.sessionId,newSessionId:'augmentor-'+crypto.randomUUID(),messageSeq:msg.seq,mode:msg.mode??'reply'}).then(async row=>{
       state.sessionId=row.sessionId;state.sessionReady=true;saveSessionId(row.sessionId);state.selection=row.selection;saveSelection(row.selection)
@@ -127,7 +127,7 @@ export function handlePanelMessage(msg, sender, sendResponse) {
     return true
   }
   if(msg?.type==='dshSetup'){
-    if(state.running||state.mutating){sendResponse({ok:false,error:'Finish the current action before changing harness settings.'});return}
+    if(state.running||state.mutating){sendResponse({ok:false,error:'Beende die aktuelle Aktion, bevor du Harness-Einstellungen änderst.'});return}
     ensurePort()
     request('augmentor/dsh',msg.request??{}).then(result=>{sendResponse({ok:true,result});if(result.reconnect)setTimeout(()=>resetHarnessPort(),100)}).catch(error=>sendResponse({ok:false,error:error.message}));return true
   }
@@ -138,9 +138,9 @@ export function handlePanelMessage(msg, sender, sendResponse) {
     request('augmentor/memory',msg.request??{action:'describe'}).then(result=>sendResponse({ok:true,result})).catch(error=>sendResponse({ok:false,error:error.message}));return true
   }
   if(msg?.type==='modelSetup'){
-    if(state.harness!=='pi'){sendResponse({ok:false,error:'Select Pi to use this model setup form.'});return}
-    if(!['test','save','cancel'].includes(msg.action)){sendResponse({ok:false,error:'Unknown setup action.'});return}
-    if(state.running||state.mutating){sendResponse({ok:false,error:'Finish the current action before changing model settings.'});return}
+    if(state.harness!=='pi'){sendResponse({ok:false,error:'Wähle Pi, um dieses Modell-Einrichtungsformular zu nutzen.'});return}
+    if(!['test','save','cancel'].includes(msg.action)){sendResponse({ok:false,error:'Unbekannte Einrichtungsaktion.'});return}
+    if(state.running||state.mutating){sendResponse({ok:false,error:'Beende die aktuelle Aktion, bevor du Modelleinstellungen änderst.'});return}
     ensurePort()
     request('setup.'+msg.action,msg.params??{}).then(result=>{
       if(msg.action==='save'){state.selection=result.selection;saveSelection(result.selection);resetHarnessPort()}
@@ -178,13 +178,13 @@ export function handlePanelMessage(msg, sender, sendResponse) {
     // (authoritative) so the badge never lies.
     const saving = msg.type === 'save'
     if (state.phase !== 'ready' || !state.sessionReady) {
-      sendResponse({ ok: false, error: saving ? 'this chat is not on the server yet — send a message first' : 'not connected' })
+      sendResponse({ ok: false, error: saving ? 'dieser Chat ist noch nicht auf dem Server — sende zuerst eine Nachricht' : 'nicht verbunden' })
       return
     }
     ;(async () => {
       try {
         const res = await request(saving ? 'augmentor/save' : 'augmentor/unsave', { sessionId: state.sessionId })
-        if (!res?.ok) throw new Error(res?.error ?? (saving ? 'save failed' : 'unsave failed'))
+        if (!res?.ok) throw new Error(res?.error ?? (saving ? 'Speichern fehlgeschlagen' : 'Entfernen fehlgeschlagen'))
         try {
           const st = await request('augmentor/state', {})
           state.saved = new Set(st?.saved ?? [])
@@ -216,16 +216,16 @@ export function handlePanelMessage(msg, sender, sendResponse) {
     // agent's FIRST browser action lands and is removed at turn end, so a
     // text-only turn never marks the user's tab "under AI control".
     if (state.phase !== 'ready') {
-      sendResponse({ ok: false, error: state.error ?? `not ready (phase: ${state.phase})` })
+      sendResponse({ ok: false, error: state.error ?? `nicht bereit (Phase: ${state.phase})` })
       return
     }
     if (state.running||state.mutating) {
-      sendResponse({ ok: false, error: 'finish the current turn before sending' })
+      sendResponse({ ok: false, error: 'beende den aktuellen Durchlauf vor dem Senden' })
       return
     }
     const text = String(msg.text ?? '').trim()
     if (!text) {
-      sendResponse({ ok: false, error: 'empty prompt' })
+      sendResponse({ ok: false, error: 'leerer Prompt' })
       return
     }
     state.mutating=true
@@ -295,7 +295,7 @@ export function handlePanelMessage(msg, sender, sendResponse) {
     // turn/end (aborted) and the agent goes idle, so the panel's Stop swaps
     // back to Send and a new prompt resumes the same session.
     if (state.phase !== 'ready') {
-      sendResponse({ ok: false, error: state.error ?? `not ready (phase: ${state.phase})` })
+      sendResponse({ ok: false, error: state.error ?? `nicht bereit (Phase: ${state.phase})` })
       return
     }
     if (!state.sessionReady) {
@@ -341,7 +341,7 @@ export function handlePanelMessage(msg, sender, sendResponse) {
       sendResponse({ ok: groups !== null, groups, selection: state.selection, error: error ?? null, ...curationOf(curation) })
     if (state.catalog) return respond(state.catalog, null, state.catalogCuration)
     if (!state.port) {
-      sendResponse({ ok: false, groups: null, selection: state.selection, error: state.error ?? `not ready (phase: ${state.phase})`, ...curationOf(state.catalogCuration) })
+      sendResponse({ ok: false, groups: null, selection: state.selection, error: state.error ?? `nicht bereit (Phase: ${state.phase})`, ...curationOf(state.catalogCuration) })
       return
     }
     request('augmentor/models')
@@ -361,7 +361,7 @@ export function handlePanelMessage(msg, sender, sendResponse) {
     // If the current selection fell out of the catalog, fall back to the
     // catalog default — the same rule the connect handshake applies.
     if (!state.port) {
-      sendResponse({ ok: false, groups: null, selection: state.selection, error: state.error ?? `not ready (phase: ${state.phase})` })
+      sendResponse({ ok: false, groups: null, selection: state.selection, error: state.error ?? `nicht bereit (Phase: ${state.phase})` })
       return
     }
     request('augmentor/models',{refresh:true})
@@ -384,11 +384,11 @@ export function handlePanelMessage(msg, sender, sendResponse) {
     // session exists yet it is remembered and applied at create (first
     // prompt). Switches only land while the turn is idle.
     if (state.phase !== 'ready') {
-      sendResponse({ ok: false, error: state.error ?? `not ready (phase: ${state.phase})` })
+      sendResponse({ ok: false, error: state.error ?? `nicht bereit (Phase: ${state.phase})` })
       return
     }
     if (state.running) {
-      sendResponse({ ok: false, error: 'finish the current turn before switching models' })
+      sendResponse({ ok: false, error: 'beende den aktuellen Durchlauf vor dem Modellwechsel' })
       return
     }
     const provider = msg.provider
@@ -396,7 +396,7 @@ export function handlePanelMessage(msg, sender, sendResponse) {
     const known =
       state.catalog?.some((g) => g.provider === provider && g.models.some((m) => m.model === model)) ?? false
     if (!known) {
-      sendResponse({ ok: false, error: `unknown model: ${provider}/${model}` })
+      sendResponse({ ok: false, error: `unbekanntes Modell: ${provider}/${model}` })
       return
     }
     if (state.selection && state.selection.provider === provider && state.selection.model === model) {
@@ -437,7 +437,7 @@ export function handlePanelMessage(msg, sender, sendResponse) {
     return true // async
   }
   if (msg?.type === 'newchat') {
-    if(state.running||state.mutating){sendResponse({ok:false,error:'Finish or stop the current action before starting a new chat.'});return}
+    if(state.running||state.mutating){sendResponse({ok:false,error:'Beende oder stoppe die aktuelle Aktion, bevor du einen neuen Chat startest.'});return}
     state.sessionId = `augmentor-${crypto.randomUUID().slice(0, 8)}`
     saveSessionId(state.sessionId)
     state.sessionReady = false // the stored id was never a DSH session (yet)
@@ -472,7 +472,7 @@ export function handlePanelMessage(msg, sender, sendResponse) {
     // messaging host." from a previous generation.
     requireReady().then((ok) => {
       if (!ok) {
-        sendResponse({ ok: false, error: state.error ?? `not ready (phase: ${state.phase})` })
+        sendResponse({ ok: false, error: state.error ?? `nicht bereit (Phase: ${state.phase})` })
         return
       }
       request('session.list', {})
@@ -487,12 +487,12 @@ export function handlePanelMessage(msg, sender, sendResponse) {
     // tool/call, …). The panel resets its seq baseline before applying.
     requireReady().then((ok) => {
       if (!ok) {
-        sendResponse({ ok: false, error: state.error ?? `not ready (phase: ${state.phase})` })
+        sendResponse({ ok: false, error: state.error ?? `nicht bereit (Phase: ${state.phase})` })
         return
       }
       const sessionId = String(msg.sessionId ?? '')
       if (!sessionId) {
-        sendResponse({ ok: false, error: 'missing sessionId' })
+        sendResponse({ ok: false, error: 'fehlende sessionId' })
         return
       }
       request('session.history', { sessionId, maxMessages: 500 })
@@ -513,13 +513,13 @@ export function handlePanelMessage(msg, sender, sendResponse) {
     // and the host pushes the session/title event back through the pipe,
     // which chat-render re-asserts in the header.
     if (state.phase !== 'ready') {
-      sendResponse({ ok: false, error: state.error ?? `not ready (phase: ${state.phase})` })
+      sendResponse({ ok: false, error: state.error ?? `nicht bereit (Phase: ${state.phase})` })
       return
     }
     const sessionId = String(msg.sessionId ?? '')
     const title = String(msg.title ?? '').trim()
     if (!sessionId || !title) {
-      sendResponse({ ok: false, error: 'missing sessionId or title' })
+      sendResponse({ ok: false, error: 'fehlende sessionId oder Titel' })
       return
     }
     request('session.rename', { sessionId, title })
@@ -533,7 +533,7 @@ export function handlePanelMessage(msg, sender, sendResponse) {
     // settings row uses.
     requireReady().then((ok) => {
       if (!ok) {
-        sendResponse({ ok: false, error: state.error ?? `not ready (phase: ${state.phase})` })
+        sendResponse({ ok: false, error: state.error ?? `nicht bereit (Phase: ${state.phase})` })
         return
       }
       request('settings.describe', msg.ns ? { ns: msg.ns } : {})
@@ -548,13 +548,13 @@ export function handlePanelMessage(msg, sender, sendResponse) {
     // settings-store contract.
     requireReady().then((ok) => {
       if (!ok) {
-        sendResponse({ ok: false, error: state.error ?? `not ready (phase: ${state.phase})` })
+        sendResponse({ ok: false, error: state.error ?? `nicht bereit (Phase: ${state.phase})` })
         return
       }
       const ns = String(msg.ns ?? '')
       const ops = Array.isArray(msg.ops) ? msg.ops : []
       if (!ns || ops.length === 0) {
-        sendResponse({ ok: false, error: 'missing ns or ops' })
+        sendResponse({ ok: false, error: 'fehlende ns oder ops' })
         return
       }
       request('settings.mutate', {
@@ -578,7 +578,7 @@ export function handlePanelMessage(msg, sender, sendResponse) {
   if (msg?.type === 'updates/check') {
     requireReady().then((ok) => {
       if (!ok) {
-        sendResponse({ ok: false, error: state.error ?? `not ready (phase: ${state.phase})` })
+        sendResponse({ ok: false, error: state.error ?? `nicht bereit (Phase: ${state.phase})` })
         return
       }
       request('updates/check', { extension: chrome.runtime.getManifest().version })
@@ -591,12 +591,12 @@ export function handlePanelMessage(msg, sender, sendResponse) {
     // Fire-and-poll start: returns the initial job state immediately.
     requireReady().then((ok) => {
       if (!ok) {
-        sendResponse({ ok: false, error: state.error ?? `not ready (phase: ${state.phase})` })
+        sendResponse({ ok: false, error: state.error ?? `nicht bereit (Phase: ${state.phase})` })
         return
       }
       const version = String(msg.version ?? '')
       if (!/^\d+\.\d+\.\d+$/.test(version)) {
-        sendResponse({ ok: false, error: `invalid version: ${JSON.stringify(msg.version)}` })
+        sendResponse({ ok: false, error: `ungültige Version: ${JSON.stringify(msg.version)}` })
         return
       }
       request('augmentor/update-plugin', { version })
@@ -608,7 +608,7 @@ export function handlePanelMessage(msg, sender, sendResponse) {
   if (msg?.type === 'updates/plugin-status') {
     requireReady().then((ok) => {
       if (!ok) {
-        sendResponse({ ok: false, error: state.error ?? `not ready (phase: ${state.phase})` })
+        sendResponse({ ok: false, error: state.error ?? `nicht bereit (Phase: ${state.phase})` })
         return
       }
       request('augmentor/update-status', {})
@@ -623,13 +623,13 @@ export function handlePanelMessage(msg, sender, sendResponse) {
     // stays pipe-side); this relay only checks the pair is present.
     requireReady().then((ok) => {
       if (!ok) {
-        sendResponse({ ok: false, error: state.error ?? `not ready (phase: ${state.phase})` })
+        sendResponse({ ok: false, error: state.error ?? `nicht bereit (Phase: ${state.phase})` })
         return
       }
       const version = String(msg.version ?? '')
       const url = String(msg.url ?? '')
       if (!/^\d+\.\d+\.\d+$/.test(version) || !url.startsWith('https://github.com/')) {
-        sendResponse({ ok: false, error: 'invalid update target' })
+        sendResponse({ ok: false, error: 'ungültiges Update-Ziel' })
         return
       }
       request('updates/download', { version, url })

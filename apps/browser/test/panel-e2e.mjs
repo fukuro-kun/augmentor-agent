@@ -239,7 +239,7 @@ process.stderr.write(`[harness] sessions popover: ${rows.length} rows\n`)
 // ---------- 3. Probe (before opening a session; strip lives in the popover) ----------
 const probeFile = path.join(AUG, 'trace/fence-probe.json')
 const before = fs.existsSync(probeFile) ? fs.statSync(probeFile).mtimeMs : 0
-const probeBtn = [...doc.querySelectorAll('.sp-strip button')].find((b) => b.textContent === 'Probe')
+const probeBtn = [...doc.querySelectorAll('.sp-strip button')].find((b) => b.textContent === 'Prüfen')
 if (!probeBtn) fail('Probe button not in popover')
 await probeBtn.click()
 waited = 0
@@ -325,7 +325,7 @@ if (!sameKeys(domKeys(), fullKeys)) fail('picker full list does not match the SW
 const pinHeader = doc.querySelector('#modelpop .mp-group.pin')
 if (expectedPinKeys.length > 0) {
   if (!pinHeader) fail('Pinned section missing although the DSH picker has pins')
-  if (pinHeader.textContent.trim() !== 'Pinned') fail('Pinned header label: ' + pinHeader.textContent)
+  if (pinHeader.textContent.trim() !== 'Angepinnt') fail('Pinned header label: ' + pinHeader.textContent)
   const actualPinKeys = [...doc.querySelectorAll('#modelpop .mp-row')].slice(0, expectedPinKeys.length).map((r) => r.title)
   if (!sameKeys(actualPinKeys, expectedPinKeys.map(pinTitleOf))) fail('pinned rows have wrong keys or order')
   if (new Set(domKeys()).size !== domKeys().length) fail('a model row appears twice (pinned + group)')
@@ -346,7 +346,7 @@ if (!sameKeys(domKeys(), searchExpected)) fail(`search "${query}": rows do not m
 searchInput.value = 'zzqzx-404-none'
 searchInput.dispatchEvent(new window.Event('input', { bubbles: true }))
 if (doc.querySelector('#modelpop .mp-row')) fail('no-match query still renders rows')
-if (!/No models match/.test(doc.querySelector('#modelpop .mp-strip')?.textContent ?? '')) fail('no-match strip missing')
+if (!/Keine passenden Modelle/.test(doc.querySelector('#modelpop .mp-strip')?.textContent ?? '')) fail('no-match strip missing')
 // Escape inside the field clears the query (DSH parity) and keeps the
 // popover open; the full list comes back.
 searchInput.dispatchEvent(new window.KeyboardEvent('keydown', { key: 'Escape', bubbles: true, cancelable: true }))

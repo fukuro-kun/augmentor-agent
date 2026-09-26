@@ -18,7 +18,7 @@ class EchoRouteTests(unittest.TestCase):
     def test_playback_monitor_cannot_become_microphone(self):
         with patch('augmentor_linux.voice_echo._pactl',
                    side_effect=['desktop.monitor', 'desktop']) as pactl:
-            with self.assertRaisesRegex(EchoRouteError, 'physical microphone'):
+            with self.assertRaisesRegex(EchoRouteError, 'physisches Mikrofon'):
                 EchoRoute.create()
             self.assertEqual(pactl.call_count, 2)
 
@@ -27,7 +27,7 @@ class EchoRouteTests(unittest.TestCase):
                    side_effect=['physical_mic', 'physical_sink', '25', '']) as pactl, \
              patch.object(EchoRoute, '_device_index', return_value=None), \
              patch('augmentor_linux.voice_echo.time.monotonic', side_effect=[10, 13]):
-            with self.assertRaisesRegex(EchoRouteError, 'did not become available'):
+            with self.assertRaisesRegex(EchoRouteError, 'nicht verfügbar'):
                 EchoRoute.create()
             self.assertEqual(pactl.call_args.args, ('unload-module', '25'))
             self.assertFalse(any('set-default' in str(call) for call in pactl.call_args_list))
@@ -39,7 +39,7 @@ class EchoRouteTests(unittest.TestCase):
              patch.object(route, '_process_streams', side_effect=[[], [{'index': 42, 'source': 90}]]), \
              patch('augmentor_linux.voice_echo._pactl'):
             try:
-                with self.assertRaisesRegex(EchoRouteError, 'confirm echo-cancelled'):
+                with self.assertRaisesRegex(EchoRouteError, 'Echo-freies Audio-Routing'):
                     route.open_input(sd, samplerate=16000)
                 sd.RawInputStream.return_value.close.assert_called_once()
             finally:

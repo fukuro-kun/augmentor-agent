@@ -22,7 +22,7 @@ test('shared voice submits final transcript exactly once and never replays unkno
  const event={type:'transcript',sessionId:'personal',requestId:id,text:'Synthetic voice fixture'}
  f.event(event);f.event(event);f.event({...event,sessionId:'other'});await delay(0)
  assert.equal(calls.length,1);assert.equal(calls[0][1],'resonant-voice:'+id)
- const reply=f.commands.find(c=>c.action==='submission');assert.equal(reply.result.accepted,false);assert.match(reply.result.error,/unknown/)
+ const reply=f.commands.find(c=>c.action==='submission');assert.equal(reply.result.accepted,false);assert.match(reply.result.error,/unbekannt/)
  assert.equal(f.events.some(e=>e.params.type==='transcript'),false)
 })
 test('closing during ticket preparation discards late credentials and audio start',async t=>{

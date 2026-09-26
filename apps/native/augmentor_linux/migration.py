@@ -19,7 +19,7 @@ def migrate(config,appearance=None,settings=None,prompts=None):
     if appearance and Path(appearance).exists():
         from .preferences import DEFAULTS
         old=json.loads(Path(appearance).read_text());destination=config/'appearance.json'
-        if not isinstance(old,dict):raise ValueError('Appearance must be a JSON object')
+        if not isinstance(old,dict):raise ValueError('Erscheinungsbild muss ein JSON-Objekt sein')
         if not destination.exists():atomic_json(destination,{k:v for k,v in old.items() if k in DEFAULTS and type(v) is type(DEFAULTS[k])});report['appearance']=True
         else:report['skipped'].append('Existing Pi appearance')
     source={}

@@ -26,47 +26,47 @@ def skin_document(name, values):
 
 def validate_skin(data):
     if not isinstance(data,dict) or set(data) != {'format','version','name','appearance'}:
-        raise ValueError('This is not an Augmentor skin file.')
+        raise ValueError('Dies ist keine Augmentor-Skin-Datei.')
     if data['format'] != 'augmentor-skin' or type(data['version']) is not int or data['version'] not in (1,2):
-        raise ValueError('Unsupported skin format or version.')
+        raise ValueError('Nicht unterstütztes Skin-Format oder -Version.')
     name=data['name']
     if not isinstance(name,str) or not name.strip() or len(name)>80 or any(ord(c)<32 for c in name):
-        raise ValueError('Use a skin name of 1–80 characters.')
+        raise ValueError('Verwende einen Skin-Namen mit 1–80 Zeichen.')
     values=data['appearance']
     if isinstance(values,dict) and 'background' not in values:
         values={**values,'background':'none'}
     if isinstance(values,dict) and 'background_image' not in values:
         values={**values,'background_image':''}
     if not isinstance(values,dict) or set(values) != set(BASE):
-        raise ValueError('The skin has missing or unsupported appearance settings.')
+        raise ValueError('Der Skin enthält fehlende oder nicht unterstützte Darstellungseinstellungen.')
     for key,(lo,hi) in RANGES.items():
         if type(values[key]) is not int or not lo<=values[key]<=hi:
-            raise ValueError(f'{key} must be a whole number from {lo} to {hi}.')
+            raise ValueError(f'{key} muss eine ganze Zahl von {lo} bis {hi} sein.')
     for key in ('animation','flares'):
-        if type(values[key]) is not bool:raise ValueError(f'{key} must be true or false.')
+        if type(values[key]) is not bool:raise ValueError(f'{key} muss true oder false sein.')
     if values['theme'] not in ('light','dark') or values['effect'] not in ('plasma','butterflies','butterflies-large','none'):
-        raise ValueError('Unsupported theme or activity effect.')
+        raise ValueError('Nicht unterstütztes Theme oder Aktivitätseffekt.')
     if values['background'] not in ('none','blossom-lake','uploaded'):
-        raise ValueError('Unsupported background image.')
-    if not isinstance(values['background_image'],str):raise ValueError('Invalid background image data.')
+        raise ValueError('Nicht unterstütztes Hintergrundbild.')
+    if not isinstance(values['background_image'],str):raise ValueError('Ungültige Hintergrundbilddaten.')
     if values['background']=='uploaded':
-        if data['version']!=2:raise ValueError('Uploaded backgrounds require skin version 2.')
+        if data['version']!=2:raise ValueError('Hochgeladene Hintergründe erfordern Skin-Version 2.')
         from .backgrounds import decode_background
         decode_background(values['background_image'])
     elif values['background_image']:
-        raise ValueError('Unexpected background image data.')
+        raise ValueError('Unerwartete Hintergrundbilddaten.')
     colours=values['format_colours']
     roles={'heading','link','emphasis','keyword','string','number','name','comment','operator'}
     if not isinstance(colours,dict) or not set(colours)<=roles or any(not isinstance(v,str) or not re.fullmatch(r'#[0-9a-fA-F]{6}',v) for v in colours.values()):
-        raise ValueError('Formatting colours must be supported roles with #RRGGBB values.')
+        raise ValueError('Formatierungsfarben müssen unterstützte Rollen mit #RRGGBB-Werten sein.')
     return {**deepcopy(data),'name':name.strip(),'appearance':deepcopy(values)}
 
 
 def read_skin(path):
     with open(path,'rb') as source:raw=source.read(LIMIT+1)
-    if len(raw)>LIMIT:raise ValueError('Skin files must be smaller than 6 MiB.')
+    if len(raw)>LIMIT:raise ValueError('Skin-Dateien müssen kleiner als 6 MiB sein.')
     try:return validate_skin(json.loads(raw))
-    except (UnicodeError,RecursionError) as error:raise ValueError('Invalid skin file.') from error
+    except (UnicodeError,RecursionError) as error:raise ValueError('Ungültige Skin-Datei.') from error
 
 
 def write_skin(path,name,values):

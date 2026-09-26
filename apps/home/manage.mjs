@@ -3,10 +3,10 @@
 import {readFileSync,writeFileSync} from 'node:fs';
 import {join} from 'node:path';
 const [operation,role='owner']=process.argv.slice(2);
-if(operation!=='invite'||!['owner','member','viewer'].includes(role))throw Error('Usage: node manage.mjs invite [owner|member|viewer]');
+if(operation!=='invite'||!['owner','member','viewer'].includes(role))throw Error('Aufruf: node manage.mjs invite [owner|member|viewer]');
 const token=readFileSync(process.env.HOME_AGENT_TOKEN_FILE,'utf8').trim();
 const response=await fetch(`http://127.0.0.1:${process.env.PORT??8181}/clients/invite`,{method:'POST',redirect:'error',headers:{Authorization:'Bearer '+token,'Content-Type':'application/json'},body:JSON.stringify({role}),signal:AbortSignal.timeout(5000)});
-if(!response.ok)throw Error('Cannot create invitation; check Home health');
+if(!response.ok)throw Error('Einladung kann nicht erstellt werden; prüfe den Home-Status');
 const {code,expires}=await response.json();
 const path=join(process.env.HOME_STATE_DIR??'/state','pairing-code');
 writeFileSync(path,code+'\n',{mode:0o600});

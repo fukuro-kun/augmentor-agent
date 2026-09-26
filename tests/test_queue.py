@@ -30,7 +30,7 @@ class QueueTests(unittest.TestCase):
         p=QueuePanel();p.running=True;p.submitted('rpc','Queued prompt');p.replace([item()]);calls=[]
         p.action_requested.connect(lambda *args:calls.append(args));p.act('one','steer');p.act('one','steer')
         self.assertEqual(calls,[('one','steer')]);self.assertFalse(p.pending)
-        p.replace([item(placement='steering')]);self.assertFalse(next(b for b in p.findChildren(QPushButton) if b.text()=='Steer' and not b.isHidden()).isEnabled())
+        p.replace([item(placement='steering')]);self.assertFalse(next(b for b in p.findChildren(QPushButton) if b.text()=='Steuern' and not b.isHidden()).isEnabled())
         p.consumed('rpc');p.replace([item()]);p.submission_result({'id':'rpc','accepted':True})
         self.assertFalse(p.items);self.assertFalse(p.pending);p.close()
 
