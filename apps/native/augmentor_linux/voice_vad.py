@@ -27,7 +27,7 @@ class SileroVad:
                 path = data/'augmentor/vad/silero-v6.2.1.onnx'
         else:
             path = Path(path)
-        if hashlib.sha256(path.read_bytes()).hexdigest() != MODEL_SHA256:
+        if not path.is_file() or hashlib.sha256(path.read_bytes()).hexdigest() != MODEL_SHA256:
             raise RuntimeError('Der Freisprechen-Sprachdetektor fehlt oder wurde geändert. Installiere sein gepinntes Modell neu (siehe docs/VOICE-LAN.md).')
         options = ort.SessionOptions()
         options.inter_op_num_threads = 1

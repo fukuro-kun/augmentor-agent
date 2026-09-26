@@ -220,7 +220,7 @@ def install(args):
         run('systemctl','--user','start','augmentor-desktop.service')
     result={'bundle':manifest['artifactId'],'status':'installed','desktop':True,'browserExtension':str(extension),
             'browserAction':'Load this folder once in chrome://extensions (Developer mode).',
-            'voice':'augmentor-voice-lan registered; enable it in the Voice settings once a LAN InferenzQuelle forward is reachable',
+            'voice':'augmentor-voice-lan registered; enable it in the Voice settings once a LAN InferenzQuelle forward is reachable. Hands-free mode additionally needs the pinned Silero model (docs/VOICE-LAN.md)',
             'memory':'configured' if args.memory else 'adapter installed; memory engine setup deferred',
             'model':'configured; verify a reply before relying on this setup'}
     write(stamp,json.dumps(result,indent=2)+'\n')

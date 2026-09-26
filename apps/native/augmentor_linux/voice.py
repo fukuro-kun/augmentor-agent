@@ -393,6 +393,7 @@ class VoiceSession(QObject):
         self.accepting_audio = False
         self.recording_started = None
         if not self.hands_free and self.capture:
+            self.capture_timer.stop()
             try:
                 self.capture.stop();self.capture.close()
             except Exception:pass
