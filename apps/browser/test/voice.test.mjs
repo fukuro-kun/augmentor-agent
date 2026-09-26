@@ -34,7 +34,9 @@ test('hold records, release sends; locked recording survives release and ends on
  down();await delay(260);assert.equal(sent.at(-1).action,'begin')
  button.onpointerup();assert.equal(sent.at(-1).action,'end')
  down();button.onpointermove({clientX:-30});await delay(5)
- assert.equal(sent.at(-1).action,'begin');button.onpointerup();assert.equal(sent.at(-1).action,'begin')
+ // Locking now also engages pause-based dictation segmentation server-side.
+ assert.equal(sent.at(-2).action,'begin');assert.equal(sent.at(-1).action,'dictation')
+ button.onpointerup();assert.equal(sent.at(-1).action,'dictation')
  down();assert.equal(sent.at(-1).action,'end')
 })
 test('hands-free uses native engine, survives blur, and stops on Escape',async t=>{

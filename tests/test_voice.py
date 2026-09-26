@@ -181,6 +181,95 @@ class VoiceTests(unittest.TestCase):
                 self.assertEqual(kinds.count('end'),3)
             window.close()
 
+    def test_tap_end_preserves_deferred_chain_through_disarm(self):
+        # Regression: end() parked deferred segments under dictation=False,
+        # then its own 'recognizing' status cascaded through the button
+        # disarm → lock_toggled → set_dictation(False) → dictation_close()
+        # and wiped the list synchronously — every segment after the first
+        # replay was lost on the native path.
+        with patch.object(VoiceDialog,'connect_voice',lambda self:None):
+            window,voice=self.make_voice_window()
+            voice.dictation_vad=lambda pcm:0.
+            voice.begin();window.voice_button.lock_recording()
+            self.assertTrue(voice.dictation)
+            # Two segments collected while a third still transcribes.
+            voice.dictation_deferred=[b'seg-one',b'seg-two']
+            voice.dictation_open=False;voice.dictation_open_pending=None;voice.recognizing=True
+            voice.end()
+            self.assertFalse(voice.dictation)
+            self.assertEqual(voice.dictation_deferred,[b'seg-one',b'seg-two'])
+            voice.handle({'type':'transcript','requestId':'live','text':'live','sessionId':'s'})
+            kinds=[p.get('type') for p in voice.sender_queue.queue if isinstance(p,dict)]
+            self.assertEqual(kinds.count('begin'),2)
+            self.assertEqual(kinds.count('end'),1)
+            voice.handle({'type':'transcript','requestId':'r2','text':'eins','sessionId':'s'})
+            kinds=[p.get('type') for p in voice.sender_queue.queue if isinstance(p,dict)]
+            self.assertEqual(kinds.count('begin'),3)
+            self.assertEqual(kinds.count('end'),2)
+            self.assertEqual(voice.dictation_deferred,[])
+            window.close()
+
+    def test_tap_with_lone_pending_segment_keeps_it_for_replay(self):
+        # A tap landing < dictation pause after a phrase while ASR is busy:
+        # the worker parked the half-collected onset in dictation_open_pending
+        # with no deferred entry yet — end() must carry it into the chain
+        # instead of dropping the audio at dictation_close().
+        with patch.object(VoiceDialog,'connect_voice',lambda self:None):
+            window,voice=self.make_voice_window()
+            voice.dictation_vad=lambda pcm:0.
+            voice.begin();window.voice_button.lock_recording()
+            voice.dictation_open=False;voice.recognizing=True
+            voice.dictation_deferred=[];voice.dictation_open_pending=bytearray(b'lone-segment')
+            voice.end()
+            self.assertFalse(voice.dictation)
+            self.assertEqual(voice.dictation_deferred,[b'lone-segment'])
+            self.assertIsNone(voice.dictation_open_pending)
+            voice.handle({'type':'transcript','requestId':'live','text':'live','sessionId':'s'})
+            kinds=[p.get('type') for p in voice.sender_queue.queue if isinstance(p,dict)]
+            self.assertEqual(kinds.count('begin'),2)
+            self.assertEqual(kinds.count('end'),1)
+            self.assertEqual(voice.dictation_deferred,[])
+            window.close()
+
+    def test_recoverable_stt_error_resumes_deferred_chain(self):
+        # A recoverable backend failure never produces a transcript — the
+        # event itself must re-drive the parked replay chain or every
+        # remaining segment is silently stranded.
+        with patch.object(VoiceDialog,'connect_voice',lambda self:None):
+            window,voice=self.make_voice_window()
+            voice.dictation_vad=lambda pcm:0.
+            voice.begin();window.voice_button.lock_recording()
+            voice.dictation_deferred=[b'seg-one',b'seg-two']
+            voice.dictation_open=False;voice.dictation_open_pending=None;voice.recognizing=True
+            voice.end()
+            voice.handle({'type':'error','recoverable':True,'message':'STT-Zeitüberschreitung'})
+            kinds=[p.get('type') for p in voice.sender_queue.queue if isinstance(p,dict)]
+            self.assertEqual(kinds.count('begin'),2)
+            self.assertEqual(kinds.count('end'),1)
+            self.assertEqual(voice.dictation_deferred,[b'seg-two'])
+            window.close()
+
+    def test_idle_tap_does_not_wedge_recognizing(self):
+        # Regression: end() set recognizing=True unconditionally. A tap during
+        # dictation silence (segment closed, transcript received, nothing
+        # pending) sent no 'end' — the flag stayed set forever, can_record
+        # never recovered and the UI stuck in 'recognizing' until interrupt().
+        with patch.object(VoiceDialog,'connect_voice',lambda self:None):
+            window,voice=self.make_voice_window()
+            voice.dictation_vad=lambda pcm:0.
+            voice.begin();window.voice_button.lock_recording()
+            self.assertTrue(voice.dictation)
+            voice.dictation_open=False;voice.recognizing=False
+            voice.dictation_deferred=[];voice.dictation_open_pending=None
+            voice.end()
+            self.assertFalse(voice.dictation)
+            self.assertFalse(voice.recognizing)
+            self.assertTrue(voice.can_record)
+            self.assertEqual(voice.state,'ready')
+            kinds=[p.get('type') for p in voice.sender_queue.queue if isinstance(p,dict)]
+            self.assertEqual(kinds.count('end'),0)
+            window.close()
+
     def test_interrupted_dictation_leaves_no_stray_wire_messages(self):
         # Regression: the worker kept draining its pending backlog after
         # dictation_close() cleared the state, so a 'start' event post-close
