@@ -22,7 +22,9 @@ export class InferenzVoice {
   }
 
   signal(outer) {
-    return AbortSignal.any([outer, AbortSignal.timeout(this.timeoutMs)])
+    const signals = [AbortSignal.timeout(this.timeoutMs)]
+    if (outer) signals.push(outer)
+    return AbortSignal.any(signals)
   }
 
   async request(path, init, outer) {
@@ -30,7 +32,7 @@ export class InferenzVoice {
     try {
       response = await fetch(this.base + path, { ...init, signal: this.signal(outer) })
     } catch (error) {
-      if (outer.aborted) throw error
+      if (outer?.aborted) throw error
       if (error?.name === 'TimeoutError' || error?.name === 'AbortError')
         throw new VoiceBackendError('timeout', 504)
       throw new VoiceBackendError('unreachable', 502)
