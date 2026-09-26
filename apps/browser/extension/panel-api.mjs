@@ -74,7 +74,7 @@ export function handlePanelMessage(msg, sender, sendResponse) {
         state.sessionReady=true
         broadcast()
       }
-      return request('augmentor/voice/start',{sessionId:state.sessionId,id:msg.id,handsFree:msg.handsFree===true})
+      return request('augmentor/voice/start',{sessionId:state.sessionId,id:msg.id,handsFree:msg.handsFree===true,submitMode:msg.submitMode})
     })().then(voice=>sendResponse({ok:true,voice})).catch(error=>sendResponse({ok:false,error:error.message})).finally(()=>state.mutating=false)
     return true
   }

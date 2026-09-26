@@ -22,6 +22,12 @@
 - User-facing UI localized to German across the native app, browser
   extension, Home and mobile surfaces, runtime errors and the prompt
   library service.
+- `voice_submit_mode` preference (`auto` | `review`, default `auto`):
+  `review` parks the finished transcript in the composer/sidebar input as
+  a correctable draft instead of submitting it; `auto` keeps the
+  immediate submit. Exposed in the native Voice settings and the
+  extension's voice section; the browser lease picks the mode up at
+  `voice/start`.
 
 ## 0.2.3
 

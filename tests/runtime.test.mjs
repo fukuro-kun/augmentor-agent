@@ -73,7 +73,7 @@ test('Pi host protocol, lifecycle, policy and crash recovery', {timeout:120000},
    await until(()=>bridge.events.some(e=>e.method==='browser/execute'));
    const request=bridge.events.find(e=>e.method==='browser/execute').payload;
    assert.equal(request.params.action,'snapshot');
-   await assert.rejects(stranger.call('browser.respond',{rpcId:request.id,result:{text:'wrong client'}}),/fremde/);
+   await assert.rejects(stranger.call('browser.respond',{rpcId:request.id,result:{text:'wrong client'}}),/fremde/i);
    await bridge.call('browser.respond',{rpcId:request.id,result:{text:'verified browser context'}});await idle('browser-contract');
    assert(received.at(-1).messages.some(m=>m.role==='tool'&&JSON.stringify(m).includes('verified browser context')));
    assert(!received.at(-1).tools.some(t=>t.function.name==='linux_browser_open'));

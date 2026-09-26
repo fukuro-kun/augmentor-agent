@@ -115,9 +115,11 @@ async function showVoice(container){
   }
   const mode=add('mode','Unterhaltungsmodus',make('select'))
   for(const [value,label] of [['manual','Halten oder zum Sperren schieben'],['hands-free','Freisprech-Unterhaltung']]){const option=make('option',label);option.value=value;mode.append(option)}mode.value=data.mode
+  const submitMode=add('submitMode','Nach dem Diktat',make('select'))
+  for(const [value,label] of [['auto','Transkript sofort senden'],['review','Ins Eingabefeld legen']]){const option=make('option',label);option.value=value;submitMode.append(option)}submitMode.value=data.submitMode||'auto'
   const note=make('p','Halten zum Aufnehmen · Nach links schieben zum Sperren · Nach rechts für Freisprechen · Escape bricht ab. Änderungen gelten beim nächsten Öffnen der Sprachfunktion.');container.append(note)
   button(container,'Speichern',async()=>{
-    const settings={voiceId:voices.value,enabled:enabled.checked,ttsEnabled:ttsEnabled.checked,sttLanguage:language.value,mode:mode.value,speed:Number(fields.speed.value),volume:Number(fields.volume.value),pauseMs:Number(fields.pauseMs.value)}
+    const settings={voiceId:voices.value,enabled:enabled.checked,ttsEnabled:ttsEnabled.checked,sttLanguage:language.value,mode:mode.value,submitMode:submitMode.value,speed:Number(fields.speed.value),volume:Number(fields.volume.value),pauseMs:Number(fields.pauseMs.value)}
     const reply=await send('voice/preferences',{action:'save',settings});if(!reply?.ok)throw Error(reply?.error||'Spracheinstellungen konnten nicht gespeichert werden')
     note.textContent='Für beide Oberflächen gespeichert. Änderungen gelten beim nächsten Öffnen der Sprachfunktion.'
   })

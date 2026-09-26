@@ -72,6 +72,32 @@ class VoiceTests(unittest.TestCase):
             self.assertEqual(panel.status_text,'Spricht …')
             panel.close()
 
+    def test_review_submit_mode_parks_transcript_without_thinking(self):
+        with patch.object(VoiceDialog, 'connect_voice', lambda self: None):
+            parent = QWidget(); parent.stop = lambda: None
+            parent.preferences = SimpleNamespace(values={'voice_submit_mode': 'review'})
+            dialog = VoiceDialog(parent, {'sessionId': 's'})
+            seen = []; dialog.transcript.connect(seen.append)
+            dialog.handle({'type': 'ready'})
+            dialog.handle({'type': 'transcript', 'requestId': 'r1', 'text': 'Diktierter Entwurf', 'sessionId': 's'})
+            self.assertEqual([event['text'] for event in seen], ['Diktierter Entwurf'])
+            self.assertEqual(dialog.state, 'ready')
+            self.assertIn('Eingabefeld', dialog.status_text)
+            self.assertIsNone(dialog.waiting_request)
+            self.assertTrue(dialog.turn_complete)
+            dialog.close()
+
+    def test_auto_submit_mode_keeps_thinking_state(self):
+        with patch.object(VoiceDialog, 'connect_voice', lambda self: None):
+            parent = QWidget(); parent.stop = lambda: None
+            parent.preferences = SimpleNamespace(values={'voice_submit_mode': 'auto'})
+            dialog = VoiceDialog(parent, {'sessionId': 's'})
+            dialog.handle({'type': 'ready'})
+            dialog.handle({'type': 'transcript', 'requestId': 'r2', 'text': 'Direkt', 'sessionId': 's'})
+            self.assertEqual(dialog.waiting_request, 'augmentor-voice:r2')
+            self.assertFalse(dialog.turn_complete)
+            dialog.close()
+
     def test_settings_disable_disconnects_hides_and_persists(self):
         from augmentor_linux.window import Window
         calls=[]

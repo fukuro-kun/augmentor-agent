@@ -127,9 +127,17 @@ Tested ref: `feature/x11-mate-desktop` commits `7c007a2` + `c41e787`
 
 - Preference keys are `voice_enabled`, `voice_mode`, `voice_pause_ms`,
   `voice_tts_enabled`, `voice_stt_language`, `voice_speed`,
-  `voice_volume`, `voice_id`. A stored legacy `resonant_voice` flag is
-  imported once; a former private voice store seeds speed/volume/voice
-  when present.
+  `voice_volume`, `voice_id`, `voice_submit_mode`. A stored legacy
+  `resonant_voice` flag is imported once; a former private voice store
+  seeds speed/volume/voice when present.
+- `voice_submit_mode` (`auto` | `review`, default `auto`) chooses what a
+  finished transcript does: `auto` submits it to the session as before;
+  `review` parks it in the composer as a draft (native) or sidebar input
+  (browser) so dictation errors can be corrected before sending manually.
+  The browser lease picks up the mode at `voice/start`; saving voice
+  preferences closes an open lease, so the change applies on next open.
+  In review mode no `session.prompt` call is made and the server-side
+  utterance lifecycle ends with the delivered transcript.
 - `dsh-memory` recognises both `resonant-voice:` and `augmentor-voice:`
   request prefixes during the transition; new sessions emit
   `augmentor-voice:`.

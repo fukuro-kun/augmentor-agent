@@ -25,6 +25,17 @@ test('shared voice submits final transcript exactly once and never replays unkno
  const reply=f.commands.find(c=>c.action==='submission');assert.equal(reply.result.accepted,false);assert.match(reply.result.error,/unbekannt/)
  assert.equal(f.events.some(e=>e.params.type==='transcript'),false)
 })
+test('review mode parks the transcript as a composer draft and never submits',async t=>{
+ const calls=[];const f=fixture(t,{submit:async(...args)=>{calls.push(args);return {accepted:true}}})
+ await assert.rejects(f.voice.start({id,sessionId:'personal',submitMode:'bogus'}))
+ await f.voice.start({id,sessionId:'personal',submitMode:'review'});await delay(0)
+ const event={type:'transcript',sessionId:'personal',requestId:id,text:'Diktierter Entwurf'}
+ f.event(event);f.event(event);await delay(0)
+ assert.equal(calls.length,0)
+ const drafts=f.events.filter(e=>e.params.type==='draft')
+ assert.equal(drafts.length,1);assert.equal(drafts[0].params.text,'Diktierter Entwurf');assert.equal(drafts[0].params.requestId,id)
+ assert.equal(f.commands.some(c=>c.action==='submission'),false)
+})
 test('closing during ticket preparation discards late credentials and audio start',async t=>{
  let resolve;const f=fixture(t,{ticket:()=>new Promise(r=>resolve=r)})
  await f.voice.start({id,sessionId:'personal',handsFree:true})

@@ -10,7 +10,7 @@ export function attachVoice({send,onError,isHistory}){
   const seat=document.getElementById('voice-seat');if(seat)seat.append(button,status);else document.getElementById('send').before(button,status)
   const drawing=typeof MutationObserver==='function'?attachVoiceIcon(button):null
   let lease=null,opening=null,epoch=0,held=false,locked=false,handsFree=false,timer=null,startX=0,heartbeat=null,voiceState='closed'
-  let maxSeconds=600,elapsed=0,defaultHandsFree=false,voiceEnabled=true,nextPreferences=0
+  let maxSeconds=600,elapsed=0,defaultHandsFree=false,voiceEnabled=true,nextPreferences=0,submitMode='auto'
   const label=text=>{status.textContent=text;button.title=text;button.setAttribute('aria-description',text)}
   label('Halten zum Sprechen · Nach links schieben zum Sperren · Nach rechts für Freisprechen')
   async function control(action,current=lease){
@@ -32,7 +32,7 @@ export function attachVoice({send,onError,isHistory}){
     if(opening)return opening
     const ownEpoch=epoch,id=crypto.randomUUID();handsFree=free;label('Sprachmodelle werden vorbereitet…')
     opening=(async()=>{
-      const result=await send('voice/start',{id,handsFree:free})
+      const result=await send('voice/start',{id,handsFree:free,submitMode})
       if(!result?.ok)throw Error(result?.error??'Sprache konnte nicht starten')
       const current=result.voice
       if(epoch!==ownEpoch){await control('close',current);return null}
@@ -90,6 +90,16 @@ export function attachVoice({send,onError,isHistory}){
       if(event.closed){close();return}
       button.dataset.recording=String(event.recordingAvailable)
       label(locked&&event.recording?'Aufnahme gesperrt · Tippen zum Senden':event.status)
+    }else if(event.type==='draft'){
+      // Review mode: park the transcript in the composer for correction; the
+      // user sends it manually like any other draft.
+      const input=document.getElementById('input')
+      if(input&&!input.disabled){
+        const current=input.value
+        input.value=current&&!current.endsWith(' ')&&!current.endsWith('\n')?current+' '+event.text:current+event.text
+        input.dispatchEvent(new Event('input',{bubbles:true}));input.focus()
+        label('Entwurf im Eingabefeld · prüfen und senden')
+      }
     }else if(event.type==='progress'){
       elapsed=event.elapsed;maxSeconds=event.maximum
       drawing?.levels(event.levels)
@@ -105,7 +115,7 @@ export function attachVoice({send,onError,isHistory}){
   return {update(state,history){
     if(state.harness==='dsh'&&state.phase==='ready'&&!lease&&!opening&&Date.now()>nextPreferences){
       nextPreferences=Date.now()+15000
-      void send('voice/preferences').then(result=>{if(result?.ok&&result.result){defaultHandsFree=result.result.mode==='hands-free';voiceEnabled=result.result.enabled;button.hidden=!voiceEnabled;status.hidden=!voiceEnabled}}).catch(()=>{})
+      void send('voice/preferences').then(result=>{if(result?.ok&&result.result){defaultHandsFree=result.result.mode==='hands-free';voiceEnabled=result.result.enabled;submitMode=result.result.submitMode==='review'?'review':'auto';button.hidden=!voiceEnabled;status.hidden=!voiceEnabled}}).catch(()=>{})
     }
     button.disabled=state.harness!=='dsh'||state.phase!=='ready'||history||!voiceEnabled
     if((lease||opening)&&(button.disabled||lease&&state.sessionId&&lease.sessionId!==state.sessionId))close()

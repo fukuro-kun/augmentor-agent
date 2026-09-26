@@ -24,10 +24,13 @@ def request(value):
         if not isinstance(volume,(int,float)) or not 0<=volume<=1:raise ValueError('Invalid volume')
         voice=settings.get('voiceId',v['voice_id'])
         if not isinstance(voice,str) or len(voice)>128:raise ValueError('Invalid voice')
+        submit=settings.get('submitMode',v['voice_submit_mode'])
+        if submit not in ('auto','review'):raise ValueError('Invalid submit mode')
         preferences.values.update(voice_mode=settings['mode'],voice_pause_ms=settings['pauseMs'],voice_enabled=settings['enabled'],
-            voice_tts_enabled=tts,voice_stt_language=language,voice_speed=float(speed),voice_volume=float(volume),voice_id=voice)
+            voice_tts_enabled=tts,voice_stt_language=language,voice_speed=float(speed),voice_volume=float(volume),voice_id=voice,
+            voice_submit_mode=submit)
         preferences.save()
-    return {'ok':True,'mode':v['voice_mode'],'pauseMs':v['voice_pause_ms'],'enabled':v['voice_enabled'],
+    return {'ok':True,'mode':v['voice_mode'],'pauseMs':v['voice_pause_ms'],'enabled':v['voice_enabled'],'submitMode':v['voice_submit_mode'],
             'ttsEnabled':v['voice_tts_enabled'],'sttLanguage':v['voice_stt_language'],
             'values':{'voiceId':v['voice_id'],'speed':v['voice_speed'],'volume':v['voice_volume']},
             'voices':[{'id':'','name':'Standardstimme'}]}

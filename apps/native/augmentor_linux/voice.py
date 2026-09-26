@@ -504,9 +504,16 @@ class VoiceSession(QObject):
             if self.closed or event.get('requestId') in self.submitted:return
             self.recognizing=False
             self.submitted.add(event.get('requestId'))
-            self.set_status('Denkt …', 'thinking')
-            self.waiting_request='augmentor-voice:'+str(event.get('requestId'))
-            self.turn_complete=False
+            review=getattr(getattr(self.parent(),'preferences',None),'values',{}).get('voice_submit_mode','auto')=='review'
+            if review:
+                # The draft goes to the composer instead of the session — no
+                # answer turn follows, so nothing is awaited here.
+                self.turn_complete=True
+                self.set_status('Hört zu · Entwurf im Eingabefeld' if self.hands_free else 'Entwurf im Eingabefeld · prüfen und senden','listening' if self.hands_free else 'ready')
+            else:
+                self.set_status('Denkt …', 'thinking')
+                self.waiting_request='augmentor-voice:'+str(event.get('requestId'))
+                self.turn_complete=False
             self.transcript.emit(event)
             self.resume_detection()
         elif event['type']=='speaking':
