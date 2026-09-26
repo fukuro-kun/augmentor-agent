@@ -23,7 +23,8 @@ assert (config/'autostart/com.augmentor.Agent.desktop').is_file()
 assert (data.parent/'applications/com.augmentor.Agent.secondary.desktop').is_file()
 assert (data/'browser'/version/'voice.mjs').is_file()
 assert (config/'chromium/NativeMessagingHosts/com.augmentor.agent.json').is_file()
-assert (data/'dsh-home/profiles/web/node_modules/dsh-resonant-voice/package.json').is_file()
+patch=(data/'dsh-home/profiles/web/cordis.patch.yml').read_text()
+assert 'augmentor-voice-lan' in patch and 'dsh-resonant-voice' not in patch
 for role in ('linux','browser'):
     preset=data/'dsh-home/.agent-presets'/('augmentor-'+role+'-product')/'agent.cordis.yml'
     entries=json.loads(preset.read_text().split('\n',1)[1])

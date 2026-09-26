@@ -77,8 +77,8 @@ def configure_product(app, cli, home, endpoint, env, state):
     sys.path.insert(0,str(app/'services'))
     from dsh.setup import Setup
     from dsh.remote import client
-    # The voice bundle needs this fresh secret during its first boot. The
-    # checked product installer subsequently validates and reuses it.
+    # The product and in-repo voice plugins share this fresh secret during
+    # first boot. The checked product installer validates and reuses it.
     if not (home/'augmentor-product-token').exists():
         write(home/'augmentor-product-token',secrets.token_hex(32)+'\n')
     log_path=state/'setup-dsh.log';process=None
@@ -132,16 +132,11 @@ def install(args):
         info=dict(line.split('=',1) for line in Path('/etc/os-release').read_text().splitlines() if '=' in line)
         if info.get('ID','').strip('"')!='debian' or info.get('VERSION_ID','').strip('"')!='13' or platform.machine() not in ('x86_64','amd64'):
             raise ValueError('This complete installer is qualified for Debian 13 amd64. Other distributions require separate qualification.')
-    if args.plan:return {'bundle':manifest['version'],'components':manifest['components'],'changes':'Fresh private DSH home, desktop/browser, plugins, login recovery and optional local voice/memory.'}
+    if args.plan:return {'bundle':manifest['version'],'components':manifest['components'],'changes':'Fresh private DSH home, desktop/browser, plugins, login recovery and optional dual memory. Voice registers through the in-repo augmentor-voice-lan plugin.'}
     if not args.model_url:args.model_url=input('Your OpenAI-compatible model API URL (including /v1): ').strip()
     if not args.model:args.model=input('Model ID: ').strip()
     settings=model_settings(args.model_url,args.model,args.context)
     if sys.stdin.isatty() and not args.non_interactive:
-        if not args.voice:
-            args.voice=input('Set up local voice? Downloads a 2.54 GB model; Breeze research/non-commercial terms apply. [y/N] ').strip().lower()=='y'
-        if args.voice and not args.gpu:
-            choice=input('Speech device: enter an NVIDIA GPU UUID, or press Enter for CPU (slower): ').strip()
-            if choice:args.gpu=choice
         if not args.memory:args.memory=input('Set up dual memory with Docker and this local model? [y/N] ').strip().lower()=='y'
     if args.memory and urlsplit(args.model_url).hostname not in ('127.0.0.1','::1'):
         raise ValueError('The bundled memory setup currently requires a local numeric-loopback model API. Omit memory for a cloud-only setup.')
@@ -179,18 +174,6 @@ def install(args):
     write(state/'model.env','AUGMENTOR_MODEL_API_KEY='+environment_value(secret)+'\n')
     for name in manifest['plugins']:
         run(cli,'plugin','--profile','web','add',bundle/name,'--ignore-scripts','--config.auto-install-peers=false',env=env,stdout=subprocess.DEVNULL)
-    voice=home/'profiles/web/node_modules/dsh-resonant-voice'
-    if not voice.exists():
-        raise ValueError('This bundle expects the retired private dsh-resonant-voice plugin, which this fork does not ship. Install Augmentor through the standard DSH setup instead — it registers the in-repo augmentor-voice-lan plugin. See docs/VOICE-LAN.md.')
-    if args.voice:
-        command=['/usr/bin/python3',voice/'bin/setup-linux.py','--node',node,'--accept-model-license']
-        if args.gpu:
-            if not args.skip_packages:run('sudo','apt','install','-y','libvulkan-dev','glslc','spirv-headers')
-            command+=['--gpu',args.gpu]
-        else:command+=['--cpu']
-        if args.no_services:command+=['--no-start']
-        run(*command,env=env)
-    run(node,voice/'bin/resonant-voice.js','init',env=env)
     endpoint='http://127.0.0.1:'+str(args.port)
     configure_product(app,cli,home,endpoint,env,state)
     python=data/'python/bin/python'
@@ -237,7 +220,7 @@ def install(args):
         run('systemctl','--user','start','augmentor-desktop.service')
     result={'bundle':manifest['artifactId'],'status':'installed','desktop':True,'browserExtension':str(extension),
             'browserAction':'Load this folder once in chrome://extensions (Developer mode).',
-            'voice':'configured' if args.voice else 'plugin installed; speech engine setup deferred',
+            'voice':'augmentor-voice-lan registered; enable it in the Voice settings once a LAN InferenzQuelle forward is reachable',
             'memory':'configured' if args.memory else 'adapter installed; memory engine setup deferred',
             'model':'configured; verify a reply before relying on this setup'}
     write(stamp,json.dumps(result,indent=2)+'\n')
@@ -248,13 +231,11 @@ def main():
     p=argparse.ArgumentParser(description=__doc__);p.add_argument('--bundle',type=Path,required=True)
     p.add_argument('--model-url');p.add_argument('--model');p.add_argument('--context',type=int,default=32768)
     p.add_argument('--api-key-env');p.add_argument('--port',type=int,default=3080)
-    p.add_argument('--voice',action='store_true',help='Accept Breeze research/non-commercial terms and provision local voice.');p.add_argument('--gpu',help='Explicit NVIDIA GPU UUID; otherwise voice uses CPU.')
     p.add_argument('--memory',action='store_true',help='Provision Docker Hindsight using this explicitly chosen local model.')
     p.add_argument('--plan',action='store_true');p.add_argument('--app-root',type=Path,default=Path('/usr/lib/augmentor'))
     p.add_argument('--non-interactive',action='store_true',help='Use supplied model settings and explicit feature flags without questions.')
     p.add_argument('--skip-packages',action='store_true',help=argparse.SUPPRESS);p.add_argument('--no-services',action='store_true',help=argparse.SUPPRESS)
     args=p.parse_args()
-    if args.gpu and not args.voice:p.error('--gpu requires --voice')
     print(json.dumps(install(args),indent=2))
 
 

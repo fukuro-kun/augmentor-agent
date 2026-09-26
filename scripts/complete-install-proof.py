@@ -24,11 +24,9 @@ with tempfile.TemporaryDirectory(prefix='augmentor-complete-proof-') as director
     cli=Path(shutil.which('dsh'));env={**os.environ,'DSH_HOME':str(home),'DSH_TELEMETRY_MODE':'DISABLED','AUGMENTOR_MODEL_API_KEY':'fixture'}
     import yaml
     (home/'settings.yaml').write_text(yaml.safe_dump(setup.model_settings('http://127.0.0.1:9/v1','fixture',32768)))
-    for name in ('dsh-model-picker-augmented-1.1.2.tgz','dsh-adaptive-reasoning-0.2.3.tgz','dsh-resonant-voice-0.1.16.tgz'):
+    for name in ('dsh-model-picker-augmented-1.1.2.tgz','dsh-adaptive-reasoning-0.2.3.tgz'):
         subprocess.run([str(cli),'plugin','--profile','web','add',str((a.plugins/name).resolve()),'--ignore-scripts','--config.auto-install-peers=false'],
                        env=env,check=True,stdout=subprocess.DEVNULL)
-    voice=home/'profiles/web/node_modules/dsh-resonant-voice'
-    subprocess.run(['node',str(voice/'bin/resonant-voice.js'),'init'],env=env,check=True,stdout=subprocess.DEVNULL)
     with socket.socket() as probe:probe.bind(('127.0.0.1',0));port=probe.getsockname()[1]
     try:
         setup.configure_product(ROOT,cli,home,'http://127.0.0.1:'+str(port),env,state)
@@ -40,7 +38,9 @@ with tempfile.TemporaryDirectory(prefix='augmentor-complete-proof-') as director
     assert saved['home']==str(home) and saved['version']==json.loads((ROOT/'release/product.json').read_text())['version']
     package=json.loads((home/'profiles/web/package.json').read_text())
     bundles=package['dsh']['profile']['bundles']
-    for name in ('dsh-model-picker-augmented','dsh-adaptive-reasoning','dsh-resonant-voice'):assert bundles.count(name)==1
+    for name in ('dsh-model-picker-augmented','dsh-adaptive-reasoning'):assert bundles.count(name)==1
+    patch=(home/'profiles/web/cordis.patch.yml').read_text()
+    assert 'augmentor-voice-lan' in patch and 'dsh-resonant-voice' not in patch
     for role in ('linux','browser'):
         entries=json.loads((home/'.agent-presets'/('augmentor-'+role+'-product')/'agent.cordis.yml').read_text().split('\n',1)[1])
         assert any(row['id']=='augmentor-memory' for row in entries)
@@ -48,4 +48,4 @@ with tempfile.TemporaryDirectory(prefix='augmentor-complete-proof-') as director
         execution=next(row for row in entries if row['id']=='augmentor-execution')
         assert Path(execution['name']).is_file()
         assert (Path(execution['name']).parent/'actions.mjs').is_file()
-    print('PASS: real fresh DSH installation, all three external plugins mounted once, native/browser integration, automatic-memory adapter and authenticated save after restart.')
+    print('PASS: real fresh DSH installation, both external plugins mounted once, in-repo voice plugin registered, native/browser integration, automatic-memory adapter and authenticated save after restart.')

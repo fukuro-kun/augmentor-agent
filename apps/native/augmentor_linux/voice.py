@@ -303,7 +303,9 @@ class VoiceSession(QObject):
         if not self.hands_free or self.closed or event.get('epoch') != self.vad_epoch:return
         kind=event['type']
         if kind=='vad-start':
-            self.interrupt()
+            # The barge-in continues on the same detector epoch; bumping it
+            # here would drop every buffered vad event that follows.
+            self.interrupt(resume=False)
             self.speak_turn=False;self.waiting_request='recording'
             self.turn_complete=False
             self.control({'type':'begin'})
@@ -372,7 +374,7 @@ class VoiceSession(QObject):
             if send:self.control({'type': 'end'})
             self.set_status('Aufnahmelimit erreicht · transkribiert …' if automatic else 'Transkribiert …', 'recognizing')
 
-    def interrupt(self):
+    def interrupt(self, resume=True):
         with self.audio_lock:
             self.playback_buffer.reset()
             self.timings = {}
@@ -384,18 +386,21 @@ class VoiceSession(QObject):
         # The server silently discards the interrupted utterance, so no
         # transcript/empty-transcript ever arrives; reset the local capture
         # state or can_record would stay False until the panel is reopened.
+        # In hands-free mode capture is the continuous microphone stream and
+        # must stay open; push-to-talk owns a per-recording stream instead.
         self.recognizing = False
         self.utterance_open = False
         self.accepting_audio = False
         self.recording_started = None
-        if self.capture:
+        if not self.hands_free and self.capture:
             try:
                 self.capture.stop();self.capture.close()
             except Exception:pass
             self.capture = None
         self.control({'type': 'interrupt'})
         self.speech_idle = True
-        self.resume_detection()
+        if resume:
+            self.resume_detection()
         if self.connected and not self.closed:
             self.set_status('Bereit · vorherige Sprache gestoppt', 'ready')
 

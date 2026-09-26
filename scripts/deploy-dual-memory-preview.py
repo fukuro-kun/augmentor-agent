@@ -52,7 +52,7 @@ if __name__ == '__main__':
     if args.activate and descriptor.exists() and json.loads(descriptor.read_text()).get('releaseId'):
         raise RuntimeError('This historical preview updater cannot change a managed desktop release. Follow docs/DESKTOP-DEPLOYMENTS.md and stage a separate candidate.')
     installed = Path('/usr/lib/augmentor')
-    preview = Path.home() / '.local/share/resonant-voice/augmentor-preview'
+    preview = Path.home() / '.local/share/augmentor/preview'
     stamp = time.strftime('%Y%m%d-%H%M%S')
     base = Path.home() / '.local/share/augmentor-memory'
     release = base / 'releases' / stamp

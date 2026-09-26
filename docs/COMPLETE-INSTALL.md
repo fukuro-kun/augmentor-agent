@@ -107,9 +107,10 @@ the application does not delete the memory volume or conversations.
   --api-key-env YOUR_PRIVATE_KEY_VARIABLE --context 32768
 ```
 
-Add `--voice` to accept the speech terms and provision CPU voice, or
-`--voice --gpu GPU-EXACT-UUID` for explicit NVIDIA placement. Add `--memory` for
-local dual memory. Supply secrets using an environment variable or the private
+Add `--memory` for local dual memory. Voice needs no flag: the in-repo
+`augmentor-voice-lan` plugin registers with the product integration and can be
+enabled in the Voice settings once a LAN InferenzQuelle forward is reachable.
+Supply secrets using an environment variable or the private
 prompt, never a command-line value or a shared installation transcript.
 
 ## Verify, recover and update
@@ -117,7 +118,7 @@ prompt, never a command-line value or a shared installation transcript.
 1. Open Desktop, select your model and verify one harmless response.
 2. Open the second window; it should have a separate conversation and settings.
 3. Load the Browser extension and verify its model list and a harmless response.
-4. If enabled, try microphone/playback and check memory-engine readiness.
+4. If voice is enabled, try microphone/playback and check memory-engine readiness.
 5. Log out/in and confirm Desktop reconnects. Use `augmentor-recover` if needed.
 
 `augmentor-update status` distinguishes the selected release from running windows.
@@ -129,5 +130,4 @@ need the reviewed migration/update path; do not delete their data to bypass this
 The archive carries exact component/source references, SHA-256 checksums and
 source snapshots. Public snapshots exclude repository histories, local outputs,
 configuration, credentials, conversations, memory databases, model weights and
-microphone recordings. Downloadable synthetic voice references have the separate
-speech-model terms described above.
+microphone recordings.

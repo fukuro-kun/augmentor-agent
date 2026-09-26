@@ -17,9 +17,18 @@ class SileroVad:
     def __init__(self, path=None):
         import numpy as np
         import onnxruntime as ort
-        path = Path(path or Path.home()/'.local/share/resonant-voice/vad/silero-v6.2.1.onnx')
+        if path is None:
+            data = Path.home()/'.local/share'
+            for candidate in (data/'augmentor/vad/silero-v6.2.1.onnx', data/'resonant-voice/vad/silero-v6.2.1.onnx'):
+                if candidate.is_file():
+                    path = candidate
+                    break
+            else:
+                path = data/'augmentor/vad/silero-v6.2.1.onnx'
+        else:
+            path = Path(path)
         if hashlib.sha256(path.read_bytes()).hexdigest() != MODEL_SHA256:
-            raise RuntimeError('Der Freisprechen-Sprachdetektor fehlt oder wurde geändert. Installiere sein gepinntes Modell neu.')
+            raise RuntimeError('Der Freisprechen-Sprachdetektor fehlt oder wurde geändert. Installiere sein gepinntes Modell neu (siehe docs/VOICE-LAN.md).')
         options = ort.SessionOptions()
         options.inter_op_num_threads = 1
         options.intra_op_num_threads = 1

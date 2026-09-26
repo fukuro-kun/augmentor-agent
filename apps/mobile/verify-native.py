@@ -11,7 +11,7 @@ from PySide6.QtCore import QTimer
 with tempfile.TemporaryDirectory() as directory:
     viewport=Path(directory)/'viewport.json';viewport.write_text(json.dumps({'width':360,'height':760,'show':'proof'}))
     os.environ['AUGMENTOR_TOUCH_VIEWPORT']=str(viewport)
-    installed=Path.home()/'.local/share/resonant-voice/augmentor-preview'
+    installed=Path.home()/'.local/share/augmentor/preview'
     if installed.exists():os.environ['AUGMENTOR_REMOTE_DESKTOP_ROOT']=str(installed)
     spec=importlib.util.spec_from_file_location('native_runner',Path(__file__).with_name('native_runner.py'))
     module=importlib.util.module_from_spec(spec);spec.loader.exec_module(module)

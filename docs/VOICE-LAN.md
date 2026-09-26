@@ -34,6 +34,29 @@ the insert entry: `endpoint`, `timeoutMs` (default 115 s), `sttModel`,
 `ttsModel`, `voice`, `maxUtteranceSeconds` (600), `maxBufferedBytes`
 (20 MiB), `maxSpeechChars` (6000).
 
+## Hands-free endpoint detection
+
+Hands-free mode (`voice_mode`) runs the pinned Silero VAD model locally
+on CPU through `onnxruntime`. Install the MIT-licensed model and its
+LICENSE beside it:
+
+```sh
+mkdir -p ~/.local/share/augmentor/vad
+curl -L -o ~/.local/share/augmentor/vad/silero-v6.2.1.onnx \
+  https://github.com/snakers4/silero-vad/raw/master/src/silero_vad/data/silero_vad.onnx
+curl -L -o ~/.local/share/augmentor/vad/LICENSE \
+  https://github.com/snakers4/silero-vad/raw/master/LICENSE
+```
+
+`SileroVad` verifies SHA-256
+`1a153a22f4509e292a94e67d6f9b85e8deb25b4988682b7e174c65279d8788e3`
+before loading; a missing or changed file raises a German error instead
+of silently degrading. A legacy install at
+`~/.local/share/resonant-voice/vad/silero-v6.2.1.onnx` is still picked
+up as a fallback. `onnxruntime` is a Python dependency (pip or system
+package); it is imported lazily so manual push-to-talk mode works
+without it.
+
 ## Routes
 
 - `GET /api/augmentor-voice` — loopback-only descriptor
