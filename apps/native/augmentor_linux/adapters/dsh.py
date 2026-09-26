@@ -74,7 +74,7 @@ class DshAdapter(DshClient):
         if method=='host.describe':
             presets=super().call('agentPresets.list').get('presets',[])
             if not any(row.get('id')==self.preset and not row.get('broken') for row in presets):
-                raise ContractError('The Augmentor agent preset is unavailable. Open Settings → Connect DSH, check the connection, then Save and use DSH.')
+                raise ContractError('Das Augmentor-Agent-Preset ist nicht verfügbar. Öffne Einstellungen → DSH verbinden, prüfe die Verbindung, speichere und nutze DSH.')
         if method=='session.branch':return branch(super().call,p,surface='linux',endpoint=self.base,exact_fork=product_exact_fork(self.base,self.home) if self.product else None)
         if method=='session.create':p={k:v for k,v in p.items() if k!='selection'}
         if method=='models.pin':

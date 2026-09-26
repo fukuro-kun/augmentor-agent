@@ -15,7 +15,7 @@ class UiTestingTests(unittest.TestCase):
 
     def test_disabled_launch_rejects_every_operation_without_touching_window(self):
         for action in ['inspect','send','capture']:
-            with self.assertRaisesRegex(ValueError,'disabled'):
+            with self.assertRaisesRegex(ValueError,'deaktiviert'):
                 dispatch(None,{'action':action})
 
     def test_submission_never_replaces_a_draft_or_operates_behind_a_dialog(self):
@@ -25,11 +25,11 @@ class UiTestingTests(unittest.TestCase):
         window.send_button.setEnabled(True)
         try:
             window.composer.setPlainText('An unsent user draft')
-            with self.assertRaisesRegex(ValueError,'empty composer'):
+            with self.assertRaisesRegex(ValueError,'leerem Composer'):
                 dispatch(window,{'action':'send','text':'A test'},enabled=True)
             self.assertEqual(window.composer.toPlainText(),'An unsent user draft')
             window.composer.clear();dialog=QDialog(window);dialog.show()
-            with self.assertRaisesRegex(ValueError,'no dialogs'):
+            with self.assertRaisesRegex(ValueError,'offene Dialoge'):
                 dispatch(window,{'action':'send','text':'A test'},enabled=True)
             self.assertEqual(window.composer.toPlainText(),'')
         finally:

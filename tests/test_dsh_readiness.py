@@ -19,7 +19,7 @@ class DshReadinessTests(unittest.TestCase):
         adapter=self.client()
         with patch.object(DshClient, 'call', return_value={'presets':[
                 {'id':'augmentor-linux-product'}, {'id':'augmentor-browser-product'}]}) as call:
-            with self.assertRaisesRegex(ContractError, 'Connect DSH'):
+            with self.assertRaisesRegex(ContractError, 'DSH verbinden'):
                 adapter.call('host.describe')
         self.assertEqual(call.call_args_list[0].args, ('agentPresets.list',))
         self.assertEqual(call.call_count, 1)
@@ -28,7 +28,7 @@ class DshReadinessTests(unittest.TestCase):
         adapter=self.client()
         with patch.object(DshClient, 'call', return_value={
                 'presets':[{'id':'augmentor-linux','broken':True}]}):
-            with self.assertRaisesRegex(ContractError, 'preset is unavailable'):
+            with self.assertRaisesRegex(ContractError, 'nicht verfügbar'):
                 adapter.call('host.describe')
 
     def test_supported_legacy_preset_still_connects(self):
