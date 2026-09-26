@@ -37,8 +37,9 @@
   CPU-only (Silero `silero-v6.2.1.onnx`, sha256-pinned, MIT-licensed, under
   `~/.local/share/augmentor/vad/`). Never move speech to another endpoint or
   change model settings silently; report any failure and let the user direct
-  the next change. The earlier upstream placement (Qwen/Breeze on RTX 5090,
-  CPU ASR) no longer applies to this fork.
+  the next change. (The earlier upstream note about Qwen/Breeze on an
+  RTX 5090 described the original author's machine — it never applied to
+  this LAN and is void in this fork.)
 - Voice backend is the in-repo `adapters/dsh-voice-lan` host plugin (protocol
   `augmentor-voice/1`) over the LAN InferenzQuelle forward — see
   [docs/VOICE-LAN.md](docs/VOICE-LAN.md). The private `dsh-resonant-voice`
