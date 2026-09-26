@@ -1202,6 +1202,7 @@ def main():
     parser.add_argument('--compact', action='store_true', help='Open the circular activity view.')
     parser.add_argument('--preview', action='store_true', help='Open without connecting to a harness.')
     parser.add_argument('--onboarding-host', action='store_true', help=argparse.SUPPRESS)
+    parser.add_argument('--ui-test-control', action='store_true', help=argparse.SUPPRESS)
     parser.add_argument('--harness', choices=['pi','dsh'], help='Open the shared UI with this harness.')
     parser.add_argument('--instance', type=validate_name, default=current_name(), help='Named independent window (for example secondary); repeated launches toggle that window.')
     args = parser.parse_args()
@@ -1239,7 +1240,14 @@ def main():
             if client:
                 if not client.bytesAvailable():client.waitForReadyRead(200)
                 command=bytes(client.readAll()).decode()
-                if command in ('maintenance.status','maintenance.close','maintenance.recover'):
+                if command.startswith('ui-test:'):
+                    try:
+                        from .ui_testing import dispatch
+                        result=dispatch(window,json.loads(command[len('ui-test:'):]),enabled=args.ui_test_control)
+                        response={'ok':True,'result':result}
+                    except Exception as error:response={'ok':False,'error':str(error)}
+                    client.write(json.dumps(response).encode()+b'\n');client.waitForBytesWritten(500)
+                elif command in ('maintenance.status','maintenance.close','maintenance.recover'):
                     running=bool(window.controller and window.controller.running)
                     busy=running or window.composer.improving or window.voice_opening or window.voice_input is not None or bool(window.voice_dialog and window.voice_dialog.capture) or any(dialog.isVisible() for dialog in window.findChildren(QDialog))
                     controller = window.controller
@@ -1265,6 +1273,7 @@ def main():
                         response={'ok':True,'result':result}
                     except Exception as error:response={'ok':False,'error':str(error)}
                     client.write(json.dumps(response).encode()+b'\n');client.waitForBytesWritten(500)
+                elif command=='show':window.bring_forward()
                 elif command=='voice':window.request_voice()
                 elif command.startswith('harness:'):
                     window.switch_harness(command.split(':',1)[1])
