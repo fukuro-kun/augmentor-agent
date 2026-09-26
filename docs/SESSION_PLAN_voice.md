@@ -51,19 +51,21 @@ Grundlage: Masterplan `/home/fukuro/.devin/plans/plan-d277f30a0a25f159.md`
 
 | # | Schritt | Status |
 |---|---|---|
-| 1 | `adapters/dsh-voice-lan/` (index/connection/inferenz/wav/prose) | ☐ |
-| 2 | `services/dsh/setup.py`: 4. Patch-Eintrag + Proof-Update | ☐ |
-| 3 | Native: dsh.py Ticket, voice.py Präfix/Settings/Gain, window.py | ☐ |
-| 4 | Preferences: `voice_tts_enabled`, `voice_stt_language`, `voice_speed`, `voice_volume` | ☐ |
-| 5 | VoiceSettings-Dialog: TTS-/Sprach-Controls, lokale Dienst-Abhängigkeit trennen | ☐ |
-| 6 | Browser: pipe.mjs, voice-client.mjs, services/voice/preferences.py | ☐ |
-| 7 | dsh-memory rpcId-Präfix (alt+neu) | ☐ |
-| 8 | Tests: Plugin-Contract-Tests neu; Bestehende an neuen Vertrag anpassen | ☐ |
-| 9 | `python3-sounddevice` install + deb-Depends | ☐ |
-| 10 | Setup-Run → DSH-Restart → Plugin-Proof live | ☐ |
-| 11 | Live-Verifikation (synthetisch STT+TTS, Lease, Interrupt) | ☐ |
-| 12 | Doku (SOURCES/ARCHITECTURE/DSH-SETUP/DATA-AND-SUPPORT/VOICE-*/AGENTS.md) + Trilium | ☐ |
-| 13 | Review-Subagent → Fixes → Commit | ☐ |
+| 1 | `adapters/dsh-voice-lan/` (index/connection/inferenz/wav/prose) | ✅ `7c007a2` |
+| 2 | `services/dsh/setup.py`: 4. Patch-Eintrag + Proof-Update | ✅ |
+| 3 | Native: dsh.py Ticket, voice.py Präfix/Settings/Gain, window.py | ✅ |
+| 4 | Preferences: `voice_tts_enabled`, `voice_stt_language`, `voice_speed`, `voice_volume` | ✅ |
+| 5 | VoiceSettings-Dialog: TTS-/Sprach-Controls, lokale Dienst-Abhängigkeit trennen | ✅ |
+| 6 | Browser: pipe.mjs, voice-client.mjs, services/voice/preferences.py | ✅ |
+| 7 | dsh-memory rpcId-Präfix (alt+neu) | ✅ |
+| 8 | Tests: Plugin-Contract-Tests neu; Bestehende an neuen Vertrag anpassen | ✅ 10/10 Plugin, 59/59 native+browser Voice |
+| 9 | `python3-sounddevice` install + deb-Depends | ✅ deb+fedora |
+| 10 | Setup-Run → DSH-Restart → Plugin-Proof live | ✅ Route 200, Ticket+WS+STT live |
+| 11 | Live-Verifikation (synthetisch STT+TTS, Lease, Interrupt) | ✅ |
+| 12 | Doku (SOURCES/ARCHITECTURE/DSH-SETUP/DATA-AND-SUPPORT/VOICE-*/AGENTS.md) + Trilium | ✅ |
+| 13 | Review-Subagent → Fixes → Commit | ✅ `1ea63a9` + Regression-Fix `956a4b4` |
+| 14 | Complete-Bundle: resonant-Artefakte raus, Path-Plugin-Registrierung | ✅ `956a4b4` |
+| 15 | Debian-Build + Installation auf Hydra | ✅ `augmentor-runtime/desktop_0.2.12_amd64.deb` installiert |
 
 ## Verifikations-Strategie
 
@@ -82,16 +84,16 @@ Grundlage: Masterplan `/home/fukuro/.devin/plans/plan-d277f30a0a25f159.md`
 **Szenario:** DSH läuft mit `augmentor-voice-lan`-Plugin; ein Script-Client
 spricht `augmentor-voice/1`.
 **Akzeptanzkriterien:**
-- [ ] `POST /api/augmentor-voice` mit Produkt-Token liefert Ticket (protocol,
+- [x] `POST /api/augmentor-voice` mit Produkt-Token liefert Ticket (protocol,
       ws-URL, sessionId) für `augmentor-linux-product`-Session
-- [ ] WS-Auth → `ready`; `begin` → `listening` mit requestId
-- [ ] 1.5 s synthetische Sprach-WAV (TTS-generiert) als PCM-Frames → `end` →
+- [x] WS-Auth → `ready`; `begin` → `listening` mit requestId
+- [x] 1.5 s synthetische Sprach-WAV (TTS-generiert) als PCM-Frames → `end` →
       `transcript`-Event mit nicht-leerem deutschem Text, gleiche requestId
-- [ ] Antwort-Turn (simulierter `session/event`-Pfad oder echter Prompt) →
+- [x] Antwort-Turn (simulierter `session/event`-Pfad oder echter Prompt) →
       `speaking` + PCM-Frames + `speech-idle` + `turn-complete`
-- [ ] `interrupt` → `clear`, keine späten Frames
-- [ ] Fehlerfälle: falsches Ticket → WS-Close; Fremdpreset → 403
-- [ ] DSH-Log enthält keine Audiodaten/Transkripte
+- [x] `interrupt` → `clear`, keine späten Frames
+- [x] Fehlerfälle: falsches Ticket → WS-Close; Fremdpreset → 403
+- [x] DSH-Log enthält keine Audiodaten/Transkripte
 
 ## Defaults bei Unklarheit
 

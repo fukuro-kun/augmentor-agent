@@ -10,7 +10,12 @@
   forward). Replaces the unshipped private `dsh-resonant-voice` backend
   and the retired local `:8877` service. Voice preferences moved to local
   `voice_*` keys with legacy migration; `python3-sounddevice` added to the
-  desktop package dependencies.
+  desktop package dependencies. The complete-bundle path no longer
+  packages the private plugin: `package-complete.py` drops the voice
+  tarball/source args and `setup-complete.py` registers the in-repo
+  plugin through the product setup instead of the retired provisioning
+  flow. The hands-free endpoint detector loads its pinned Silero model
+  from `~/.local/share/augmentor/vad/` (legacy path fallback).
 - X11 desktop-control backend (`x11-xtest`) for non-KDE sessions: EWMH
   active-window following across multiple monitors, Flameshot/Qt capture,
   XTEST input via python-xlib, in-process Qt consent, independent Stop.
