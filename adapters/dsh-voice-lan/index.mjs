@@ -20,7 +20,7 @@ import { visibleText } from './prose.mjs'
 
 const DSH_HOME = process.env.DSH_HOME ?? join(homedir(), '.dsh')
 const PROTOCOL = 'augmentor-voice/1'
-const REQUEST_PREFIX = 'augmentor-voice:'
+export const REQUEST_PREFIX = 'augmentor-voice:'
 const TICKET_TTL_MS = 60000
 const ALLOWED_PRESETS = new Set(['augmentor-linux-product', 'augmentor-browser-product'])
 
@@ -162,7 +162,7 @@ export function apply(ctx, config = {}) {
         if (req.headers.origin !== undefined) {
           try {
             const originHost = new URL(req.headers.origin).hostname.replace(/^\[|\]$/g, '')
-            if (!(originHost === '::1' || originHost.startsWith('127.'))) throw Error()
+            if (!isIP(originHost) || !(originHost === '::1' || originHost.startsWith('127.'))) throw Error()
           } catch {
             socket.destroy()
             return

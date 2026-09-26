@@ -31,9 +31,10 @@ flowchart TD
     Pi --> Memory
     Memory --> Relationship[Hindsight relationship bank / person]
     Memory --> Project[Hindsight work bank / person and project]
-    Native --> Voice[Resonant Voice companion / ASR and TTS]
+    Native --> Voice[Augmentor Voice DSH plugin / ASR and TTS]
     Bridge --> Voice
     Voice --> DSH
+    Voice --> Inferenz[LAN InferenzQuelle forward / STT and TTS]
     Adapters --> Desktop[Consented desktop executor]
     Browser --> Executor[Browser action executor]
 ```
@@ -59,7 +60,7 @@ code is in this repository and its deployment companion holds private home state
 | Shared visual behavior | `packages/design`, `scripts/sync-design.py` | [Skins](SKINS.md); build generates surface bindings |
 | Automatic memory | `services/memory/{service,hindsight,dual}.py`, `packages/memory/src/dual.ts`, `adapters/dsh-memory/automatic.mjs` | [Architecture](DUAL-MEMORY.md), [operations and RPC](MEMORY-OPERATIONS.md) |
 | Optional manual memory | `services/memory/provider.py`, prompt-service routing, `packages/memory/src/index.ts` | [Manual memory](MEMORY.md); separate 0.9.2 connection |
-| Speech engine and plugin | Separate [Resonant Voice repository](https://github.com/ManoloRemiddi/resonant-voice) | [Voice handoff](https://github.com/ManoloRemiddi/resonant-voice/blob/main/docs/AGENT-HANDOFF.md); protocol `resonant-voice/1` |
+| Speech engine and plugin | `adapters/dsh-voice-lan` (in-repo DSH host plugin, protocol `augmentor-voice/1`) over LAN InferenzQuelle | [Voice LAN](VOICE-LAN.md); retired private `resonant-voice/1` artifact never shipped |
 | Audio controls and capture | Shared native `VoiceSession`; browser `voice.mjs` via private stdio worker | [Controls](VOICE-SINGLE-BUTTON.md), [hands-free](HANDS-FREE-IMPLEMENTATION.md) |
 | Desktop tools / specialist | `services/desktop`, `packages/desktop`, `packages/computer-use`, `adapters/dsh-desktop` | [Desktop control](DESKTOP-CONTROL.md), [specialist](DESKTOP-SPECIALIST.md) |
 | Recovery, maintenance and support | `services/recovery`, `services/lifecycle`, `services/support`, `scripts/maintenance.py` | [Recovery](DESKTOP-OFFLINE-RECOVERY.md), [lifecycle](LIFECYCLE.md), [data](DATA-AND-SUPPORT.md) |
@@ -90,8 +91,8 @@ contribute to both banks. See [dual memory](DUAL-MEMORY.md) for boundaries.
 Pi persists its own conversation state; DSH persists its own. Shared memory does
 not merge or convert conversations. Prompt records are independently stored in
 `prompts.sqlite3`; automatic transcript memory uses `dual-memory.sqlite3`.
-Speech configuration belongs to Resonant Voice. UI preferences belong to the
-surface. [Data and support](DATA-AND-SUPPORT.md) explains data flow and retention.
+Speech configuration belongs to the Augmentor Voice plugin config and the
+local `voice_*` preferences. UI preferences belong to the surface. [Data and support](DATA-AND-SUPPORT.md) explains data flow and retention.
 
 Preserve selected models, explicit surface authority, Stop, pending interactions,
 and original history. A reconnect or unknown acknowledgment must not replay a

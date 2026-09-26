@@ -244,8 +244,9 @@ The following records the old private development state, not today’s checkout 
 - Subsequent native voice correction: [buffered activation, echo guard and drag feedback](HANDS-FREE-IMPLEMENTATION.md#buffered-activation-and-playback-echo-protection--19-september-2026),
   based on `cc8845c`. Its own validation/deployment scope is recorded separately
   from the fully qualified product snapshot above.
-- Speech repository: [resonant-voice](https://github.com/ManoloRemiddi/resonant-voice),
-  `main`, package 0.1.14. Both repositories require the appropriate GitHub access.
+- Speech plugin: in-repo `adapters/dsh-voice-lan`, protocol `augmentor-voice/1`,
+  LAN InferenzQuelle backend — [Voice LAN](VOICE-LAN.md). The former private
+  resonant-voice repository is superseded and its artifact never shipped here.
 - Product manifest: [`release/product.json`](../release/product.json), 0.2.9 preview.
   A version alone is insufficient to identify a development artifact: record its
   commit and artifact hash too.
@@ -328,8 +329,8 @@ voice became idle. Journal migration continues asynchronously.
 This is a dated observation, not a guarantee about a future machine. Read
 `~/.local/share/augmentor-memory/active.json` locally to locate its actual release
 and rollback backup. Use [memory operations](MEMORY-OPERATIONS.md) for checks and
-[voice deployment](https://github.com/ManoloRemiddi/resonant-voice/blob/main/docs/DEPLOYMENT.md)
-for speech state. Do not copy private local configuration into documentation.
+[Voice LAN](VOICE-LAN.md) for speech state. Do not copy private local
+configuration into documentation.
 Do not restart active DSH tasks or voice connections to load a change.
 
 ## Remaining work and evidence gaps

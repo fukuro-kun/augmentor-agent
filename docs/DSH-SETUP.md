@@ -25,6 +25,13 @@ including desktop and browser tools with the same consent/approval rules.
 Both presets mount the same optional memory tool; explicit memory retention and
 its data controls stay in Augmentor's shared settings.
 
+The same single composition entry also mounts the host-plane plugins:
+`augmentor-product` (product API), `augmentor-product-browser` (browser
+bridge), `augmentor-product-prompts` (prompt library) and
+`augmentor-voice-lan` (Augmentor Voice over LAN InferenzQuelle, protocol
+`augmentor-voice/1` — see [Voice LAN](VOICE-LAN.md)). Changing the entry
+requires a `dsh-web` restart; the setup reports `restartRequired`.
+
 Future integration refreshes validate recorded file and preset hashes before
 replacement, keep the old integration and preset contents, and avoid duplicating
 the composition entry. Edited presets or composition entries require migration;

@@ -2,6 +2,11 @@
 
 # Resonant Voice single-button desktop interaction
 
+> **HISTORISCH.** Backend references below describe the retired private
+> Resonant Voice service. The client-side single-button/hold/lock behaviour
+> is unchanged; the current backend is the in-repo Augmentor Voice plugin —
+> see [Voice LAN](VOICE-LAN.md).
+
 September 24: Browser now presents the same native VoiceSession through a private
 host worker, with matching hold/lock/hands-free controls. See [shared surfaces](SHARED-SURFACES-2026-09-24.md) for scope, settings, tests and actual deployment.
 

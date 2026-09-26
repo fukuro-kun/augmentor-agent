@@ -8,6 +8,7 @@
 import { randomUUID } from 'node:crypto'
 import { wavToPcm } from './wav.mjs'
 import { stripForSpeech } from './prose.mjs'
+import { REQUEST_PREFIX } from './index.mjs'
 
 const sleep = ms => new Promise(resolve => setTimeout(resolve, ms))
 
@@ -39,7 +40,7 @@ export class VoiceConnection {
     this.sttWork = null
     this.ttsWork = null
     this.pendingAnswer = null // {text, rpcId, turn} from the session watcher
-    this.lastVoiceRequest = null
+    this.pendingRpc = null
     this.authTimer = setTimeout(() => {
       if (!this.authed) this.fail('Sprachanmeldung fehlgeschlagen.', false)
     }, 15000)
@@ -69,7 +70,7 @@ export class VoiceConnection {
   // A newer connection claimed this session's voice lease.
   takeover() {
     this.send({ type: 'error', message: 'Diese Unterhaltung wurde in einer anderen Sprachverbindung geöffnet.', recoverable: false })
-    this.dispose(true)
+    this.dispose()
   }
 
   applySettings(value) {
@@ -184,7 +185,6 @@ export class VoiceConnection {
       if (this.closed || this.requestEpoch !== epoch) return
       this.send({ type: 'timing', stage: 'asr-final', elapsedMs: Math.round(performance.now() - started) })
       if (text) {
-        this.lastVoiceRequest = 'augmentor-voice:' + utterance.requestId
         this.send({ type: 'transcript', requestId: utterance.requestId, sessionId: this.sessionId, text })
       } else {
         this.send({ type: 'empty-transcript', requestId: utterance.requestId, sessionId: this.sessionId })
@@ -225,7 +225,7 @@ export class VoiceConnection {
         offset += CHUNK_BYTES
       }
       this.send({ type: 'speech-idle', generation })
-      const requestId = typeof meta.rpcId === 'string' && meta.rpcId.startsWith('augmentor-voice:')
+      const requestId = typeof meta.rpcId === 'string' && meta.rpcId.startsWith(REQUEST_PREFIX)
         ? meta.rpcId : undefined
       this.send({ type: 'turn-complete', generation, ...(requestId ? { requestId } : {}) })
     } catch (error) {
@@ -236,7 +236,7 @@ export class VoiceConnection {
     }
   }
 
-  dispose(silent = false) {
+  dispose() {
     if (this.closed) return
     this.closed = true
     clearTimeout(this.authTimer)

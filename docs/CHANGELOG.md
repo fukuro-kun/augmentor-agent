@@ -4,6 +4,13 @@
 
 ## 0.2.12+fukuro (fork)
 
+- Augmentor Voice LAN plugin (`adapters/dsh-voice-lan`, protocol
+  `augmentor-voice/1`): DSH host plugin serving native and browser voice
+  through the LAN InferenzQuelle (batch STT + TTS over the loopback
+  forward). Replaces the unshipped private `dsh-resonant-voice` backend
+  and the retired local `:8877` service. Voice preferences moved to local
+  `voice_*` keys with legacy migration; `python3-sounddevice` added to the
+  desktop package dependencies.
 - X11 desktop-control backend (`x11-xtest`) for non-KDE sessions: EWMH
   active-window following across multiple monitors, Flameshot/Qt capture,
   XTEST input via python-xlib, in-process Qt consent, independent Stop.

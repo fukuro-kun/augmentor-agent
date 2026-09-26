@@ -180,6 +180,8 @@ def install(args):
     for name in manifest['plugins']:
         run(cli,'plugin','--profile','web','add',bundle/name,'--ignore-scripts','--config.auto-install-peers=false',env=env,stdout=subprocess.DEVNULL)
     voice=home/'profiles/web/node_modules/dsh-resonant-voice'
+    if not voice.exists():
+        raise ValueError('This bundle expects the retired private dsh-resonant-voice plugin, which this fork does not ship. Install Augmentor through the standard DSH setup instead — it registers the in-repo augmentor-voice-lan plugin. See docs/VOICE-LAN.md.')
     if args.voice:
         command=['/usr/bin/python3',voice/'bin/setup-linux.py','--node',node,'--accept-model-license']
         if args.gpu:

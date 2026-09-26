@@ -35,3 +35,8 @@
   on the RTX 5090. Preserve Qwen context/concurrency/precision and the current
   CPU ASR/VAD path. Never move speech to another GPU or change model settings
   silently; report any failure and let the user direct the next change.
+- Voice backend is the in-repo `adapters/dsh-voice-lan` host plugin (protocol
+  `augmentor-voice/1`) over the LAN InferenzQuelle forward — see
+  [docs/VOICE-LAN.md](docs/VOICE-LAN.md). The private `dsh-resonant-voice`
+  artifact never shipped; do not reintroduce a `resonant-voice/1` or `:8877`
+  dependency. Voice enablement/preferences live in local `voice_*` keys.

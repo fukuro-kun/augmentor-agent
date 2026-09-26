@@ -52,8 +52,11 @@ def main():
     client=DshAdapter()
     def idle():
         assert not any(r.get('running') for r in client.session_rows()), 'DSH has active work'
-        with urllib.request.urlopen('http://127.0.0.1:8877/health',timeout=3) as reply:
-            assert not json.load(reply).get('active'), 'Voice is active'
+        try:
+            with urllib.request.urlopen('http://127.0.0.1:3080/api/augmentor-voice',timeout=3) as reply:
+                assert not json.load(reply).get('leases'), 'Voice is active'
+        except urllib.error.URLError:
+            pass # DSH down means no voice lease can be held
         for name in ('','-mobile','-secondary'):
             current=status(name)
             assert not current or current.get('accepted'), 'A desktop has work or an open dialog'

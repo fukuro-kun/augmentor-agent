@@ -381,9 +381,22 @@ class VoiceSession(QObject):
             self.generation = -1
             self.audible_until = 0.
             self.drained_generation = None
+        # The server silently discards the interrupted utterance, so no
+        # transcript/empty-transcript ever arrives; reset the local capture
+        # state or can_record would stay False until the panel is reopened.
+        self.recognizing = False
+        self.utterance_open = False
+        self.accepting_audio = False
+        self.recording_started = None
+        if self.capture:
+            try:
+                self.capture.stop();self.capture.close()
+            except Exception:pass
+            self.capture = None
         self.control({'type': 'interrupt'})
         self.speech_idle = True
-        if self.connected and not self.closed and not self.recognizing and not self.capture:
+        self.resume_detection()
+        if self.connected and not self.closed:
             self.set_status('Bereit · vorherige Sprache gestoppt', 'ready')
 
     def apply_voice_settings(self):
@@ -416,7 +429,8 @@ class VoiceSession(QObject):
         # Hands-free cancellation therefore uses the service's ordered clear
         # packets and explicit local Stop, not this unscoped observer event.
         if self.hands_free:return
-        if event.get('type')=='turn/end' and event.get('data',{}).get('reason',{}).get('kind') in ('aborted','error','interrupted'):
+        reason=event.get('data',{}).get('reason',{})
+        if event.get('type')=='turn/end' and (reason if isinstance(reason,str) else reason.get('kind')) in ('aborted','error','interrupted'):
             self.interrupt()
 
     def update_playback_status(self):
@@ -481,11 +495,11 @@ class VoiceSession(QObject):
         elif event['type'] == 'recording-ended':
             self.end(send=False,automatic=True)
         elif event['type'] == 'transcript':
-            if self.closed or event['requestId'] in self.submitted:return
+            if self.closed or event.get('requestId') in self.submitted:return
             self.recognizing=False
-            self.submitted.add(event['requestId'])
+            self.submitted.add(event.get('requestId'))
             self.set_status('Denkt …', 'thinking')
-            self.waiting_request='augmentor-voice:'+event['requestId']
+            self.waiting_request='augmentor-voice:'+str(event.get('requestId'))
             self.turn_complete=False
             self.transcript.emit(event)
             self.resume_detection()
@@ -503,8 +517,13 @@ class VoiceSession(QObject):
             self.resume_detection()
         elif event['type'] == 'error':
             if not event.get('recoverable'):self.connected=False
+            elif self.recognizing:
+                # A recoverable backend failure (e.g. STT timeout) never
+                # produces a transcript; release the recording latch.
+                self.recognizing=False
+                self.resume_detection()
             self.set_status(event['message'])
-            if self.hands_free:self.shutdown()
+            if self.hands_free and not event.get('recoverable'):self.shutdown()
         elif event['type'] == 'disconnected':
             self.connected=False
             if self.state!='error':self.set_status('Sprache getrennt · Klicken zum Wiederverbinden', 'disconnected')

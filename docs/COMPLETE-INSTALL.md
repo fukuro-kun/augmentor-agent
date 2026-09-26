@@ -40,7 +40,8 @@ and Python packages. Do not run the whole script as root.
   Execution recovery is enabled once in both Augmentor presets; no separate plugin installation is needed.
   It bounds empty/truncated-response recovery, preserves Stop and user handoffs, and prevents
   exact duplicate changes during recovery. It does not certify that a model answer is correct.
-- Model Picker Augmented 1.1.2, Adaptive Reasoning 0.2.3 and Resonant Voice 0.1.16.
+- Model Picker Augmented 1.1.2, Adaptive Reasoning 0.2.3 and the in-repo
+  Augmentor Voice plugin (`adapters/dsh-voice-lan`, see [Voice LAN](VOICE-LAN.md)).
 - Desktop login startup, connection recovery, consistent release selection and
   a separate second-window menu entry. On KDE, available defaults are
   **Super+Alt+Space** for the main window and **Super+Alt+Shift+Space** for the
@@ -69,18 +70,14 @@ this bundle with the older public Browser 0.1.32 companion.
 
 ## Local speech
 
-The guided installer asks whether to provision speech. Acceptance applies to
-Breeze's [research/non-commercial model and self-hosted output terms](https://huggingface.co/BreezeBlue/Breeze-TTS-2#license-and-responsible-use),
-which are separate from [Augmentor's source license](LICENSING.md) and Resonant Voice's MIT source license.
-Speech is optional; declining leaves the plugin installed for later setup.
-
-If enabled, it builds the pinned Breeze C++ runtime, downloads and checks the
-2.54 GB Q4 model, installs CPU ASR dependencies and synthetic voice references,
-and enables speech services. Provide an NVIDIA GPU UUID when prompted to request
-that exact GPU; Enter selects CPU, which is slower. It does not move, resize or
-stop another model. GPU setup requires Vulkan and enough free memory; failure is
-reported instead of silently switching devices. Whisper's pinned English ASR
-model is downloaded on first use. First startup is slower than a warm session.
+> **HISTORISCH (Fork).** Diese geführte Breeze-/Lokaldienst-Provisionierung
+> beschrieb den privaten Resonant-Voice-Begleiter, der für diesen Fork nie
+> veröffentlicht wurde. Der aktuelle Sprachpfad ist das im Repository
+> enthaltene Augmentor-Voice-Plugin (`augmentor-voice/1`) über die
+> LAN-InferenzQuelle — siehe [Voice LAN](VOICE-LAN.md). Es installiert keine
+> Modelle und keine separaten Sprachdienste; benötigt wird nur
+> `python3-sounddevice` für Aufnahme/Wiedergabe sowie ein erreichbarer
+> InferenzQuelle-Forward.
 
 Use the desktop audio button for hold/release recording, slide-to-lock and the
 optional hands-free mode. Actual microphone/speaker quality depends on the

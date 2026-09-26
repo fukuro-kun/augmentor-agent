@@ -46,8 +46,9 @@ of this repository; include reproducible commands and sanitized evidence summari
 
 ## Voice and desktop experience
 
-- [Resonant Voice single-button desktop interaction](VOICE-SINGLE-BUTTON.md)
-- [Hands-free native implementation](HANDS-FREE-IMPLEMENTATION.md)
+- [Augmentor Voice LAN plugin](VOICE-LAN.md)
+- [Resonant Voice single-button desktop interaction](VOICE-SINGLE-BUTTON.md) (historical client evidence)
+- [Hands-free native implementation](HANDS-FREE-IMPLEMENTATION.md) (client engine, historical backend references)
 - [Desktop colors and skins](SKINS.md)
 - [Independent second window](SECOND-WINDOW.md)
 - [Linux window resizing](WINDOW-RESIZING.md)
@@ -119,7 +120,7 @@ for present behavior; uncompleted plan items are not feature claims.
 - [Runtime](../packages/runtime/README.md), [protocol package](../packages/protocol/README.md), [Pi Linux tools](../packages/pi-linux/README.md)
 - [Locked DSH test host](../release/dsh/README.md)
 - [Test map](../tests/README.md) and [CI workflow](../.github/workflows/validate.yml)
-- [Resonant Voice handoff and documentation index](https://github.com/ManoloRemiddi/resonant-voice/blob/main/docs/AGENT-HANDOFF.md)
+- [Augmentor Voice LAN plugin](VOICE-LAN.md) (supersedes the retired private Resonant Voice handoff)
 - [Original imported browser architecture](../apps/browser/PROPOSAL-plugin-architecture.md), [DSH-only README](../apps/browser/HISTORICAL-DSH-README.md), [plugin](../apps/browser/plugin/README.md), [steering adapter](../adapters/dsh-steering/README.md)
 
 Concurrent uncommitted features are not a GitHub handoff. Add their guides here

@@ -168,7 +168,7 @@ class Setup:
                     old_presets[path]=path.read_text()
             if not previous.get('patchEntry') or text.count(previous['patchEntry'])!=1:raise ValueError('The Augmentor composition entry was edited. No files were replaced.')
         else:
-            conflicts=('augmentor-product','dsh-augmentor') if p.get('existingPromptPlugin') else ('augmentor-product','dsh-augmentor','prompt-library')
+            conflicts=('augmentor-product','augmentor-voice','dsh-augmentor') if p.get('existingPromptPlugin') else ('augmentor-product','augmentor-voice','dsh-augmentor','prompt-library')
             if any(word in text for word in conflicts):raise ValueError('This DSH profile already has custom Augmentor integration entries. Review the integration migration first.')
             if target.exists() or target.is_symlink() or any((presets/name).exists() or (presets/name).is_symlink() for name in PRESETS.values()):raise ValueError('Augmentor integration files already exist. No files were replaced.')
         # Fresh DSH profiles include explanatory comments followed by []. Keep

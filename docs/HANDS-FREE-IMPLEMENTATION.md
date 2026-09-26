@@ -1,6 +1,11 @@
 <!-- Copyright © 2026 Manolo Remiddi · SPDX-License-Identifier: LicenseRef-Augmentor-MIT-Resale-1.0 -->
 # Hands-free native implementation
 
+> **HISTORISCH (Backend-Namen).** Capture, VAD, echo routing and playback
+> pacing below describe the shared client engine, which is unchanged. The
+> retired private Resonant Voice backend is replaced by the in-repo
+> Augmentor Voice plugin — see [Voice LAN](VOICE-LAN.md).
+
 Hands-free is an optional Conversation mode in Resonant Voice settings. Manual hold/slide remains the default and fallback. Save the mode and pause tolerance (400–2000 ms, initially 800), then tap the existing voice icon to start. Tap again or Escape stops capture and playback; explicit hiding/session changes also close the session. No automatic restart follows a fault.
 
 A single 16 kHz capture stream stays open during the active conversation. Its callback only puts bounded PCM into the worker queue. A CPU Silero ONNX worker uses 32 ms frames, 320 ms pre-roll, 128 ms speech confirmation (320 ms during audible playback), probability hysteresis, and configurable silence endpointing. Silence and brief transients never submit prompts. ASR finalization suspends detection while the same microphone buffers the next utterance; after its response detection processes those frames, including during the agent's work and playback. The existing DSH controller sends or steers each utterance once. The 10-minute safeguard ends the current utterance and leaves conversation mode active; speech during ASR finalization is retained for the next request, without opening overlapping ASR requests.

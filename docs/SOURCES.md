@@ -170,7 +170,9 @@ This does not verify a real Fedora desktop session, browser attachment or DSH
 model turn. See [Fedora preview](FEDORA-PREVIEW.md) for installation and limits.
 
 
-Resonant Voice development integration (17 September 2026): protocol `resonant-voice/1`, local `dsh-resonant-voice` 0.1.0 preview. Added native push-to-talk using optional sounddevice 0.5.2 and existing websocket-client; Chromium uses AudioWorklet/WebSocket through the existing product-authorized native-host route. Engine implementations live in the separate Resonant Voice package. This source integration is not yet deployed or qualified with real microphone/GPU inference. Existing DSH session/model/queue authority is retained.
+Augmentor Voice LAN plugin (30 September 2026): protocol `augmentor-voice/1`, in-repo `adapters/dsh-voice-lan` host plugin on the existing DSH webserver. Batch STT and TTS run through the LAN InferenzQuelle forward (127.0.0.1:8012 → Janus → Acheron), WAV 24 kHz int16 mono. Native and browser clients share the same `VoiceSession` engine; the retired private `dsh-resonant-voice`/`resonant-voice/1` artifact and the local `:8877` service are no longer referenced or required. Verified live on DSH 0.1.5-rc.1 (ticket, WS auth, Whisper transcript, TTS WAV, lease takeover, 403/400 rejections); see [Voice LAN](VOICE-LAN.md). Existing DSH session/model/queue authority is retained; no microphone acceptance is claimed.
+
+> **HISTORISCH.** Resonant Voice development integration (17 September 2026): protocol `resonant-voice/1`, local `dsh-resonant-voice` 0.1.0 preview. Added native push-to-talk using optional sounddevice 0.5.2 and existing websocket-client; Chromium uses AudioWorklet/WebSocket through the existing product-authorized native-host route. Engine implementations live in the separate Resonant Voice package. This source integration was never deployed or qualified and is superseded by the Augmentor Voice LAN plugin above.
 
 ### Automatic dual memory, 2026-09-19
 
@@ -195,11 +197,12 @@ were used. A synthetic fresh-session answer correctly recalled calm check-ins,
 SQLite and the unfinished export screen after bridge restart. No human microphone
 or acoustic acceptance is implied. See [dual memory](DUAL-MEMORY.md).
 
-Resonant Voice source package **0.1.14** is maintained in its
-[separate repository](https://github.com/ManoloRemiddi/resonant-voice).
-The source contains hands-free native protocol support, reference voices and
-per-window playback settings. The earlier 0.1.0 paragraph records the initial
-integration only; current deployment and limitations are in the voice repository.
+> **HISTORISCH.** Resonant Voice source package **0.1.14** was maintained in a
+> [separate repository](https://github.com/ManoloRemiddi/resonant-voice).
+> Its protocol support, reference voices and per-window playback settings are
+> superseded by the in-repo Augmentor Voice plugin; hands-free capture, VAD and
+> playback pacing live on unchanged in the shared native voice engine
+> ([Voice LAN](VOICE-LAN.md)).
 
 
 ## Original Desktop remote preview · 2026-09-19

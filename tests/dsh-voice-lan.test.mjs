@@ -142,17 +142,33 @@ test('ticket requires token, real session and an allowed preset', async () => {
 })
 
 test('ws auth rejects bad, reused and stale tickets', async () => {
-  const {body} = await ticket('linux-1')
-  const ws = await connect(body.url)
+  const ws = await connect(`ws://127.0.0.1:${webServer.port}/api/augmentor-voice/ws`)
   ws.send(JSON.stringify({type: 'auth', ticket: 'wrong'}))
   assert.equal((await ws.next('error')).recoverable, false)
   await ws.closed
-  const ws2 = await authed() // consumes the only other ticket
-  ws2.close(); await ws2.closed
-  const ws3 = await connect(body.url)
-  ws3.send(JSON.stringify({type: 'auth', ticket: body.ticket})) // first ticket still unused? no—'wrong' consumed itself only
-  const ready = await ws3.next('ready').catch(() => null)
-  if (ready) ws3.close()
+  // One-time use: a consumed ticket can never authenticate a second socket.
+  const {body} = await ticket('linux-1')
+  const good = await connect(body.url)
+  good.send(JSON.stringify({type: 'auth', ticket: body.ticket}))
+  await good.next('ready')
+  const reused = await connect(body.url)
+  reused.send(JSON.stringify({type: 'auth', ticket: body.ticket}))
+  const refused = await reused.next('error')
+  assert.equal(refused.recoverable, false)
+  await reused.closed
+  good.close(); await good.closed
+  // Stale: a ticket minted >60 s ago expires before its first use.
+  const {body: stale} = await ticket('linux-1')
+  const realNow = Date.now
+  Date.now = () => realNow() + 120000
+  try {
+    const old = await connect(stale.url)
+    old.send(JSON.stringify({type: 'auth', ticket: stale.ticket}))
+    assert.equal((await old.next('error')).recoverable, false)
+    await old.closed
+  } finally {
+    Date.now = realNow
+  }
 })
 
 test('utterance uploads one WAV and emits one transcript', async () => {

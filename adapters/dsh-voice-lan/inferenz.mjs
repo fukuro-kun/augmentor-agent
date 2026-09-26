@@ -81,6 +81,11 @@ export class InferenzVoice {
       headers: { 'content-type': 'application/json' },
       body: JSON.stringify(payload),
     }, signal)
-    return Buffer.from(await response.arrayBuffer())
+    const declared = Number(response.headers.get('content-length') ?? 0)
+    const limit = 64 * 1024 * 1024
+    if (declared > limit) throw new VoiceBackendError('speech response exceeds limit', 502)
+    const wav = Buffer.from(await response.arrayBuffer())
+    if (wav.length > limit) throw new VoiceBackendError('speech response exceeds limit', 502)
+    return wav
   }
 }

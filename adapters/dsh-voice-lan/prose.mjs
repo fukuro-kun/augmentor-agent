@@ -9,7 +9,8 @@
 // engine does not read out markup; fenced code blocks are dropped entirely.
 
 export function visibleText(message) {
-  const parts = (message?.content ?? [])
+  const content = message?.content
+  const parts = (Array.isArray(content) ? content : typeof content === 'string' ? [{ type: 'text', text: content }] : [])
     .filter(block => block?.type === 'text' && typeof block.text === 'string')
     .map(block => block.text)
   return parts.join('\n').trim() || null

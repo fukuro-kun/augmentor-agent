@@ -30,11 +30,11 @@ def idle(remote):
     if any(row.get('running') for row in rows):
         raise RuntimeError('DSH has active work; activation was not performed.')
     try:
-        with urllib.request.urlopen('http://127.0.0.1:8877/health', timeout=3) as response:
-            if json.load(response).get('active'):
+        with urllib.request.urlopen('http://127.0.0.1:3080/api/augmentor-voice', timeout=3) as response:
+            if json.load(response).get('leases'):
                 raise RuntimeError('A voice connection is open; activation was not performed.')
     except urllib.error.URLError:
-        raise RuntimeError('Voice state could not be checked; activation was not performed.') from None
+        pass # DSH unreachable means no voice lease can be held
 
 
 def atomic(path, value):

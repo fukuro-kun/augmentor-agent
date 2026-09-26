@@ -2,7 +2,7 @@
 
 # Local voice for Augmentor through DSH
 
-**Superseded planning baseline, 17 September 2026.** The project is now **Resonant Voice**, with its own local repository. The user selected Breeze, English, and single-5090 inference if it preserves quality and existing capabilities, with 5060 Ti fallback. The current [architecture and delivery plan](../../resonant-voice/docs/PLAN.md) and [hardware/latency qualification](../../resonant-voice/docs/QUALIFICATION.md) replace this document's model choice, deployment recommendation, component ownership and performance targets. Keep the following as the original video analysis and proposal, not a current deployment instruction. No implementation or service change has been made by this planning update.
+**Superseded planning baseline, 17 September 2026.** The project is now **Augmentor Voice** (`adapters/dsh-voice-lan`, protocol `augmentor-voice/1`, LAN InferenzQuelle backend) — see [Voice LAN](VOICE-LAN.md). The private Resonant Voice repository and its `dsh-resonant-voice` artifact never shipped for this fork. Keep the following as the original video analysis and proposal, not a current deployment instruction.
 
 Planning only, 2026-09-14. No implementation, installation, model loading, or service changes performed. User confirmed two NVIDIA GPUs (5090 and 5060 Ti) and English-only speech. This proposal is not an approved implementation specification.
 

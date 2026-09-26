@@ -54,13 +54,13 @@ independent profiles. The shared response_metrics tool retains up to 20 timing
 records per conversation locally, including a short identifying response excerpt;
 see [shared surfaces](SHARED-SURFACES-2026-09-24.md).
 
-The speech companion processes microphone audio through configured ASR and sends
-reply text to configured TTS. The automatic memory journal stores the resulting
-text, not the microphone stream. Speech-engine configuration, transient buffering
-and audio asset licensing are described in the
-[voice protocol](https://github.com/ManoloRemiddi/resonant-voice/blob/main/docs/PROTOCOL.md)
-and [running guide](https://github.com/ManoloRemiddi/resonant-voice/blob/main/docs/RUNNING.md).
-This does not promise that every configured external provider has zero retention.
+The Augmentor Voice plugin processes microphone audio through the configured
+LAN ASR and sends reply text to the configured LAN TTS; audio exists only in
+memory inside the DSH plugin and the router logs byte counts, not content. The
+automatic memory journal stores the resulting text, not the microphone stream.
+Speech contract, configuration and buffering are described in
+[Voice LAN](VOICE-LAN.md). This does not promise that every configured external
+provider has zero retention.
 
 Prompts, conversation history, settings and memory configuration belong to the
 local user. The shared Prompt Library synchronizes these interfaces on this
