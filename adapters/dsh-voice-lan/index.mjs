@@ -159,6 +159,13 @@ export function apply(ctx, config = {}) {
           socket.destroy()
           return
         }
+        try {
+          const host = new URL('http://' + req.headers.host).hostname.replace(/^\[|\]$/g, '')
+          if (!isIP(host) || !(host === '::1' || host.startsWith('127.'))) throw Error()
+        } catch {
+          socket.destroy()
+          return
+        }
         if (req.headers.origin !== undefined) {
           try {
             const originHost = new URL(req.headers.origin).hostname.replace(/^\[|\]$/g, '')
