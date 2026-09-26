@@ -7,8 +7,8 @@ const messageText=(content:any):string=>typeof content==='string'?content:(conte
 export function branchContext(file:string, directory:string, events:DisplayEvent[], seq:number, mode:'reply'|'edit') {
   const target=events.find(e=>e.seq===seq);
   const type=mode==='edit'?'user/message':'assistant/message';
-  if(!target||target.type!==type)throw new Error('Choose a message from this conversation.');
-  if(mode==='edit'&&events.filter(e=>e.type==='user/message').at(-1)?.seq!==seq)throw new Error('Only the latest user message can be edited. Reload the conversation.');
+  if(!target||target.type!==type)throw new Error('Wähle eine Nachricht aus dieser Unterhaltung.');
+  if(mode==='edit'&&events.filter(e=>e.type==='user/message').at(-1)?.seq!==seq)throw new Error('Nur die letzte eigene Nachricht kann bearbeitet werden. Lade die Unterhaltung neu.');
   // createBranchedSession changes its manager's active file. Use a separate
   // manager so the source conversation's live agent and leaf remain untouched.
   const manager=SessionManager.open(file,directory);
@@ -16,8 +16,8 @@ export function branchContext(file:string, directory:string, events:DisplayEvent
   const ordinal=events.filter(e=>e.type===type&&e.seq<=seq).length-1;
   const entry=manager.getBranch().filter(e=>e.type==='message'&&e.message.role===role)[ordinal];
   const content=mode==='edit'?target.data.content:target.data.message?.content;
-  if(!entry||entry.type!=='message'||messageText((entry.message as any).content)!==messageText(content))throw new Error('Cannot locate this message in Pi history. Reload the conversation.');
-  if(mode==='reply'&&entry.message.role==='assistant'&&entry.message.content.some(p=>p.type==='toolCall'))throw new Error('Choose the reply after the tools have finished.');
+  if(!entry||entry.type!=='message'||messageText((entry.message as any).content)!==messageText(content))throw new Error('Nachricht nicht im Pi-Verlauf gefunden. Lade die Unterhaltung neu.');
+  if(mode==='reply'&&entry.message.role==='assistant'&&entry.message.content.some(p=>p.type==='toolCall'))throw new Error('Wähle die Antwort, nachdem die Werkzeuge abgeschlossen sind.');
   const leaf=mode==='edit'?entry.parentId:entry.id;
   const branchFile=leaf?manager.createBranchedSession(leaf):undefined;
   let cutoff=seq;

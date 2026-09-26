@@ -23,7 +23,7 @@ export class BrowserBroker {
     for(const row of this.pending.values())if(row.owner===owner)row.finish(new Error('Browser disconnected. Action outcome may be unknown; it was not retried.'));
   }
   respond(owner:object,id:string,value:unknown,error?:string){
-    const row=this.pending.get(id);if(!row||row.owner!==owner)throw new Error('Stale or unowned browser response');
+    const row=this.pending.get(id);if(!row||row.owner!==owner)throw new Error('Veraltete oder fremde Browser-Antwort');
     row.finish(error?new Error(error):null,value);
   }
   execute(sid:string,params:unknown,signal?:AbortSignal):Promise<unknown>{

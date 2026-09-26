@@ -16,7 +16,7 @@ export class Interactions {
       this.pending.set(id,{sessionId,frame,finish});options?.signal?.addEventListener('abort',abort,{once:true});this.publish(sessionId,frame);
     });
   }
-  answer(id:string,value:any,sessionId:string){const item=this.pending.get(id);if(!item||item.sessionId!==sessionId)throw new Error('This interaction has already resolved');item.finish(value);return {accepted:true};}
+  answer(id:string,value:any,sessionId:string){const item=this.pending.get(id);if(!item||item.sessionId!==sessionId)throw new Error('Diese Interaktion wurde bereits abgeschlossen');item.finish(value);return {accepted:true};}
   cancel(sessionId:string){for(const item of [...this.pending.values()])if(item.sessionId===sessionId)item.finish(undefined);}
   frames(sessionId:string){return [...this.pending.values()].filter(p=>p.sessionId===sessionId).map(p=>p.frame);}
   async approve(sid:string,toolName:string,input:unknown){const result=await this.ask(sid,'approval/requested',{toolName,reason:JSON.stringify(input).slice(0,16000)});return result?.outcome==='allowed-once';}
@@ -31,7 +31,7 @@ export class Interactions {
       editor:(title,prefill)=>question(title,undefined,undefined,prefill),
       confirm:async(title,message,opts)=>{const value=await this.ask(sid,'approval/requested',{toolName:title,reason:message},opts);return value?.outcome==='allowed-once';},
       notify,setStatus:(_key,value)=>{if(value)notify(value);},setWorkingMessage:value=>{if(value)notify(value);},
-      custom:async()=>{throw new Error('Terminal-only custom UI is unsupported by the native surface');},
+      custom:async()=>{throw new Error('Reine Terminal-Benutzeroberflächen werden von der nativen Oberfläche nicht unterstützt');},
       getEditorText:()=>'',getEditorComponent:()=>undefined,getToolsExpanded:()=>false,getAllThemes:()=>[],getTheme:()=>undefined,
       setTheme:()=>({success:false,error:'Use native appearance settings'}),onTerminalInput:()=>()=>{},
     };

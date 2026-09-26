@@ -66,18 +66,18 @@ class Library:
         db.execute('UPDATE library SET revision=revision+1');return db.execute('SELECT revision FROM library').fetchone()[0]
     def valid(self,p):
         name=p.get('name');content=p.get('content')
-        if not isinstance(name,str) or not re.fullmatch(r'[a-zA-Z0-9_-]{1,128}',name):raise ValueError('Use letters, numbers, - or _ for the shortcut name.')
-        if not isinstance(content,str) or not content.strip() or len(content)>32000:raise ValueError('Enter prompt text up to 32,000 characters.')
+        if not isinstance(name,str) or not re.fullmatch(r'[a-zA-Z0-9_-]{1,128}',name):raise ValueError('Verwende Buchstaben, Zahlen, - oder _ für den Kurznamen.')
+        if not isinstance(content,str) or not content.strip() or len(content)>32000:raise ValueError('Gib Prompt-Text mit bis zu 32.000 Zeichen ein.')
         return name,content
     def save(self,db,p):
         name,content=self.valid(p)
         identity=p.get('promptId') or p.get('id');original=p.get('original') or (name if p.get('expectedRevision') is not None and not identity else None)
         old=db.execute('SELECT * FROM prompts WHERE id=?',(identity,)).fetchone() if identity else db.execute('SELECT * FROM prompts WHERE name=?',(original,)).fetchone() if original else None
-        if (identity or original) and not old:raise Conflict('This prompt was deleted or renamed. Your draft is unchanged; reload or save it as a new prompt.')
-        if old and old['revision']!=p.get('expectedRevision'):raise Conflict('This prompt changed elsewhere. Your draft is unchanged; reload or save it as a new prompt.')
-        if db.execute('SELECT id FROM prompts WHERE name=? AND id<>?',(name,old['id'] if old else '')).fetchone():raise Conflict('That shortcut name already exists. Choose another name.')
-        if not old and db.execute('SELECT count(*) FROM prompts').fetchone()[0]>=1000:raise ValueError('The library is limited to 1,000 prompts.')
-        if db.execute('SELECT coalesce(sum(length(cast(content AS BLOB))),0) FROM prompts').fetchone()[0]-len((old['content'] if old else '').encode())+len(content.encode())>500000:raise ValueError('The library text limit is 500,000 characters.')
+        if (identity or original) and not old:raise Conflict('Dieser Prompt wurde gelöscht oder umbenannt. Dein Entwurf ist unverändert; lade neu oder speichere ihn als neuen Prompt.')
+        if old and old['revision']!=p.get('expectedRevision'):raise Conflict('Dieser Prompt wurde an anderer Stelle geändert. Dein Entwurf ist unverändert; lade neu oder speichere ihn als neuen Prompt.')
+        if db.execute('SELECT id FROM prompts WHERE name=? AND id<>?',(name,old['id'] if old else '')).fetchone():raise Conflict('Dieser Kurzname existiert bereits. Wähle einen anderen Namen.')
+        if not old and db.execute('SELECT count(*) FROM prompts').fetchone()[0]>=1000:raise ValueError('Die Bibliothek ist auf 1.000 Prompts begrenzt.')
+        if db.execute('SELECT coalesce(sum(length(cast(content AS BLOB))),0) FROM prompts').fetchone()[0]-len((old['content'] if old else '').encode())+len(content.encode())>500000:raise ValueError('Das Textlimit der Bibliothek beträgt 500.000 Zeichen.')
         revision=self.bump(db);identity=old['id'] if old else str(uuid.uuid4())
         db.execute('INSERT INTO prompts VALUES (?,?,?,?,?) ON CONFLICT(id) DO UPDATE SET name=excluded.name,content=excluded.content,revision=excluded.revision,updatedAt=excluded.updatedAt',
                    (identity,name,content,revision,time.strftime('%Y-%m-%dT%H:%M:%SZ',time.gmtime())))
@@ -85,20 +85,20 @@ class Library:
     def mutate(self,db,method,p):
         if method=='prompts.improvement.save':
             content=p.get('content')
-            if not isinstance(content,str) or not content.strip() or len(content)>8000:raise ValueError('Enter improvement instructions up to 8,000 characters.')
+            if not isinstance(content,str) or not content.strip() or len(content)>8000:raise ValueError('Gib Verbesserungsanweisungen mit bis zu 8.000 Zeichen ein.')
             old=db.execute('SELECT revision FROM improvement').fetchone()[0]
-            if old!=p.get('expectedRevision'):raise Conflict('These instructions changed elsewhere. Your draft is kept; reload before saving.')
+            if old!=p.get('expectedRevision'):raise Conflict('Diese Anweisungen wurden an anderer Stelle geändert. Dein Entwurf bleibt erhalten; lade vor dem Speichern neu.')
             revision=self.bump(db)
             db.execute('UPDATE improvement SET content=?,revision=? WHERE singleton=1',(content,revision))
         elif method=='prompts.save':self.save(db,p)
         elif method=='prompts.delete':
             identity=p.get('promptId') or p.get('id')
             old=db.execute('SELECT * FROM prompts WHERE id=?',(identity,)).fetchone() if identity else db.execute('SELECT * FROM prompts WHERE name=?',(p.get('name'),)).fetchone()
-            if not old or old['revision']!=p.get('expectedRevision'):raise Conflict('This prompt changed or was deleted elsewhere. Reload before deleting.')
+            if not old or old['revision']!=p.get('expectedRevision'):raise Conflict('Dieser Prompt wurde an anderer Stelle geändert oder gelöscht. Lade vor dem Löschen neu.')
             db.execute('DELETE FROM prompts WHERE id=?',(old['id'],));self.bump(db)
         elif method=='prompts.import':
             source=p.get('source');rows=p.get('prompts')
-            if not isinstance(source,str) or len(source)>300 or not isinstance(rows,list) or len(rows)>1000:raise ValueError('Invalid import')
+            if not isinstance(source,str) or len(source)>300 or not isinstance(rows,list) or len(rows)>1000:raise ValueError('Ungültiger Import')
             for row in rows:
                 name,content=self.valid(row);source_id=str(row.get('id',name));digest=hashlib.sha256(content.encode()).hexdigest()
                 if db.execute('SELECT 1 FROM imports WHERE source=? AND sourceId=? AND digest=?',(source,source_id,digest)).fetchone():continue
@@ -110,7 +110,7 @@ class Library:
                         number+=1;name=base[:105]+'-imported-'+str(number)
                     identity=self.save(db,{'name':name,'content':content})
                 db.execute('INSERT INTO imports VALUES (?,?,?,?)',(source,source_id,digest,identity))
-        else:raise ValueError('Unsupported prompt operation')
+        else:raise ValueError('Nicht unterstützte Prompt-Operation')
         return self.snapshot(db)
     def call(self,method,p,request_id):
         if isinstance(method,str) and method.startswith('home.connection.'):return home_connection_call(method,p)
@@ -133,7 +133,7 @@ class Library:
             db.execute('BEGIN IMMEDIATE')
             existing=db.execute('SELECT * FROM requests WHERE id=?',(request_id,)).fetchone()
             if existing:
-                if existing['digest']!=digest:raise Conflict('Request ID reused with different data.')
+                if existing['digest']!=digest:raise Conflict('Anfrage-ID mit anderen Daten wiederverwendet.')
                 return json.loads(existing['result'])
             result=self.mutate(db,method,p)
             db.execute('INSERT INTO requests VALUES (?,?,?)',(request_id,digest,json.dumps(result)))
@@ -150,12 +150,12 @@ class Handler(socketserver.StreamRequestHandler):
         try:
             require_same_user(self.connection)
             raw=self.rfile.readline(LIMIT+1)
-            if len(raw)>LIMIT or not raw.endswith(b'\n'):raise ValueError('Invalid frame')
+            if len(raw)>LIMIT or not raw.endswith(b'\n'):raise ValueError('Ungültiger Frame')
             request=json.loads(raw);identity=request.get('id')
-            if request.get('protocol')!=PROTOCOL:raise ValueError('Incompatible prompt service version')
-            if not isinstance(identity,str) or not re.fullmatch(r'[a-zA-Z0-9_.-]{1,128}',identity):raise ValueError('Invalid request ID')
+            if request.get('protocol')!=PROTOCOL:raise ValueError('Inkompatible Prompt-Service-Version')
+            if not isinstance(identity,str) or not re.fullmatch(r'[a-zA-Z0-9_.-]{1,128}',identity):raise ValueError('Ungültige Anfrage-ID')
             params=request.get('params',{})
-            if not isinstance(params,dict):raise ValueError('Invalid parameters')
+            if not isinstance(params,dict):raise ValueError('Ungültige Parameter')
             result=self.server.library.call(request.get('method'),params,identity)
             response={'id':identity,'result':result}
         except Exception as error:

@@ -9,7 +9,7 @@ const write=(socket:net.Socket,value:unknown)=>{if(socket.destroyed)return;const
 const host=new Host((sid,frame)=>{for(const [socket,session] of clients)if(session===sid)write(socket,{event:frame});},sid=>[...clients.values()].includes(sid));
 const path=host.dirs.socket;
 if(existsSync(path)){
-  if(!lstatSync(path).isSocket()||lstatSync(path).uid!==process.getuid?.())throw new Error('Runtime socket path is not an owned socket');
+  if(!lstatSync(path).isSocket()||lstatSync(path).uid!==process.getuid?.())throw new Error('Der Laufzeit-Socket-Pfad ist kein eigener Socket');
   const live=await new Promise<boolean>((resolve,reject)=>{const probe=net.createConnection(path);probe.on('connect',()=>{probe.destroy();resolve(true);});probe.on('error',(error:NodeJS.ErrnoException)=>{if(error.code==='ECONNREFUSED'||error.code==='ENOENT')resolve(false);else reject(error);});});
   if(live){console.error('Augmentor Pi runtime is already running');process.exit(0);}unlinkSync(path);
 }
@@ -22,11 +22,11 @@ const server=net.createServer(socket=>{
     while((newline=buffer.indexOf(10))>=0){const line=buffer.subarray(0,newline).toString('utf8');buffer=buffer.subarray(newline+1);void (async()=>{
       let id:string|undefined;
       try{const req:unknown=JSON.parse(line);request(req);id=req.id;const p=req.params??{};
-        if(req.method==='host.hello'){if(p.protocol!==PROTOCOL)throw new Error('Incompatible Augmentor protocol');ready=true;write(socket,{id,result:{protocol:PROTOCOL}});return;}
-        if(!ready)throw new Error('A protocol handshake is required');
-        if(closing)throw new Error('Runtime is closing for maintenance.');
+        if(req.method==='host.hello'){if(p.protocol!==PROTOCOL)throw new Error('Inkompatibles Augmentor-Protokoll');ready=true;write(socket,{id,result:{protocol:PROTOCOL}});return;}
+        if(!ready)throw new Error('Ein Protokoll-Handshake ist erforderlich');
+        if(closing)throw new Error('Die Laufzeit wird für Wartung beendet.');
         if(req.method==='events.subscribe'){if(p.sessionId!==null&&p.sessionId!==undefined)host.getMeta(p.sessionId);clients.set(socket,p.sessionId??null);write(socket,{id,result:{subscribed:true}});if(p.sessionId)for(const frame of host.interactions.frames(p.sessionId))write(socket,{event:frame});return;}
-        if(req.method==='browser.attach'){if(host.getMeta(p.sessionId).surface!=='browser')throw new Error('Browser tools require a browser session');host.browser.attach(p.sessionId,socket,frame=>write(socket,{event:{method:'browser/execute',payload:frame}}));write(socket,{id,result:{attached:true}});return;}
+        if(req.method==='browser.attach'){if(host.getMeta(p.sessionId).surface!=='browser')throw new Error('Browser-Werkzeuge benötigen eine Browser-Sitzung');host.browser.attach(p.sessionId,socket,frame=>write(socket,{event:{method:'browser/execute',payload:frame}}));write(socket,{id,result:{attached:true}});return;}
         if(req.method==='browser.respond'){host.browser.respond(socket,p.rpcId,p.result,p.error);write(socket,{id,result:{accepted:true}});return;}
         if(req.method==='host.shutdown'){await host.dispatch('host.prepareShutdown',{},req.id);write(socket,{id,result:{accepted:true}});void shutdown();return;}
         const result=await host.dispatch(req.method,p,req.id);write(socket,{id,result});

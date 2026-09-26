@@ -34,7 +34,7 @@ class SharedPromptTests(unittest.TestCase):
         updated=other.call('prompts.save',{'id':row['id'],'name':'plain','content':'Changed','expectedRevision':row['revision']})['prompts'][0]
         self.assertEqual(updated['id'],row['id'])
         for method in ('prompts.save','prompts.delete'):
-            with self.assertRaisesRegex(ContractError,'changed'):self.client.call(method,{'id':row['id'],'name':'plain','content':'Lost draft','expectedRevision':row['revision']})
+            with self.assertRaisesRegex(ContractError,'geändert'):self.client.call(method,{'id':row['id'],'name':'plain','content':'Lost draft','expectedRevision':row['revision']})
         self.assertEqual(self.client.call('prompts.list')['prompts'],[updated])
     def test_concurrent_creates_and_updates_have_one_winner(self):
         def save(_):
@@ -63,7 +63,7 @@ class SharedPromptTests(unittest.TestCase):
         p={'name':'once','content':'only once'}
         one=self.client.call('prompts.save',p,request_id='same-request')
         self.assertEqual(self.client.call('prompts.save',p,request_id='same-request'),one)
-        with self.assertRaisesRegex(ContractError,'Request ID'):self.client.call('prompts.save',dict(p,content='changed'),request_id='same-request')
+        with self.assertRaisesRegex(ContractError,'Anfrage-ID'):self.client.call('prompts.save',dict(p,content='changed'),request_id='same-request')
         self.assertEqual(os.stat(self.client.base).st_mode&0o777,0o700)
         with self.assertRaises(ContractError):self.client.call('prompts.save',{'name':'../escape','content':'bad'})
     def test_improvement_is_separate_revisioned_and_persistent(self):
@@ -71,7 +71,7 @@ class SharedPromptTests(unittest.TestCase):
         self.assertIn('Preserve the intent',initial['content']);self.assertNotIn('[clipboard]',initial['content']);self.assertNotIn('PROMPT:',initial['content'])
         saved=self.client.call('prompts.improvement.save',{'content':'Keep the language. Be concise.','expectedRevision':initial['revision']})
         self.assertEqual(saved['prompts'],[])
-        with self.assertRaisesRegex(ContractError,'changed elsewhere'):
+        with self.assertRaisesRegex(ContractError,'an anderer Stelle geändert'):
             self.client.call('prompts.improvement.save',{'content':'Stale change','expectedRevision':initial['revision']})
         row=self.client.call('prompts.save',{'name':'prompt','content':'Unrelated reusable prompt'})['prompts'][0]
         self.client.call('prompts.delete',{'id':row['id'],'expectedRevision':row['revision']})
