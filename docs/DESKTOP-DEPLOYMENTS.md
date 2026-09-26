@@ -67,6 +67,15 @@ Installer and updater share a kernel lock so simultaneous promotions cannot race
 
 ## Required development and update workflow
 
+> **Fork note (this machine).** `augmentor-update` is installed by
+> `scripts/install-desktop-startup.py` as part of the managed user-local
+> staging workflow — it exists only where that flow was bootstrapped. The
+> fork's Debian-package installation (0.2.12, `dpkg -i` with
+> `augmentor-maintenance prepare` for backup) exposes `augmentor-agent` and
+> `augmentor-maintenance`, not `augmentor-update`; package upgrades go
+> through `dpkg -i` on a newly built deb. The staging workflow below still
+> applies wherever the managed path has been bootstrapped.
+
 1. Implement and test the change in source. Build a complete runnable candidate
    separate from the selected release. For an incremental preview patch, first
    copy the current artifact to a separate candidate and apply the reviewed

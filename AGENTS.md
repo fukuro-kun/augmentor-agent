@@ -31,10 +31,14 @@
 - Development uses separate Pi state, desktop identity and configuration paths. Preserve explicit model selection, visible Stop, and no replay of unknown-outcome actions.
 - Use Markdown links for supporting sources. Add copyright/SPDX headers to authored source and documentation where the format supports comments; JSON must remain valid JSON.
 
-- Current user-directed voice placement (19 September 2026): Qwen and Breeze run
-  on the RTX 5090. Preserve Qwen context/concurrency/precision and the current
-  CPU ASR/VAD path. Never move speech to another GPU or change model settings
-  silently; report any failure and let the user direct the next change.
+- Current user-directed voice placement (26 September 2026, fork): STT and TTS
+  run batch-style through the LAN InferenzQuelle forward
+  (`127.0.0.1:8012` → Janus → Acheron). Voice/VAD capture stays local and
+  CPU-only (Silero `silero-v6.2.1.onnx`, sha256-pinned, MIT-licensed, under
+  `~/.local/share/augmentor/vad/`). Never move speech to another endpoint or
+  change model settings silently; report any failure and let the user direct
+  the next change. The earlier upstream placement (Qwen/Breeze on RTX 5090,
+  CPU ASR) no longer applies to this fork.
 - Voice backend is the in-repo `adapters/dsh-voice-lan` host plugin (protocol
   `augmentor-voice/1`) over the LAN InferenzQuelle forward — see
   [docs/VOICE-LAN.md](docs/VOICE-LAN.md). The private `dsh-resonant-voice`

@@ -2,6 +2,28 @@
 
 # Augmentor Agent — Desktop & Browser
 
+> **Fork notice.** This is the [fukuro-kun fork](https://github.com/fukuro-kun/augmentor-agent)
+> of [ManoloRemiddi/augmentor-agent](https://github.com/ManoloRemiddi/augmentor-agent).
+> The development branch `feature/x11-mate-desktop` adapts the preview for an
+> Ubuntu/MATE X11 workstation:
+>
+> - **X11 desktop control** (`x11-xtest` backend) instead of the KDE Plasma
+>   Wayland portal path — in-process Qt consent, Flameshot/`QScreen` capture,
+>   XTEST input, and active-window following across multiple monitors. See
+>   [desktop control](docs/DESKTOP-CONTROL.md).
+> - **Augmentor Voice over LAN InferenzQuelle** — the in-repo
+>   `adapters/dsh-voice-lan` DSH plugin (protocol `augmentor-voice/1`) replaces
+>   the private `dsh-resonant-voice` artifact, which never shipped publicly.
+>   No separate voice service or port; STT/TTS run through the loopback
+>   InferenzQuelle forward. See [Voice LAN](docs/VOICE-LAN.md).
+> - **German user-facing UI** across native dialogs, browser surfaces,
+>   runtime errors and voice controls.
+> - Desktop package dependencies additionally require `python3-sounddevice`
+>   and `libportaudio2` for the shared capture/playback engine.
+>
+> Everything below this notice describes the upstream project; fork-specific
+> sections are marked accordingly.
+
 Augmentor Agent Desktop and Augmentor Agent Browser share a local Prompt Library
 and support DSH and Pi. Linux and macOS are the first release targets; Windows is
 deferred. This repository maintains both interfaces and their harness adapters.
@@ -40,7 +62,7 @@ and artifacts are provenance references, not public downloads.
 To inspect the public source:
 
 ```sh
-git clone https://github.com/ManoloRemiddi/augmentor-agent.git
+git clone https://github.com/fukuro-kun/augmentor-agent.git
 cd augmentor-agent
 ```
 
@@ -76,7 +98,9 @@ The [feature matrix](docs/FEATURE-MATRIX.md) records each surface/harness combin
 [Automatic dual memory](docs/DUAL-MEMORY.md) uses Hindsight knowledge pages for
 relationships and semantic retrieval for projects, with preserved transcripts and
 automatic consolidation. The [manual memory library](docs/MEMORY.md) remains optional. Linux also offers a bounded
-[KDE Wayland desktop control preview](docs/DESKTOP-CONTROL.md).
+[desktop control preview](docs/DESKTOP-CONTROL.md) — KDE Wayland upstream, plus an
+X11/XTEST backend for MATE-class sessions with multi-monitor active-window
+following in this fork.
 
 Use the [upgrade, rollback, migration and removal guide](docs/LIFECYCLE.md) for
 package maintenance. Configurations, prompts and conversations are retained by
@@ -89,11 +113,13 @@ distro coverage, macOS/Windows backends and public browser/OS downloads.
 
 ## September desktop development
 
-The current development branch includes [Resonant Voice](https://github.com/ManoloRemiddi/resonant-voice)
-for local speech, hold-to-record and slide-to-lock controls, voice selection and
-delivery, plus optional native [hands-free conversation](docs/HANDS-FREE-IMPLEMENTATION.md).
-The existing DSH session remains the conversational agent. Speech model licensing
-is separate from the Augmentor application code; see the voice repository before distribution.
+> **Fork.** The private Resonant Voice companion referenced by upstream was never
+> published. This fork ships speech through the in-repo
+> [Augmentor Voice LAN plugin](docs/VOICE-LAN.md): hold-to-record and
+> slide-to-lock controls, local voice settings and optional
+> [hands-free conversation](docs/HANDS-FREE-IMPLEMENTATION.md), with batch
+> STT/TTS over the LAN InferenzQuelle. The existing DSH session remains the
+> conversational agent; no separate voice service or model download is required.
 
 Other accumulated work includes [skins and appearance](docs/SKINS.md),
 [second-window behavior](docs/SECOND-WINDOW.md), configurable shortcuts,

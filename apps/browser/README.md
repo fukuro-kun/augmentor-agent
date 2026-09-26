@@ -20,7 +20,10 @@ approvals, saved conversations and speech engine.
 | `pipe.mjs`, `plugin/`, `wire.mjs` | DSH browser transport/plugin and wire primitives |
 | `test/` | Current DOM and bridge regressions; imported old suites may require their original fixtures |
 
-Browser audio controls are source-integrated with [Resonant Voice](https://github.com/ManoloRemiddi/resonant-voice).
+Browser audio controls are served by the in-repo
+[Augmentor Voice LAN plugin](../../docs/VOICE-LAN.md) (`adapters/dsh-voice-lan`,
+protocol `augmentor-voice/1` over the LAN InferenzQuelle); the private
+Resonant Voice artifact was never shipped in this fork.
 Browser capture/playback and hands-free directly reuse the native engine through
 a private host worker. See [shared surfaces](../../docs/SHARED-SURFACES-2026-09-24.md). Installing
 a speech tarball or activating the shared memory adapter does not update an

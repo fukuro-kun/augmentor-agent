@@ -23,7 +23,7 @@ This maintained checkout is the development source for both surfaces. The legacy
 | Model selection, streaming, Stop, history | Common surface controller, engine adapter | Yes | Yes | Yes | Yes |
 | Guided endpoint check, explicit save and approval mode | Pi setup / shared DSH integration; surface forms | OpenAI-compatible text/image check | Checked DSH integration; models configured in DSH | Same Pi check | Same DSH integration |
 | Browser navigate/snapshot/type/click | Browser executor + harness tool bindings | — | Yes, connected extension | Yes | Yes |
-| Consented desktop capture, click, keys and ASCII text | `services/desktop`; shared Pi/DSH tools | KDE Wayland preview | KDE Wayland preview | — | Same consented executor |
+| Consented desktop capture, click, keys and ASCII text | `services/desktop`; shared Pi/DSH tools | KDE Wayland preview; X11 backend (`x11-xtest`) on Ubuntu/MATE incl. multi-monitor follow | KDE Wayland preview; X11 backend (`x11-xtest`) | — | Same consented executor |
 | Bounded desktop specialist with isolated context and evidence | `packages/computer-use`; Pi lifecycle adapter | Development preview; same selected image model | Unavailable | — | — |
 | Optional manual memory library and data controls | Separate Hindsight 0.9.2 provider and tool binding | Yes | Yes | Yes | Yes |
 | Automatic relationship/project memory | Hindsight 0.10.0 and transcript companion | Lifecycle fixture | Local adapter active | Lifecycle fixture | Shared adapter active; controls in source |
@@ -33,7 +33,7 @@ Additional current native/browser capabilities:
 
 | Capability | Desktop | Browser |
 | --- | --- | --- |
-| Resonant Voice on DSH | Hold/release, slide-lock, voice selection; optional hands-free preview | Same shared engine: hold/release, lock, hands-free and primary voice settings |
+| Augmentor Voice LAN on DSH | Hold/release, slide-lock, voice settings; optional hands-free preview | Same shared engine: hold/release, lock, hands-free and primary voice settings |
 | Independent second conversation | Named second window, separate chat/settings/voice profile; KDE shortcut | Separate sidebar/session workflow |
 | Skins and activity animation | Futuristic plasma; Blossom lake/butterflies; validated import/export | Native skins are not applied to Chromium |
 | Startup and recovery | Shared selected release, supervised login, guarded recovery | Matching companion and explicit extension load/reload |
@@ -112,7 +112,7 @@ See [operations](MEMORY-OPERATIONS.md) for binding, pause and retention limits.
 
 ## Product requirement clarified by the user
 
-Augmentor Agent is one product with a Linux application and a Chromium extension. Each surface independently selects an available harness. Both DSH presentations use the same personal-agent instructions and tools; floating/sidebar presentation does not restrict task capabilities. Desktop input is a limited KDE Wayland preview; see DESKTOP-CONTROL.md for its actual scope.
+Augmentor Agent is one product with a Linux application and a Chromium extension. Each surface independently selects an available harness. Both DSH presentations use the same personal-agent instructions and tools; floating/sidebar presentation does not restrict task capabilities. Desktop input is a limited preview: KDE Wayland upstream and an X11/XTEST backend (`x11-xtest`) on Ubuntu/MATE in this fork; see DESKTOP-CONTROL.md for its actual scope.
 
 Use the single shared personal-agent definition. Common UI features such as Copy/check, Edit and Branch should be delivered and tested across both renderers, subject to explicitly recorded harness capability gaps. A change to one renderer alone does not automatically update the other. Shared long-term memory also does not convert a harness-native conversation into another harness's session.
 
@@ -151,7 +151,7 @@ it is not migrated into Pi or DSH conversations.
 | Feature | Desktop DSH | Browser DSH | Pi |
 | --- | --- | --- | --- |
 | Hindsight relationship pages + project semantic memory | Implemented; local adapter activated | Shared adapter activated; controls in source | Lifecycle integration tested with fixtures |
-| Resonant Voice hold/lock and saved voices | Native preview installed; [buffered capture, echo guard and gestures](HANDS-FREE-IMPLEMENTATION.md#buffered-activation-and-playback-echo-protection--19-september-2026) | Source integration and fixtures | Voice unsupported |
+| Augmentor Voice LAN hold/lock and voice settings | Native preview installed; [buffered capture, echo guard and gestures](HANDS-FREE-IMPLEMENTATION.md#buffered-activation-and-playback-echo-protection--19-september-2026); LAN InferenzQuelle backend live-verified | Source integration and fixtures | Voice unsupported |
 | Hands-free VAD and echo cancellation | Optional native preview; room acceptance pending | Deferred | Deferred |
 | Skins, backgrounds, named second window and shortcuts | Native development implementation | Surface-specific appearance only | Same native UI where applicable |
 | Fedora RPM | Container preview qualified; real desktop pending | Attachment pending | Bundled runtime subset |

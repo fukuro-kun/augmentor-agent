@@ -12,11 +12,15 @@ package checks. macOS qualification is tracked separately in the release ledger.
 
 ## Components
 
-- `augmentor-runtime`: shared services, DSH adapters, the Chromium native companion
+- `augmentor-runtime`: shared services, DSH adapters (including the
+  `augmentor-voice-lan` speech plugin), the Chromium native companion
   and application code. Existing Pi runtime code is retained but is not the
   first-release qualification target. Includes a hash-pinned Node executable and locked npm
   dependencies. Requires Python and the declared system C/C++ libraries, not
-  system Node/npm or Qt. Registers the host for conventional Chrome/Chromium.
+  system Node/npm or Qt. The shared capture/playback engine additionally
+  requires `python3-sounddevice` and `libportaudio2` (declared package
+  dependencies; speech degrades gracefully when they are absent).
+  Registers the host for conventional Chrome/Chromium.
 - `augmentor-desktop`: launcher, application-menu entry and desktop dependencies.
   Depends on the identical runtime package version. Uses Debian's separately
 installed, replaceable PySide6/Qt libraries.

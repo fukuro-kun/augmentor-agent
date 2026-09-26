@@ -26,8 +26,9 @@ and prompts. Its current chat, placement and appearance are independent from the
 user's open main and secondary windows. This is actual Desktop application code,
 not a screenshot mockup or a second mobile business-logic implementation.
 
-On this machine the running Desktop is the installed Resonant Voice preview
-0.2.8, while the maintained checkout declares 0.2.9. The launcher uses that same
+On this machine the running Desktop was the installed Resonant Voice preview
+0.2.8 (historical installed state — the current voice path is the in-repo
+[Augmentor Voice LAN plugin](VOICE-LAN.md)), while the maintained checkout declares 0.2.9. The launcher uses that same
 installed 0.2.8 build and matching Python runtime. It does not change the installed
 source, upgrade a live DSH integration or bypass its version check. Touch changes
 are applied in memory from the maintained adapter. An explicit `--desktop-root`

@@ -141,9 +141,11 @@ Tested ref: `feature/x11-mate-desktop` commits `7c007a2` + `c41e787`
 
 ## Remaining work
 
-- Deploy through a staged artifact + `augmentor-update`
-  (see [desktop deployments](DESKTOP-DEPLOYMENTS.md)); the live proof
-  above ran against the source checkout, not a promoted release.
+- Debian package install verified (0.2.12): plugin files shipped under
+  `/usr/lib/augmentor/adapters/dsh-voice-lan/`, `GET /api/augmentor-voice`
+  live after `dpkg -i` + `dsh-web` restart. The `augmentor-update` staged
+  flow is not part of this fork's package install — see the fork note in
+  [desktop deployments](DESKTOP-DEPLOYMENTS.md).
 - The `ulli_philipp` voice stays the final phase; the plugin accepts a
   configured `voice` name but ships unset (router default).
 - Local fallback engine (qualified separately, never auto-enabled).

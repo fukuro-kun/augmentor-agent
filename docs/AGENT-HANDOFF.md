@@ -2,6 +2,44 @@
 
 # Start here: agent handoff
 
+## Fork state — fukuro-kun, `feature/x11-mate-desktop` (26 September 2026)
+
+This checkout is the [fukuro-kun fork](https://github.com/fukuro-kun/augmentor-agent),
+adapted to run on an Ubuntu/MATE X11 workstation (no KDE/Wayland). All fork
+changes live on `feature/x11-mate-desktop`:
+
+- **X11 desktop-control backend** (`services/desktop/x11.py`, id `x11-xtest`):
+  Qt in-process consent, Flameshot/`QScreen.grabWindow` capture, XTEST input,
+  active-window following across two monitors. See
+  [desktop control](DESKTOP-CONTROL.md#x11-backend-x11-xtest).
+- **German UI**: all visible user-facing strings across native dialogs,
+  browser surfaces, runtime errors and status text are localized to German.
+- **Augmentor Voice LAN**: in-repo `adapters/dsh-voice-lan` host plugin
+  (protocol `augmentor-voice/1`) replaces the private `dsh-resonant-voice`
+  artifact — batch STT/TTS through the LAN InferenzQuelle forward, one-time
+  tickets + loopback WebSocket, session allowlist, lease takeover. Live
+  verified on DSH 0.1.5-rc.1 (ticket, WS auth, Whisper transcript, TTS WAV,
+  403/400 rejections). See [Voice LAN](VOICE-LAN.md).
+- **Preferences**: `voice_enabled`, `voice_mode`, `voice_pause_ms`,
+  `voice_tts_enabled`, `voice_stt_language`, `voice_speed`, `voice_volume`,
+  `voice_id`; legacy `resonant_voice` is imported once for migration.
+- **Hands-free VAD**: pinned Silero model `silero-v6.2.1.onnx`
+  (sha256 `1a153a22f4...8788e3`, MIT-licensed) at
+  `~/.local/share/augmentor/vad/` with legacy path fallback.
+- **Packaging**: desktop package depends additionally on `python3-sounddevice`
+  and `libportaudio2`; the plugin ships in `augmentor-runtime` at
+  `usr/lib/augmentor/adapters/dsh-voice-lan/`. The complete-bundle installer
+  no longer carries a private voice/model/GPU provisioning path.
+- **Inference routing**: DSH is configured against the LAN Janus router
+  (InferenzQuelle) rather than a local Ollama — model endpoints remain a
+  per-user DSH setting, not repository state.
+
+Remaining acceptance gap: synthetic STT/TTS round-trips pass; an acoustic
+microphone/speaker acceptance trial on real hardware is still pending.
+
+The sections below record upstream development history and remain valid as
+dated evidence; fork deltas are summarized above and in [SOURCES](SOURCES.md).
+
 ## September 25 source integration
 
 The user requested merging the composer correction and other ready changes.

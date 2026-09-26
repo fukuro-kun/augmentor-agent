@@ -6,11 +6,20 @@ Pi and DSH use the same per-user desktop executor. It captures a consented scree
 and can click, send a short key chord or type up to 256 ASCII characters into an
 accessible focused control. The browser role has no desktop input tools.
 
-The current target is Debian 13, KDE Plasma Wayland, one active monitor and a
-model configured for image input. The desktop package supplies the capture/input
-dependencies. The Augmentor window and independent Stop control use XWayland;
-the tested target application, Kate, uses native Wayland. Other desktops,
-multiple monitors, password fields and non-ASCII typing are not supported.
+Two session backends are qualified, each selecting automatically by session
+type:
+
+- **KDE Plasma Wayland** (upstream target): Debian 13, one active monitor and a
+  model configured for image input. The Augmentor window and independent Stop
+  control use XWayland; the tested target application, Kate, uses native
+  Wayland. Other Wayland desktops, multiple monitors, password fields and
+  non-ASCII typing are not supported on this backend.
+- **X11 (`x11-xtest`, fork target)**: tested on Ubuntu/MATE X11 with two
+  monitors. The backend follows the active EWMH window and captures whichever
+  monitor contains it — see the [X11 backend](#x11-backend-x11-xtest) section
+  below. Password fields and non-ASCII typing remain unsupported.
+
+The desktop package supplies the capture/input dependencies.
 
 ## Using it
 
