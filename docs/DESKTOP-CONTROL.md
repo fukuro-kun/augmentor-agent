@@ -44,6 +44,28 @@ context and private local evidence files; the coordinator receives a short
 structured result. This has different retention behavior from direct desktop
 tools. The native executor and its platform limitations remain the same.
 
+## X11 backend (x11-xtest)
+
+On non-Wayland Linux sessions the executor selects `services/desktop/x11.py`
+(backend id `x11-xtest`) instead of the KDE portal path. It was tested on
+Ubuntu/MATE X11 and keeps the same safety contract: explicit consent before
+capture or input, an independent visible Stop control, per-conversation
+ownership, consumed-once target tokens and no replay of unknown-outcome
+actions.
+
+Differences from the Wayland backend:
+
+- Consent is an in-process Qt dialog; X11 has no portal-mediated consent.
+- Capture uses Flameshot when available (`flameshot full -r`) and falls back
+  to `QScreen.grabWindow`. Input uses XTEST via python-xlib.
+- Multi-monitor sessions are allowed. The backend follows the active EWMH
+  window and captures the monitor containing it; a window that cannot be
+  resolved blocks the action.
+- Typing still targets an AT-SPI accessible focused control and ASCII text.
+
+The same-tool checks (changed/covered target, changed geometry, focus and
+ownership) apply unchanged.
+
 ## Reproducible evidence
 
 `scripts/vm-desktop-proof.py` drives a disposable full Plasma Wayland VM. It

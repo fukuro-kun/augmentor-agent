@@ -2,6 +2,15 @@
 
 # Preview changes
 
+## 0.2.12+fukuro (fork)
+
+- X11 desktop-control backend (`x11-xtest`) for non-KDE sessions: EWMH
+  active-window following across multiple monitors, Flameshot/Qt capture,
+  XTEST input via python-xlib, in-process Qt consent, independent Stop.
+- User-facing UI localized to German across the native app, browser
+  extension, Home and mobile surfaces, runtime errors and the prompt
+  library service.
+
 ## 0.2.3
 
 - Both UIs can check a supported DSH connection, install Augmentor's owned roles,
