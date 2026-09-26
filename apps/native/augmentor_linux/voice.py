@@ -1,5 +1,5 @@
 # Copyright © 2026 Manolo Remiddi · SPDX-License-Identifier: LicenseRef-Augmentor-MIT-Resale-1.0
-"""Optional Resonant Voice session. The existing controller submits every prompt."""
+"""Optional Augmentor Voice session. The existing controller submits every prompt."""
 from .instances import current_name
 import json
 import queue
@@ -22,6 +22,11 @@ class VoiceSession(QObject):
         super().__init__(parent)
         self.hands_free = (getattr(parent, 'preferences', None) is not None and parent.preferences.values.get('voice_mode') == 'hands-free') if hands_free is None else bool(hands_free)
         self.pause_ms = getattr(getattr(parent, 'preferences', None), 'values', {}).get('voice_pause_ms', 800)
+        prefs = getattr(parent, 'preferences', None)
+        self.tts_enabled = bool(getattr(prefs, 'values', {}).get('voice_tts_enabled', True))
+        self.stt_language = getattr(prefs, 'values', {}).get('voice_stt_language', 'de')
+        self.speech_speed = float(getattr(prefs, 'values', {}).get('voice_speed', 1.0))
+        self.volume = float(getattr(prefs, 'values', {}).get('voice_volume', 1.0))
         self.early_input=early_input
         from .voice_echo_guard import PlaybackEchoGuard
         self.echo_guard=PlaybackEchoGuard()
@@ -114,7 +119,10 @@ class VoiceSession(QObject):
             self.sd = sd
             self.ws = websocket.create_connection(self.ticket['url'], timeout=10, suppress_origin=True,
                                                   http_proxy_host=None)
-            self.ws.send(json.dumps({'type': 'auth', 'ticket': self.ticket['ticket'], 'textSource': 'plugin', 'profile': current_name()}))
+            self.ws.send(json.dumps({'type': 'auth', 'ticket': self.ticket['ticket'], 'textSource': 'plugin',
+                                     'profile': current_name(),
+                                     'settings': {'ttsEnabled': self.tts_enabled, 'sttLanguage': self.stt_language,
+                                                  'speechSpeed': self.speech_speed}}))
             self.ws.settimeout(None)
             if self.hands_free:
                 from .voice_echo import EchoRoute
@@ -193,6 +201,11 @@ class VoiceSession(QObject):
             now = time.monotonic()
             pcm = self.playback_buffer.read(len(outdata), now)
             size = len(pcm)
+            if size and self.volume < 1.:
+                gained = array('h', pcm)
+                for index in range(len(gained)):
+                    gained[index] = max(-32768, min(32767, round(gained[index]*self.volume)))
+                pcm = gained.tobytes()
             outdata[:] = pcm + bytes(len(outdata)-size)
             if getattr(_status, 'output_underflow', False):self.output_underflows += 1
             if size and self.input_ended_at is not None:
@@ -373,6 +386,29 @@ class VoiceSession(QObject):
         if self.connected and not self.closed and not self.recognizing and not self.capture:
             self.set_status('Bereit · vorherige Sprache gestoppt', 'ready')
 
+    def apply_voice_settings(self):
+        if self.closed:
+            return
+        prefs = getattr(self.parent(), 'preferences', None)
+        if prefs is None:
+            return
+        tts = bool(prefs.values.get('voice_tts_enabled', True))
+        self.stt_language = prefs.values.get('voice_stt_language', 'de')
+        self.speech_speed = float(prefs.values.get('voice_speed', 1.0))
+        self.volume = float(prefs.values.get('voice_volume', 1.0))
+        self.control({'type': 'settings', 'ttsEnabled': tts, 'sttLanguage': self.stt_language,
+                      'speechSpeed': self.speech_speed})
+        if self.tts_enabled and not tts:
+            # Stop local playback now; the plugin discards its own queue and
+            # aborts the in-flight synthesis through the same settings frame.
+            with self.audio_lock:
+                self.playback_buffer.reset()
+                self.audible_until = 0.
+                self.speech_idle = True
+            if self.state == 'speaking':
+                self.set_status('Bereit', 'ready')
+        self.tts_enabled = tts
+
     def observe(self, event):
         if self.closed:return
         # This UI event has no voice request/generation identity. An old driver's
@@ -399,7 +435,7 @@ class VoiceSession(QObject):
 
     def submission_result(self, result):
         request=result.get('id','')
-        if self.closed or not request.startswith('resonant-voice:') or request.split(':',1)[1] not in self.submitted:return
+        if self.closed or not request.startswith('augmentor-voice:') or request.split(':',1)[1] not in self.submitted:return
         if not result.get('accepted'):
             self.set_status('Folgefrage wurde nicht bestätigt. '+result.get('error','Prüfe die Unterhaltung vor einem erneuten Versuch.'))
             if self.hands_free:self.shutdown()
@@ -449,7 +485,7 @@ class VoiceSession(QObject):
             self.recognizing=False
             self.submitted.add(event['requestId'])
             self.set_status('Denkt …', 'thinking')
-            self.waiting_request='resonant-voice:'+event['requestId']
+            self.waiting_request='augmentor-voice:'+event['requestId']
             self.turn_complete=False
             self.transcript.emit(event)
             self.resume_detection()

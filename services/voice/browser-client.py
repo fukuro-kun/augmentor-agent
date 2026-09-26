@@ -41,7 +41,7 @@ class Client(QObject):
             self.intent = False
             v.begin()
         self.publish({'type': 'state', 'state': v.state if v else 'connecting',
-                   'status': v.status_text if v else 'Preparing speech models…',
+                   'status': v.status_text if v else 'Sprachverbindung wird vorbereitet …',
                    'handsFree': self.hands_free, 'canRecord': bool(v and v.can_record),
                    'recording': bool(v and v.accepting_audio),
                    'recordingAvailable': bool(v.recording_available if v else self.early and self.early.receiving),
@@ -55,7 +55,7 @@ class Client(QObject):
         if self.early:
             self.early.close()
             self.early = None
-        self.publish({'type': 'state', 'state': 'closed', 'closed': True, 'status': 'Voice off'})
+        self.publish({'type': 'state', 'state': 'closed', 'closed': True, 'status': 'Sprache aus'})
         app = QCoreApplication.instance()
         if app: app.quit()
 
@@ -69,7 +69,7 @@ class Client(QObject):
             if action == 'heartbeat':
                 self.last_heartbeat = time.monotonic()
             elif action == 'prepare' and not self.prepared:
-                if not self.preferences.values['resonant_voice']:raise ValueError('Enable Voice in Settings first.')
+                if not self.preferences.values['voice_enabled']:raise ValueError('Aktiviere die Sprachfunktion zuerst in den Einstellungen.')
                 self.prepared = True
                 self.hands_free = value.get('handsFree') is True
                 if self.hands_free:
@@ -98,6 +98,11 @@ class Client(QObject):
                 self.voice.submission_result(value['result'])
             elif action == 'observe' and self.voice:
                 self.voice.observe(value['event'])
+            elif action == 'settings' and self.voice:
+                # Settings arrive through a separate process; reload the
+                # persisted profile before applying it to the open session.
+                self.preferences = Preferences()
+                self.voice.apply_voice_settings()
             elif action == 'close':
                 self.finish()
         except Exception as error:

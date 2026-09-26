@@ -68,6 +68,7 @@ Requires: python3 >= 3.11
 Requires: python3-pyside6 >= 6.8.2
 Requires: python3-pyyaml, python3-websocket-client, python3-pygments >= 2.18, python3-numpy >= 1.24
 Requires: python3-gobject, qt6-qtsvg, at-spi2-core, gstreamer1, pipewire-gstreamer, gstreamer1-plugins-base
+Requires: python3-sounddevice, portaudio
 Requires: dejavu-sans-fonts, glib2, glibc >= 2.36, libstdc++
 Requires(pretrans): python3
 Requires(preun): python3

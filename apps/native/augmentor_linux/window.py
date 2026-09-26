@@ -44,14 +44,6 @@ class Window(QWidget):
         self.setAttribute(Qt.WidgetAttribute.WA_TranslucentBackground)
         self.setMinimumSize(364,364);self.resize(424,484)
         self.preferences=Preferences(not preview)
-        if not preview and current_name()!='main':
-            # Materialize the independent voice profile at first open, not
-            # when the user eventually visits Voice settings. No microphone.
-            from .voice_settings import voice_request
-            def initialize_voice_profile():
-                try:voice_request('preferences')
-                except Exception:pass  # Optional offline voice must not prevent chat.
-            threading.Thread(target=initialize_voice_profile,daemon=True).start()
         if harness in ('pi','dsh'):
             self.preferences.values['harness']=harness;self.preferences.save()
         self.controller=None if preview else Controller(self,harness=self.preferences.values['harness'])
@@ -262,9 +254,15 @@ class Window(QWidget):
         self.sync_orb();self.update_controls()
 
     def set_voice_enabled(self, enabled):
-        self.preferences.values['resonant_voice']=bool(enabled)
+        self.preferences.values['voice_enabled']=bool(enabled)
         self.preferences.save()
         if not enabled:self.close_voice_panel()
+        self.update_controls()
+
+    def set_voice_tts_enabled(self, enabled):
+        self.preferences.values['voice_tts_enabled']=bool(enabled)
+        self.preferences.save()
+        if self.voice_dialog:self.voice_dialog.apply_voice_settings()
         self.update_controls()
 
     def request_voice(self):
@@ -308,7 +306,7 @@ class Window(QWidget):
     def refresh_voice_preferences(self):
         if not self.voice_dialog and not self.voice_opening and getattr(self.preferences,'persistent',False):
             latest=Preferences()
-            for key in ('resonant_voice','voice_mode','voice_pause_ms'):
+            for key in ('voice_enabled','voice_mode','voice_pause_ms','voice_tts_enabled','voice_stt_language','voice_speed','voice_volume'):
                 self.preferences.values[key]=latest.values[key]
             self.voice_button.hands_free=self.voice_is_hands_free()
 
@@ -370,8 +368,8 @@ class Window(QWidget):
 
     def open_voice(self):
         if getattr(getattr(self,'preferences',None),'persistent',False):self.refresh_voice_preferences()
-        if not self.preferences.values.get('resonant_voice',True):
-            self.set_status('Aktiviere Resonant Voice in den Einstellungen, um das Mikrofon zu nutzen.');return
+        if not self.preferences.values.get('voice_enabled',True):
+            self.set_status('Aktiviere die Sprachfunktion in den Einstellungen, um das Mikrofon zu nutzen.');return
         if self.editing:
             self.set_status('Beende oder brich die Nachrichtenbearbeitung ab, bevor du Voice öffnest.');return
         if self.voice_dialog or not self.controller:return
@@ -393,7 +391,7 @@ class Window(QWidget):
             if error:
                 self.voice_button.set_state('error',error)
                 self.set_status('Sprache nicht verfügbar. '+error);return
-            if not self.preferences.values.get('resonant_voice',True) or controller is not self.controller or controller.closed or controller.session!=ticket['sessionId']:
+            if not self.preferences.values.get('voice_enabled',True) or controller is not self.controller or controller.closed or controller.session!=ticket['sessionId']:
                 self.close_voice_panel();return
             from .voice import VoiceSession
             voice=VoiceSession(self,ticket,hands_free=self.voice_is_hands_free(),early_input=self.voice_input);self.voice_dialog=voice
@@ -409,9 +407,9 @@ class Window(QWidget):
         controller=self.controller
         if not self.voice_dialog or self.voice_dialog.closed or not controller or controller.session!=event['sessionId'] or controller.read_only:return
         if controller.running:
-            accepted=controller.queue_prompt(event['text'],'resonant-voice:'+event['requestId'],mode='steer')
+            accepted=controller.queue_prompt(event['text'],'augmentor-voice:'+event['requestId'],mode='steer')
         else:
-            accepted=controller.send(event['text'],self.model_picker.currentData(),request_id='resonant-voice:'+event['requestId'])
+            accepted=controller.send(event['text'],self.model_picker.currentData(),request_id='augmentor-voice:'+event['requestId'])
         if not accepted and self.voice_dialog:
             self.voice_dialog.set_status('Nachricht wurde nicht gesendet. '+event['text'])
             if getattr(self.voice_dialog,'hands_free',False):self.voice_dialog.shutdown()
@@ -438,7 +436,7 @@ class Window(QWidget):
     def update_controls(self):
         self.voice_button.hands_free=self.voice_is_hands_free()
         self.voice_button.refresh_tip()
-        self.voice_button.setVisible(self.preferences.values.get('resonant_voice',True))
+        self.voice_button.setVisible(self.preferences.values.get('voice_enabled',True))
         self.voice_button.setEnabled(bool(self.controller and getattr(self.controller,'harness',None)=='dsh' and getattr(self.controller,'online',False) and not getattr(self.controller,'read_only',False) and (not getattr(self.controller,'navigating',False) or self.voice_opening)))
         running=bool(self.controller and (self.controller.running or getattr(self.controller,'navigating',False)))
         can_queue=bool(self.controller and getattr(getattr(self.controller,'client',None),'supports_queue',False))
@@ -1185,7 +1183,7 @@ def main():
     hold('desktop')
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument('--screenshot', type=Path, help='Save the app window only, then exit (for UI verification).')
-    parser.add_argument('--voice', action='store_true', help='Open Resonant Voice in the existing desktop conversation.')
+    parser.add_argument('--voice', action='store_true', help='Open Augmentor Voice in the existing desktop conversation.')
     parser.add_argument('--ensure-running', action='store_true', help='Start at login without toggling an existing window.')
     parser.add_argument('--compact', action='store_true', help='Open the circular activity view.')
     parser.add_argument('--preview', action='store_true', help='Open without connecting to a harness.')

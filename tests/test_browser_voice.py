@@ -23,7 +23,7 @@ class BrowserVoiceTests(unittest.TestCase):
     @classmethod
     def setUpClass(cls):cls.app=QCoreApplication.instance() or QCoreApplication([])
     def setUp(self):
-        self.preferences=patch.object(module,'Preferences',return_value=SimpleNamespace(values={'resonant_voice':True,'voice_mode':'manual','voice_pause_ms':800}))
+        self.preferences=patch.object(module,'Preferences',return_value=SimpleNamespace(values={'voice_enabled':True,'voice_mode':'manual','voice_pause_ms':800}))
         self.preferences.start();self.addCleanup(self.preferences.stop)
     def test_release_before_models_ready_does_not_start_late_capture(self):
         events=[];client=module.Client(events.append,session_type=Voice)

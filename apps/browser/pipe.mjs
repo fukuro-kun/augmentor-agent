@@ -550,8 +550,8 @@ const localMethods = {
     const token=readFileSync(path.join(configured.home,'augmentor-product-token'),'utf8').trim()
     const row=(await dsh('session.list')).items.find(row=>row.sessionId===params.sessionId)
     const surface=row?.agentPreset==='augmentor-linux-product'?'linux':'browser'
-    const result=await boundedJson(`${DSH_BASE}/api/resonant-voice`,{method:'POST',headers:{'content-type':'application/json','x-augmentor-product-token':token},body:JSON.stringify({surface,sessionId:params.sessionId}),signal:AbortSignal.timeout(5000)})
-    if(!result.ok||result.protocol!=='resonant-voice/1')throw Error(result.error||'Inkompatibler Sprachdienst')
+    const result=await boundedJson(`${DSH_BASE}/api/augmentor-voice`,{method:'POST',headers:{'content-type':'application/json','x-augmentor-product-token':token},body:JSON.stringify({surface,sessionId:params.sessionId}),signal:AbortSignal.timeout(5000)})
+    if(!result.ok||result.protocol!=='augmentor-voice/1'||result.sessionId!==params.sessionId)throw Error(result.error||'Inkompatibler Sprachdienst')
     return result
   },
   'augmentor/dsh':dshSetup,

@@ -78,11 +78,11 @@ class VoiceTests(unittest.TestCase):
         fake=SimpleNamespace(preferences=SimpleNamespace(values={},save=lambda:calls.append('saved')),
             voice_dialog=None,close_voice_panel=lambda:calls.append('closed'),update_controls=lambda:calls.append('controls'))
         Window.set_voice_enabled(fake,False)
-        self.assertFalse(fake.preferences.values['resonant_voice'])
+        self.assertFalse(fake.preferences.values['voice_enabled'])
         self.assertEqual(calls,['saved','closed','controls'])
         fake.set_status=lambda message:calls.append(message)
         Window.open_voice(fake)
-        self.assertIn('Aktiviere Resonant Voice',calls[-1])
+        self.assertIn('Aktiviere die Sprachfunktion',calls[-1])
 
     def test_voice_toggle_controls_robot_visibility(self):
         from augmentor_linux.window import Window

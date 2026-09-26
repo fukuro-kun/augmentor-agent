@@ -126,7 +126,7 @@ class VoiceButton(QPushButton):
         if self.hands_free and self.state not in ('off','error','disconnected'):
             tip=('Hört zu · Tippen oder Esc zum Stoppen' if self.recording_available else 'Bitte warten · Mikrofon nicht bereit')
         self.setToolTip(tip)
-        self.setAccessibleName('Resonant Voice · '+tip)
+        self.setAccessibleName('Sprachfunktion · '+tip)
 
     def set_recording_progress(self, elapsed, maximum, levels):
         self.elapsed=elapsed;self.max_seconds=maximum

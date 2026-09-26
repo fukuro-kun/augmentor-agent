@@ -6,7 +6,9 @@ import os
 from pathlib import Path
 import tempfile
 
-DEFAULTS = {'resonant_voice': True, 'voice_mode': 'manual', 'voice_pause_ms': 800, 'theme': 'dark', 'hue': 190, 'brightness': 0, 'accent_hue': 160,
+DEFAULTS = {'voice_enabled': True, 'voice_mode': 'manual', 'voice_pause_ms': 800, 'voice_tts_enabled': True,
+            'voice_stt_language': 'de', 'voice_speed': 1.0, 'voice_volume': 1.0, 'voice_id': '',
+            'theme': 'dark', 'hue': 190, 'brightness': 0, 'accent_hue': 160,
             'accent_brightness': 0, 'saturation': 48, 'opacity': 85, 'animation': True, 'effect': 'plasma', 'background': 'none', 'background_image': '', 'skin_name': 'Custom', 'custom_skins': [], 'flares': True, 'pinned': True, 'placement': {}, 'harness':'dsh','format_colours':{}}
 
 
@@ -26,6 +28,9 @@ class Preferences:
                     value = data.get(key, default)
                     if type(value) is type(default):
                         self.values[key] = value
+                legacy_voice = data.get('resonant_voice')
+                if 'voice_enabled' not in data and isinstance(legacy_voice, bool):
+                    self.values['voice_enabled'] = legacy_voice
             except (OSError, ValueError, TypeError):
                 pass
         if fresh_secondary:
@@ -48,6 +53,16 @@ class Preferences:
         else:self.values['background_image']=''
         if self.values['voice_mode'] not in ('manual','hands-free'):self.values['voice_mode']='manual'
         self.values['voice_pause_ms']=max(400,min(2000,self.values['voice_pause_ms']))
+        if self.values['voice_stt_language'] not in ('de','en','auto'):self.values['voice_stt_language']='de'
+        self.values['voice_speed']=max(.5,min(2.0,float(self.values['voice_speed'])))
+        self.values['voice_volume']=max(0.,min(1.0,float(self.values['voice_volume'])))
+        self.values['voice_tts_enabled']=bool(self.values['voice_tts_enabled'])
+        if persistent:
+            try:
+                from .voice_settings import seed_voice_preferences
+                seed_voice_preferences(self.values)
+            except (OSError, ValueError, ImportError):
+                pass
         self.retired_harness = self.values['harness'] == 'opencode'
         if self.values['harness'] not in ('pi','dsh'):self.values['harness']='dsh'
         if self.values['theme'] not in ('light', 'dark'):

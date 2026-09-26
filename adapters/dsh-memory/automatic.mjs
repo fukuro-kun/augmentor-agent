@@ -7,6 +7,9 @@ const owned=session=>allowed.has(session.header.agentPreset)&&session.header.ori
 // Delegated agents and speech can use the GPU inside a tool call. Only known
 // ordinary I/O tools open a spare-compute window; unknown tools stay foreground.
 const spare=name=>['bash','read','write','edit','glob','grep','web_fetch','web_search'].includes(name)||String(name).startsWith('browser_');
+// resonant-voice: ids remain in already-recorded history; augmentor-voice: is
+// the current LAN speech contract. Both count as voice input, never as text.
+const voiceRpc=id=>{const s=String(id||'');return s.startsWith('resonant-voice:')||s.startsWith('augmentor-voice:')};
 
 export function applyAutomaticMemory(ctx,{createClient=(session,cwd)=>new DualMemoryClient(session,cwd,undefined,message=>console.warn('[augmentor-memory]',message))}={}){
   const states=new Map();
@@ -26,7 +29,7 @@ export function applyAutomaticMemory(ctx,{createClient=(session,cwd)=>new DualMe
       const d=e.data;
       const live=e.seq===liveSeq;
       if(e.type==='user/message'&&d.source?.kind==='user'){
-        s.mode=String(d.source.rpcId||'').startsWith('resonant-voice:')?'voice':'text';
+        s.mode=voiceRpc(d.source.rpcId)?'voice':'text';
         const content=text(d.content);if(content.trim())events.push({id:String(e.seq),role:'user',mode:s.mode,content,live});
       }
       if(e.type==='assistant/message'){
@@ -55,7 +58,7 @@ export function applyAutomaticMemory(ctx,{createClient=(session,cwd)=>new DualMe
     const s=capture(agent.session);
     const human=messages.filter(m=>m.source?.kind==='user').at(-1);
     if(!human||agent.session.header.parentSession||agent.session.header.isSeeded)return decision;
-    const mode=String(human.source.rpcId||'').startsWith('resonant-voice:')?'voice':'text';
+    const mode=voiceRpc(human.source.rpcId)?'voice':'text';
     const context=await s.client.recall(mode,text(human.content));
     if(signal?.aborted)return decision;
     // Surface replacement is a supported DSH operation. Preserve the append-only

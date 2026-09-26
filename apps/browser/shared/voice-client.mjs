@@ -45,18 +45,18 @@ export class BrowserVoice {
     // Return the lease immediately, so release/cancel/heartbeats work during preparation.
     void this.ticket(sessionId).then(ticket=>{
       if(this.active!==active)return
-      if(ticket.protocol!=='resonant-voice/1'||ticket.sessionId!==sessionId||!/^ws:\/\/127\.0\.0\.1:\d+\/voice$/.test(ticket.url))throw Error('Ungültiger Sprach-Endpunkt')
+      if(ticket.protocol!=='augmentor-voice/1'||ticket.sessionId!==sessionId||!/^ws:\/\/(127\.0\.0\.1|\[::1\]):\d+\/api\/augmentor-voice\/ws$/.test(ticket.url))throw Error('Ungültiger Sprach-Endpunkt')
       this.write(active,{action:'start',ticket})
     }).catch(error=>{emit({type:'error',message:error.message});this.close(active)})
     return {id,sessionId}
   }
   write(active,value){if(this.active===active&&!active.worker.stdin.destroyed)active.worker.stdin.write(JSON.stringify(value)+'\n')}
-  control({id,sessionId,action}){
+  control({id,sessionId,action,settings}){
     const active=this.active
     if(!active||id!==active.id||sessionId!==active.sessionId)throw Error('Die Sprache gehört zu einer anderen oder geschlossenen Unterhaltung')
-    if(!['heartbeat','begin','end','interrupt','close'].includes(action))throw Error('Nicht unterstützte Sprachsteuerung')
+    if(!['heartbeat','begin','end','interrupt','close','settings'].includes(action))throw Error('Nicht unterstützte Sprachsteuerung')
     if(action==='close')this.close(active)
-    else this.write(active,{action})
+    else this.write(active,{action,...(action==='settings'&&settings&&typeof settings==='object'?{settings}:{})})
     return {ok:true}
   }
   observe(sessionId,event){if(this.active?.sessionId===sessionId)this.write(this.active,{action:'observe',event})}
@@ -64,7 +64,7 @@ export class BrowserVoice {
     if(this.active!==active||event.sessionId!==active.sessionId||!/^[-a-f0-9]{36}$/.test(event.requestId??'')||active.submitted.has(event.requestId))return
     if(typeof event.text!=='string'||!event.text.trim()||event.text.length>8192){this.close(active);return}
     active.submitted.add(event.requestId)
-    const id='resonant-voice:'+event.requestId
+    const id='augmentor-voice:'+event.requestId
     let result
     try{result=await this.submit(active.sessionId,id,event.text)}
     catch(error){result={accepted:false,error:'Das Ergebnis der Übermittlung ist unbekannt. Prüfe die Unterhaltung vor einem erneuten Versuch. '+error.message}}

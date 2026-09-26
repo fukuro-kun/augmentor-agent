@@ -146,7 +146,7 @@ class SettingsDialog(QDialog):
         self.resize(460,min(820,self.screen().availableGeometry().height()-80))
         from .settings_icons import settings_icon,settings_label
         from .voice_settings import VoiceSettingsDialog
-        voice=QPushButton('Resonant Voice')
+        voice=QPushButton('Sprachfunktion')
         voice.clicked.connect(lambda:VoiceSettingsDialog(window).exec())
         layout.addWidget(voice)
         layout.addWidget(settings_label('Harness','harness',window.accent))

@@ -77,18 +77,19 @@ class EchoRoute:
         valid = re.compile(r'^[A-Za-z0-9_.:-]+$')
         if (not valid.fullmatch(source) or not valid.fullmatch(sink)
                 or source.endswith('.monitor') or source.startswith('resonant_aec_')
-                or sink.startswith('resonant_aec_')):
+                or source.startswith('augmentor_aec_')
+                or sink.startswith('resonant_aec_') or sink.startswith('augmentor_aec_')):
             raise EchoRouteError('Wähle ein physisches Mikrofon und einen Lautsprecherausgang '
                                  'in den Desktop-Soundeinstellungen, bevor du Freisprechen nutzt.')
-        name = f'resonant_aec_{os.getpid()}_{uuid.uuid4().hex[:8]}'
+        name = f'augmentor_aec_{os.getpid()}_{uuid.uuid4().hex[:8]}'
         source_name, sink_name = name + '_mic', name + '_speaker'
         module_id = _pactl(
             'load-module', 'module-echo-cancel', 'aec_method=webrtc',
             f'source_master={source}', f'sink_master={sink}',
             f'source_name={source_name}', f'sink_name={sink_name}',
             'rate=48000', 'channels=1', 'channel_map=mono',
-            'source_properties=device.description=Resonant-Microphone priority.session=0',
-            'sink_properties=device.description=Resonant-Speaker priority.session=0')
+            'source_properties=device.description=Augmentor-Microphone priority.session=0',
+            'sink_properties=device.description=Augmentor-Speaker priority.session=0')
         if not module_id.isdecimal():
             raise EchoRouteError('PipeWire hat kein gültiges Echounterdrückungsmodul zurückgegeben.')
         route = cls(module_id, source_name, sink_name)

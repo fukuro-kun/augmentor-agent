@@ -6,9 +6,11 @@ sys.path.insert(0,str(Path(__file__).resolve().parents[4]/'services'))
 from dsh.branch import branch,product_exact_fork
 from dsh.setup import current,http,VERSION
 import hashlib
+import ipaddress
 import json
 import urllib.request
 import urllib.error
+import urllib.parse
 from .dsh_wire import DshClient,EventStream
 from ..pi_client import ContractError
 
@@ -32,10 +34,19 @@ class DshAdapter(DshClient):
         row=next((row for row in self.call('session.list')['items'] if row['sessionId']==session),{})
         if not self.owns_preset(row.get('agentPreset')):raise ContractError('Diese Unterhaltung gehört zu einer anderen Rolle.')
         surface='browser' if row.get('agentPreset')=='augmentor-browser-product' else 'linux'
-        result=http(self.base,'/api/resonant-voice',{'surface':surface,'sessionId':session},
+        result=http(self.base,'/api/augmentor-voice',{'surface':surface,'sessionId':session},
                     {'x-augmentor-product-token':token})
-        if not result.get('ok'):raise ContractError(result.get('error','Resonant Voice ist nicht verfügbar.'))
-        if result.get('protocol')!='resonant-voice/1':raise ContractError('Inkompatible Sprachdienst-Version.')
+        if not result.get('ok'):raise ContractError(result.get('error','Augmentor Voice ist nicht verfügbar.'))
+        if result.get('protocol')!='augmentor-voice/1':raise ContractError('Inkompatible Sprachdienst-Version.')
+        url=str(result.get('url',''))
+        try:
+            parsed=urllib.parse.urlparse(url)
+            loopback=parsed.scheme=='ws' and ipaddress.ip_address(parsed.hostname or '').is_loopback
+        except (ValueError,TypeError):
+            loopback=False
+        if not loopback:raise ContractError('Der Sprachdienst hat eine unerwartete Adresse geliefert.')
+        if result.get('sessionId')!=session or not isinstance(result.get('ticket'),str) or not result['ticket']:
+            raise ContractError('Der Sprachdienst hat ein ungültiges Sprachticket geliefert.')
         return result
 
     def saved_chats(self,action='state',session=None):

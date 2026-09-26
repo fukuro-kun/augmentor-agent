@@ -127,6 +127,8 @@ class Setup:
         try:
             product=http(base,'/api/augmentor-product');token=(home/'augmentor-product-token').read_text().strip()
             installed=product.get('protocol')=='augmentor-dsh/1' and product.get('version')==VERSION and product.get('homeId')==hashlib.sha256(token.encode()).hexdigest()
+            voice=http(base,'/api/augmentor-voice')
+            installed=installed and voice.get('protocol')=='augmentor-voice/1' and voice.get('version')==VERSION
             available={r['id'] for r in remote.call('agentPresets.list')['presets'] if not r.get('broken')}
             installed=installed and all(v in available for v in PRESETS.values())
         except (OSError,ValueError,KeyError):pass
@@ -202,7 +204,7 @@ class Setup:
             else:atomic(secret,secrets.token_hex(32)+'\n');made.append(secret)
             backup=profile/('cordis.patch.yml.before-augmentor-'+uuid.uuid4().hex)
             if patch.exists():shutil.copy2(patch,backup)
-            additions=[{'id':'augmentor-product','name':str(ROOT/'adapters/dsh-product/index.mjs')},{'id':'augmentor-product-browser','name':str(target/'browser/dist/index.js'),'config':{'agentPreset':PRESETS['browser'],'chatDir':str(Path(os.environ.get('AUGMENTOR_DSH_WORKSPACE_ROOT',Path.home()))/'Augmentor Browser DSH'),'deleteAfterDays':0}},{'id':'augmentor-product-prompts','name':str(ROOT/'adapters/dsh-prompt-library/lib/index.js')}]
+            additions=[{'id':'augmentor-product','name':str(ROOT/'adapters/dsh-product/index.mjs')},{'id':'augmentor-product-browser','name':str(target/'browser/dist/index.js'),'config':{'agentPreset':PRESETS['browser'],'chatDir':str(Path(os.environ.get('AUGMENTOR_DSH_WORKSPACE_ROOT',Path.home()))/'Augmentor Browser DSH'),'deleteAfterDays':0}},{'id':'augmentor-product-prompts','name':str(ROOT/'adapters/dsh-prompt-library/lib/index.js')},{'id':'augmentor-voice-lan','name':str(ROOT/'adapters/dsh-voice-lan/index.mjs')}]
             if p.get('existingPromptPlugin'):additions=[row for row in additions if row['id']!='augmentor-product-prompts']
             # Append one top-level patch without rewriting existing expressions.
             if digest(patch)!=p['patchHash']:raise ValueError('DSH composition changed during installation. No existing configuration was replaced.')
