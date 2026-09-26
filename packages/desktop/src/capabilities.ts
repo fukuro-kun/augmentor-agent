@@ -9,5 +9,7 @@ export function desktopCapabilities(platform:NodeJS.Platform=process.platform,en
  const available=env.AUGMENTOR_PI_LINUX_TOOLS!=='0'&&(platform==='linux'||(mac&&present(helper)));
  const backend=mac?'macos-screencapturekit':platform==='linux'?(env.XDG_SESSION_TYPE==='x11'?'x11-xtest':'kde-wayland-portal'):null;
  // monitors: 0 means per-active-window scoping (x11); a positive value is the supported monitor count.
- return {available,preview:true,backend,monitors:backend==='x11-xtest'?0:1,text:mac?'Unicode':'ASCII',requiresImageModel:true,requiresUserConsent:true};
+ // requiresImageModel: delegated vision (linux_desktop_look) works with
+ // text-only models; image input only adds the direct attachment fallback.
+ return {available,preview:true,backend,monitors:backend==='x11-xtest'?0:1,text:mac?'Unicode':'ASCII',requiresImageModel:false,requiresUserConsent:true};
 }

@@ -134,6 +134,7 @@ class Window(QWidget):
         self.voice_button.hold_started.connect(self.begin_voice)
         self.voice_button.released.connect(self.end_voice)
         self.voice_button.cancelled.connect(self.cancel_voice_recording)
+        self.voice_button.lock_toggled.connect(self.voice_lock_changed)
         footer.addWidget(self.voice_button)
         self.latest_button=self.icon_button(SURFACE['glyphs']['latest'],'Zurück zur neuesten Nachricht',self.jump_latest);self.latest_button.hide();footer.addWidget(self.latest_button)
         self.send_button=self.icon_button(SURFACE['glyphs']['send'],'Senden · Enter (Umschalt+Enter für neue Zeile)',self.send);self.send_button.setEnabled(False);footer.addWidget(self.send_button)
@@ -306,7 +307,7 @@ class Window(QWidget):
     def refresh_voice_preferences(self):
         if not self.voice_dialog and not self.voice_opening and getattr(self.preferences,'persistent',False):
             latest=Preferences()
-            for key in ('voice_enabled','voice_mode','voice_pause_ms','voice_tts_enabled','voice_stt_language','voice_speed','voice_volume'):
+            for key in ('voice_enabled','voice_mode','voice_pause_ms','voice_dictation_pause_ms','voice_tts_enabled','voice_stt_language','voice_speed','voice_volume'):
                 self.preferences.values[key]=latest.values[key]
             self.voice_button.hands_free=self.voice_is_hands_free()
 
@@ -334,6 +335,11 @@ class Window(QWidget):
     def end_voice(self):
         if self.voice_is_hands_free():return
         if self.voice_dialog and not self.voice_button.locked:self.voice_dialog.end()
+
+    def voice_lock_changed(self, locked):
+        voice = self.voice_dialog
+        if voice and not voice.closed and not voice.hands_free:
+            voice.set_dictation(locked)
 
     def cancel_voice_recording(self):
         if self.voice_input or (self.voice_dialog and (self.voice_dialog.capture or getattr(self.voice_dialog,'hands_free',False))):

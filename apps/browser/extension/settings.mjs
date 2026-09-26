@@ -110,7 +110,7 @@ async function showVoice(container){
   for(const [value,label] of [['de','Deutsch'],['en','Englisch'],['auto','Automatisch erkennen']]){const option=make('option',label);option.value=value;language.append(option)}language.value=data.sttLanguage||'de'
   const voices=add('voiceId','Sprechstimme',make('select'))
   for(const row of data.voices){const option=make('option',row.name);option.value=row.id;voices.append(option)}voices.value=data.values.voiceId
-  for(const [key,label,min,max,step,value] of [['speed','Sprechgeschwindigkeit',.5,2,.05,data.values.speed],['volume','Ausgabelautstärke',0,1,.05,data.values.volume],['pauseMs','Pause vor dem Senden (Freisprechen, Millisekunden)',400,10000,50,data.pauseMs]]){
+  for(const [key,label,min,max,step,value] of [['speed','Sprechgeschwindigkeit',.5,2,.05,data.values.speed],['volume','Ausgabelautstärke',0,1,.05,data.values.volume],['pauseMs','Pause vor dem Senden (Freisprechen, Millisekunden)',400,10000,50,data.pauseMs],['dictationPauseMs','Pause pro Abschnitt (Diktat, gesperrt — Millisekunden)',400,10000,50,data.dictationPauseMs]]){
     const input=add(key,label,make('input'));input.type='number';input.min=min;input.max=max;input.step=step;input.value=value
   }
   const mode=add('mode','Unterhaltungsmodus',make('select'))
@@ -119,7 +119,7 @@ async function showVoice(container){
   for(const [value,label] of [['auto','Transkript sofort senden'],['review','Ins Eingabefeld legen']]){const option=make('option',label);option.value=value;submitMode.append(option)}submitMode.value=data.submitMode||'auto'
   const note=make('p','Halten zum Aufnehmen · Nach links schieben zum Sperren · Nach rechts für Freisprechen · Escape bricht ab. Änderungen gelten beim nächsten Öffnen der Sprachfunktion.');container.append(note)
   button(container,'Speichern',async()=>{
-    const settings={voiceId:voices.value,enabled:enabled.checked,ttsEnabled:ttsEnabled.checked,sttLanguage:language.value,mode:mode.value,submitMode:submitMode.value,speed:Number(fields.speed.value),volume:Number(fields.volume.value),pauseMs:Number(fields.pauseMs.value)}
+    const settings={voiceId:voices.value,enabled:enabled.checked,ttsEnabled:ttsEnabled.checked,sttLanguage:language.value,mode:mode.value,submitMode:submitMode.value,speed:Number(fields.speed.value),volume:Number(fields.volume.value),pauseMs:Number(fields.pauseMs.value),dictationPauseMs:Number(fields.dictationPauseMs.value)}
     const reply=await send('voice/preferences',{action:'save',settings});if(!reply?.ok)throw Error(reply?.error||'Spracheinstellungen konnten nicht gespeichert werden')
     note.textContent='Für beide Oberflächen gespeichert. Änderungen gelten beim nächsten Öffnen der Sprachfunktion.'
   })

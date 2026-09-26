@@ -126,8 +126,9 @@ Tested ref: `feature/x11-mate-desktop` commits `7c007a2` + `c41e787`
 ## Migration notes
 
 - Preference keys are `voice_enabled`, `voice_mode`, `voice_pause_ms`,
-  `voice_tts_enabled`, `voice_stt_language`, `voice_speed`,
-  `voice_volume`, `voice_id`, `voice_submit_mode`. A stored legacy
+  `voice_dictation_pause_ms`, `voice_tts_enabled`, `voice_stt_language`,
+  `voice_speed`, `voice_volume`, `voice_id`, `voice_submit_mode`. A
+  stored legacy
   `resonant_voice` flag is imported once; a former private voice store
   seeds speed/volume/voice when present.
 - `voice_submit_mode` (`auto` | `review`, default `auto`) chooses what a
@@ -144,6 +145,19 @@ Tested ref: `feature/x11-mate-desktop` commits `7c007a2` + `c41e787`
 - `voice_pause_ms` (hands-free endpointing, default 800) accepts
   400–10000 ms. Longer thresholds suit deliberate dictation: short
   thinking pauses no longer split an utterance into separate turns.
+- `voice_dictation_pause_ms` (default 2500, same 400–10000 ms range)
+  endpoint-segments a locked dictation. Sliding left onto the lock no
+  longer records one unbounded utterance: the local VAD cuts the
+  microphone stream at each detected pause and submits the finished
+  segment while recording continues. In `review` submit mode each
+  segment appends to the composer draft — pauses never split one
+  dictation into separate assistant requests; in `auto` mode each
+  segment submits as its own request, so the longer pause belongs here
+  when drafts should stay whole. While speech recognition is busy the
+  audio frames are queued locally, so no recorded audio is lost and
+  deferred segments keep their order. Tapping the locked button flushes
+  the pending audio and finishes exactly once; Escape discards the
+  recording without an `end` request.
 - `dsh-memory` recognises both `resonant-voice:` and `augmentor-voice:`
   request prefixes during the transition; new sessions emit
   `augmentor-voice:`.

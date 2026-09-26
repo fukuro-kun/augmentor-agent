@@ -15,8 +15,14 @@ class Voice(QObject):
     def __init__(self,parent,ticket,**options):
         super().__init__(parent);self.options=options;self.state='connecting';self.status_text='Connecting'
         self.can_record=False;self.accepting_audio=False;self.recording_available=False;self.closed=False;self.calls=[]
+        self.dictation=False;self.hands_free=options.get('hands_free',False)
     def begin(self):self.calls.append('begin');self.can_record=False;self.accepting_audio=True;self.changed.emit()
     def end(self):self.calls.append('end');self.accepting_audio=False
+    def set_dictation(self,active):self.calls.append('dictation' if active else 'dictation-off');self.dictation=bool(active)
+    def interrupt(self):self.calls.append('interrupt')
+    def observe(self,event):self.calls.append('observe')
+    def submission_result(self,result):self.calls.append('submission')
+    def apply_voice_settings(self):self.calls.append('settings')
     def close(self):self.calls.append('close');self.closed=True
 
 class BrowserVoiceTests(unittest.TestCase):
@@ -37,6 +43,14 @@ class BrowserVoiceTests(unittest.TestCase):
         client.receive({'action':'start','ticket':{}});voice=client.voice
         with patch.object(module.time,'monotonic',return_value=client.last_heartbeat+7):client.check_lease()
         self.assertTrue(voice.closed);self.assertIsNone(client.voice)
+    def test_dictation_action_reaches_the_voice_session(self):
+        client=module.Client(lambda _:None,session_type=Voice)
+        client.receive({'action':'prepare'});client.receive({'action':'start','ticket':{}});voice=client.voice
+        client.receive({'action':'dictation','active':True})
+        self.assertEqual(voice.calls,['dictation']);self.assertTrue(voice.dictation)
+        self.assertTrue(client.dictation_wanted)
+        client.finish();self.assertFalse(client.dictation_wanted)
+
     def test_native_engine_is_the_production_default(self):
         from augmentor_linux.voice import VoiceSession
         self.assertIs(module.Client.__init__.__defaults__[0],VoiceSession)

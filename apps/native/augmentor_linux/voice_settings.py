@@ -75,7 +75,10 @@ class VoiceSettingsDialog(QDialog):
         self.pause, self.pause_value = self.slider(conversation_rows, 'Pause vor dem Senden (Freisprechen)', 400, 10000, window.preferences.values.get('voice_pause_ms', 800))
         self.pause.valueChanged.connect(lambda: self.pause_value.setText(f'{self.pause.value()/1000:.2f} s'))
         self.pause_value.setText(f'{self.pause.value()/1000:.2f} s')
-        explanation = QLabel('Freisprechen: tippen zum Starten, natürlich sprechen, Pause zum Senden. Sprich über eine Antwort, um zu unterbrechen. Tippen oder Esc stoppt das Mikrofon. Längere Pausen geben dir mehr Zeit zum Nachdenken. „Ins Eingabefeld legen“ gilt nur für das manuelle Diktat — Freisprechen sendet nach der eingestellten Pause automatisch.')
+        self.dictation_pause, self.dictation_pause_value = self.slider(conversation_rows, 'Pause pro Abschnitt (Diktat, gesperrt)', 400, 10000, window.preferences.values.get('voice_dictation_pause_ms', 2500))
+        self.dictation_pause.valueChanged.connect(lambda: self.dictation_pause_value.setText(f'{self.dictation_pause.value()/1000:.2f} s'))
+        self.dictation_pause_value.setText(f'{self.dictation_pause.value()/1000:.2f} s')
+        explanation = QLabel('Freisprechen: tippen zum Starten, natürlich sprechen, Pause zum Senden. Sprich über eine Antwort, um zu unterbrechen. Tippen oder Esc stoppt das Mikrofon. Längere Pausen geben dir mehr Zeit zum Nachdenken. „Ins Eingabefeld legen“ gilt nur für das manuelle Diktat — Freisprechen sendet nach der eingestellten Pause automatisch. Gesperrtes Diktat teilt die Rede an jeder Abschnittspause in eigene Abschnitte, die nacheinander im Eingabefeld landen — kürzere Pausen sind dort sicher.')
         explanation.setWordWrap(True); conversation_rows.addWidget(explanation)
         layout.addWidget(conversation)
         self.note = QLabel('Änderungen gelten sofort für eine offene Voice-Verbindung. Die Sprachausgabe stoppt beim Ausschalten sofort; die schriftliche Antwort bleibt erhalten.')
@@ -99,11 +102,12 @@ class VoiceSettingsDialog(QDialog):
 
     def save(self):
         values = self.owner.preferences.values
-        changed_mode = values.get('voice_mode', 'manual') != self.mode.currentData() or values.get('voice_pause_ms', 800) != self.pause.value()
+        changed_mode = values.get('voice_mode', 'manual') != self.mode.currentData()
         if changed_mode and getattr(self.owner, 'voice_dialog', None): self.owner.close_voice_panel()
         values['voice_mode'] = self.mode.currentData()
         values['voice_submit_mode'] = self.submit_mode.currentData()
         values['voice_pause_ms'] = self.pause.value()
+        values['voice_dictation_pause_ms'] = self.dictation_pause.value()
         values['voice_stt_language'] = self.language.currentData()
         values['voice_speed'] = self.speed.value()/100
         values['voice_volume'] = self.volume.value()/100

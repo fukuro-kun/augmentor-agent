@@ -54,7 +54,7 @@ export class BrowserVoice {
   control({id,sessionId,action,settings}){
     const active=this.active
     if(!active||id!==active.id||sessionId!==active.sessionId)throw Error('Die Sprache gehört zu einer anderen oder geschlossenen Unterhaltung')
-    if(!['heartbeat','begin','end','interrupt','close','settings'].includes(action))throw Error('Nicht unterstützte Sprachsteuerung')
+    if(!['heartbeat','begin','end','interrupt','close','settings','dictation'].includes(action))throw Error('Nicht unterstützte Sprachsteuerung')
     if(action==='close')this.close(active)
     else this.write(active,{action,...(action==='settings'&&settings&&typeof settings==='object'?{settings}:{})})
     return {ok:true}

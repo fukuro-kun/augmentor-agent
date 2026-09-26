@@ -66,7 +66,7 @@ export function attachVoice({send,onError,isHistory}){
     if(!held||locked||handsFree)return
     const delta=event.clientX-startX
     button.style.transform=`translateX(${Math.max(-12,Math.min(12,delta))}px)`
-    if(delta<=-24){clearTimeout(timer);timer=null;locked=true;button.dataset.mode='locked';label('Aufnahme gesperrt · Tippen zum Senden');void begin()}
+    if(delta<=-24){clearTimeout(timer);timer=null;locked=true;button.dataset.mode='locked';label('Aufnahme gesperrt · Pause legt Abschnitt ab · Tippen zum Senden');void begin().then(()=>control('dictation'))}
     else if(delta>=24){const closing=close(),ownEpoch=epoch;handsFree=true;button.dataset.mode='hands-free';void closing.then(()=>{if(epoch===ownEpoch)return open(true)})}
   }
   button.oncontextmenu=event=>{event.preventDefault();void send('settings/open',{section:'voice'})}
@@ -77,7 +77,7 @@ export function attachVoice({send,onError,isHistory}){
     if(event.key==='Escape'){event.preventDefault();close()}
     else if(event.key===' '&&!event.repeat)down(event)
     else if(event.key==='Enter'&&!event.repeat){event.preventDefault();if(handsFree)close();else if(locked){locked=false;void control('end')}else if(defaultHandsFree)void open(true);else void open().then(current=>control('interrupt',current))}
-    else if(event.key.toLowerCase()==='l'&&held){clearTimeout(timer);timer=null;locked=true;button.dataset.mode='locked';void begin()}
+    else if(event.key.toLowerCase()==='l'&&held){clearTimeout(timer);timer=null;locked=true;button.dataset.mode='locked';void begin().then(()=>control('dictation'))}
   }
   button.onkeyup=event=>{if(event.key===' '){event.preventDefault();release()}}
   chrome.runtime.onMessage.addListener(message=>{

@@ -110,6 +110,71 @@ class VoiceTests(unittest.TestCase):
             self.assertFalse(dialog.turn_complete)
             dialog.close()
 
+    def test_dictation_pause_pref_defaults_and_clamps(self):
+        import os
+        with tempfile.TemporaryDirectory() as directory:
+            os.environ['AUGMENTOR_PI_CONFIG']=directory
+            try:
+                from augmentor_linux.preferences import Preferences
+                prefs=Preferences()
+                self.assertEqual(prefs.values['voice_dictation_pause_ms'],2500)
+                prefs.values['voice_dictation_pause_ms']=99999;prefs.values['voice_pause_ms']=1
+                prefs.save();loaded=Preferences()
+                self.assertEqual(loaded.values['voice_dictation_pause_ms'],10000)
+                self.assertEqual(loaded.values['voice_pause_ms'],400)
+            finally:os.environ.pop('AUGMENTOR_PI_CONFIG',None)
+
+    def test_button_lock_enables_dictation_and_tap_flushes(self):
+        with patch.object(VoiceDialog,'connect_voice',lambda self:None):
+            window,voice=self.make_voice_window()
+            voice.dictation_vad=lambda pcm:0.
+            voice.begin()
+            self.assertEqual(voice.state,'listening')
+            window.voice_button.lock_recording()
+            self.assertTrue(voice.dictation);self.assertTrue(voice.dictation_open)
+            voice.end()
+            self.assertFalse(voice.dictation)
+            kinds=[p.get('type') for p in voice.sender_queue.queue if isinstance(p,dict)]
+            self.assertEqual(kinds.count('end'),1)
+            window.close()
+
+    def test_dictation_needs_an_open_capture(self):
+        with patch.object(VoiceDialog,'connect_voice',lambda self:None):
+            window,voice=self.make_voice_window()
+            voice.set_dictation(True)
+            self.assertFalse(voice.dictation)
+            window.close()
+
+    def test_locked_dictation_segments_on_pause(self):
+        import time
+        with patch.object(VoiceDialog,'connect_voice',lambda self:None):
+            window,voice=self.make_voice_window()
+            window.preferences.values['voice_submit_mode']='review'
+            voice.dictation_pause_ms=400
+            voice.begin()
+            # ~0.4s speech, ~0.64s silence ends segment one; more speech while
+            # ASR is busy is buffered as a deferred segment.
+            probs=iter([.9]*12+[0.]*20+[.9]*20+[0.]*40)
+            voice.dictation_vad=lambda pcm:next(probs,0.)
+            voice.set_dictation(True)
+            for _ in range(200):voice.microphone(bytes(640))
+            deadline=time.monotonic()+5
+            while time.monotonic()<deadline and not voice.dictation_deferred:
+                kinds=[p.get('type') for p in voice.sender_queue.queue if isinstance(p,dict)]
+                if voice.dictation_deferred:break
+                time.sleep(.02)
+            kinds=[p.get('type') for p in voice.sender_queue.queue if isinstance(p,dict)]
+            self.assertEqual(kinds.count('begin'),1)
+            self.assertEqual(kinds.count('end'),1)
+            # Segment two ran during ASR and waits deferred until the transcript lands.
+            voice.handle({'type':'transcript','requestId':'seg1','text':'erster Abschnitt','sessionId':'s'})
+            kinds=[p.get('type') for p in voice.sender_queue.queue if isinstance(p,dict)]
+            self.assertEqual(kinds.count('begin'),2)
+            self.assertEqual(kinds.count('end'),2)
+            self.assertEqual(voice.state,'listening')
+            self.assertIn('Diktat',voice.status_text)
+            window.close()
+
     def test_settings_disable_disconnects_hides_and_persists(self):
         from augmentor_linux.window import Window
         calls=[]

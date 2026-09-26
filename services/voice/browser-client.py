@@ -24,6 +24,7 @@ class Client(QObject):
         self.intent = False
         self.prepared = False
         self.hands_free = False
+        self.dictation_wanted = False
         self.last_heartbeat = time.monotonic()
         self.command.connect(self.receive)
         self.watchdog = QTimer(self)
@@ -40,6 +41,8 @@ class Client(QObject):
         if v and self.intent and v.can_record:
             self.intent = False
             v.begin()
+        if v and self.dictation_wanted and v.accepting_audio and not v.dictation:
+            v.set_dictation(True)
         self.publish({'type': 'state', 'state': v.state if v else 'connecting',
                    'status': v.status_text if v else 'Sprachverbindung wird vorbereitet …',
                    'handsFree': self.hands_free, 'canRecord': bool(v and v.can_record),
@@ -49,6 +52,7 @@ class Client(QObject):
 
     def finish(self):
         self.intent = False
+        self.dictation_wanted = False
         if self.voice:
             self.voice.close()
             self.voice = None
@@ -88,6 +92,11 @@ class Client(QObject):
             elif action == 'begin' and not self.hands_free:
                 self.intent = True
                 self.state()
+            elif action == 'dictation':
+                # The extension locks the recorder; segments split on the
+                # dictation pause instead of ending on release.
+                self.dictation_wanted = value.get('active', True) is True
+                if self.voice: self.voice.set_dictation(self.dictation_wanted)
             elif action == 'end':
                 self.intent = False
                 if self.voice: self.voice.end()

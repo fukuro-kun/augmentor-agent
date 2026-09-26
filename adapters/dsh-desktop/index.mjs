@@ -1,30 +1,43 @@
 // Copyright © 2026 Manolo Remiddi · SPDX-License-Identifier: LicenseRef-Augmentor-MIT-Resale-1.0
 // Shared personal-agent tools in both Augmentor surfaces. Use the same executor as Pi.
-import {definitions,control} from '../../dist/desktop/src/index.js'
+import {definitions,control,look} from '../../dist/desktop/src/index.js'
+import {configureVision,recordObservation} from '../../dist/desktop/src/observations.js'
 import {applyBrowserPolicy} from './browser-policy.mjs'
 import {applyResponsiveSteering} from './steering.mjs'
 import {applyLinuxSupport} from './linux-support.mjs'
 export const name='augmentor-desktop'
 export const inject=['tools','llm','attachments']
-export function apply(ctx){
+export function apply(ctx,config={}){
   applyBrowserPolicy(ctx)
   applyResponsiveSteering(ctx)
   applyLinuxSupport(ctx)
+  configureVision({endpoint:config.visionEndpoint,model:config.visionModel,timeoutMs:config.visionTimeoutMs})
   const owners=new Set()
   for(const d of definitions)ctx.tools.register({name:d.name,description:d.description,parameters:d.parameters,
     output:{schema:{type:'object'},render:(_args,value)=>value.content},
     execute:async(args,exec)=>{
       const id=exec.agent?.id;if(!id)throw Error('Desktop control requires an active Augmentor conversation.')
       const owner='dsh:'+id;owners.add(owner)
+      if(d.method==='look'){
+        const value=await look(owner,args,exec.signal)
+        return {content:[{type:'text',text:JSON.stringify(value)}]}
+      }
+      let wantsImage=false
       if(d.method==='capture'){
         const routed=exec.agent.session.requestHeader()?.config
         const provider=routed?.provider??exec.agent.options.provider,model=routed?.model??exec.agent.options.model
         const info=await ctx.llm.resolveModelInfo(provider,model,exec.signal)
-        if(!info.inputModalities?.includes('image'))throw Error('Select a DSH model that declares image input before capturing the desktop.')
+        // Delegated vision makes image input optional: the observation is
+        // always persisted; the attachment fallback stays for image models.
+        wantsImage=info.inputModalities?.includes('image')===true
       }
       const {image,...metadata}=await control(d.method,owner,args,exec.signal)
-      const content=[{type:'text',text:JSON.stringify(metadata)}]
       if(image){
+        const stored=recordObservation(owner,image)
+        metadata.observation={path:stored.path,capturedAt:stored.capturedAt,attached:wantsImage}
+      }
+      const content=[{type:'text',text:JSON.stringify(metadata)}]
+      if(image&&wantsImage){
         exec.signal.throwIfAborted()
         const attachment=await ctx.attachments.saveImage({data:Buffer.from(image.data,'base64'),mediaType:image.mimeType,name:'Augmentor desktop observation'})
         exec.signal.throwIfAborted();content.push({type:'image',attachment})

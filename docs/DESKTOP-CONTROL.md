@@ -19,13 +19,21 @@ type:
   monitor contains it — see the [X11 backend](#x11-backend-x11-xtest) section
   below. Password fields and non-ASCII typing remain unsupported.
 
+An image-capable chat model is no longer required: `linux_desktop_look`
+delegates visual questions to the LAN vision model and returns plain text.
+With an image-capable model a `linux_desktop_snapshot` still attaches the
+screenshot to the conversation as before — see
+[Delegated vision](#delegated-vision-linux_desktop_look) below.
+
 The desktop package supplies the capture/input dependencies.
 
 ## Using it
 
 1. Open the intended application and a harmless test document. Enable
-   accessibility for that application. Configure an image-capable model in Pi,
-   or declare image input in the DSH provider configuration.
+   accessibility for that application. An image-capable model is optional:
+   `linux_desktop_look` answers visual questions through the LAN vision
+   model for any chat model, while `linux_desktop_snapshot` still attaches
+   the image directly when the selected model declares image input.
 2. Ask Augmentor for a bounded action. The OS opens **Remote control requested**.
    Choose **Share** yourself to allow capture and keyboard/pointer input. If the
    dialog opens behind another window, select it with Alt+Tab. Declining or
@@ -43,9 +51,33 @@ actions. The executor rejects a changed or covered target, changed monitor
 geometry, inaccessible keyboard focus and another chat's ownership. These checks
 reduce accidental input; they are not an operating-system sandbox.
 
-Screenshots go to the selected model and may remain in the harness conversation
-history. The executor itself writes no screenshot file and does not use the
-clipboard to type. See DATA-AND-SUPPORT.md for data locations and deletion limits.
+Screenshots are persisted in a per-user observation store (see below).
+With an image-capable model they also go to the selected model and may
+remain in the harness conversation history. The executor itself writes no
+screenshot file and does not use the clipboard to type. See
+DATA-AND-SUPPORT.md for data locations and deletion limits.
+
+## Delegated vision (`linux_desktop_look`)
+
+`linux_desktop_look({question, reuse?})` keeps the screenshot out of the
+chat model entirely. The tool captures a fresh consented screenshot (or,
+with `reuse:true`, reuses this chat's latest stored observation), persists
+it in the observation store, and posts image plus the focused question to
+the LAN InferenzQuelle vision endpoint (`127.0.0.1:8012`, OpenAI-compatible
+`chat/completions`; the router forwards image payloads to the VLM cascade).
+The textual answer returns to the chat model, which then decides the
+action — one capture can serve several questions.
+
+The observation store lives at
+`$XDG_STATE_HOME/augmentor/desktop-observations/` (override:
+`AUGMENTOR_OBSERVATION_DIR`), survives reboots, and records each capture as
+`obs-<ISO-timestamp>-<random>.png` plus a JSON sidecar with owner, capture
+time, size and the questions asked about it. Stored observations are pruned
+oldest-first to roughly 50 MB (`CAP_BYTES`).
+
+The safety contract is unchanged: `look` captures only after OS consent, the
+per-chat owner and independent Stop apply, and actions still need a fresh
+`snapshot`/`look` observation for their single-use target token.
 
 The Pi development runtime now also offers a [bounded desktop
 specialist](DESKTOP-SPECIALIST.md). Its screenshots stay in a separate worker

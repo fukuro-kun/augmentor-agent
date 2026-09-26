@@ -7,10 +7,10 @@ spec=importlib.util.spec_from_file_location('surface',Path(__file__).resolve().p
 class SurfacePreferences(unittest.TestCase):
     def test_shared_colours_preserve_model_voice_and_placement(self):
         with tempfile.TemporaryDirectory() as temp,patch.dict(os.environ,{'AUGMENTOR_PI_CONFIG':temp,'AUGMENTOR_WINDOW_ID':'main'}):
-            prefs=Preferences();prefs.values.update(harness='pi',voice_pause_ms=1100,placement={'sentinel':True});prefs.save()
+            prefs=Preferences();prefs.values.update(harness='pi',voice_pause_ms=1100,voice_dictation_pause_ms=1800,placement={'sentinel':True});prefs.save()
             before=surface.appearance();values={**before['values'],'theme':'light','accentHue':32,'neutBright':-3}
             after=surface.appearance(values);self.assertEqual(after['values']['accentHue'],32);self.assertEqual(after['tokens']['--text'],'#152b2c')
-            loaded=Preferences().values;self.assertEqual(loaded['harness'],'pi');self.assertEqual(loaded['voice_pause_ms'],1100);self.assertEqual(loaded['placement'],{'sentinel':True})
+            loaded=Preferences().values;self.assertEqual(loaded['harness'],'pi');self.assertEqual(loaded['voice_pause_ms'],1100);self.assertEqual(loaded['voice_dictation_pause_ms'],1800);self.assertEqual(loaded['placement'],{'sentinel':True})
             with self.assertRaises(ValueError):surface.appearance({**values,'neutBright':999})
             self.assertEqual(Preferences().values,loaded)
     def test_improvement_uses_native_adapter_and_shared_template_without_submission(self):

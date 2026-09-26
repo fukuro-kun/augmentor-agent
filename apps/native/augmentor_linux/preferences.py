@@ -8,7 +8,7 @@ import tempfile
 
 DEFAULTS = {'voice_enabled': True, 'voice_mode': 'manual', 'voice_pause_ms': 800, 'voice_tts_enabled': True,
             'voice_stt_language': 'de', 'voice_speed': 1.0, 'voice_volume': 1.0, 'voice_id': '',
-            'voice_submit_mode': 'auto',
+            'voice_submit_mode': 'auto', 'voice_dictation_pause_ms': 2500,
             'theme': 'dark', 'hue': 190, 'brightness': 0, 'accent_hue': 160,
             'accent_brightness': 0, 'saturation': 48, 'opacity': 85, 'animation': True, 'effect': 'plasma', 'background': 'none', 'background_image': '', 'skin_name': 'Custom', 'custom_skins': [], 'flares': True, 'pinned': True, 'placement': {}, 'harness':'dsh','format_colours':{}}
 
@@ -55,6 +55,7 @@ class Preferences:
         if self.values['voice_mode'] not in ('manual','hands-free'):self.values['voice_mode']='manual'
         if self.values['voice_submit_mode'] not in ('auto','review'):self.values['voice_submit_mode']='auto'
         self.values['voice_pause_ms']=max(400,min(10000,self.values['voice_pause_ms']))
+        self.values['voice_dictation_pause_ms']=max(400,min(10000,self.values['voice_dictation_pause_ms']))
         if self.values['voice_stt_language'] not in ('de','en','auto'):self.values['voice_stt_language']='de'
         self.values['voice_speed']=max(.5,min(2.0,float(self.values['voice_speed'])))
         self.values['voice_volume']=max(0.,min(1.0,float(self.values['voice_volume'])))

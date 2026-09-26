@@ -22,6 +22,16 @@ class VoiceSession(QObject):
         super().__init__(parent)
         self.hands_free = (getattr(parent, 'preferences', None) is not None and parent.preferences.values.get('voice_mode') == 'hands-free') if hands_free is None else bool(hands_free)
         self.pause_ms = getattr(getattr(parent, 'preferences', None), 'values', {}).get('voice_pause_ms', 800)
+        self.dictation_pause_ms = getattr(getattr(parent, 'preferences', None), 'values', {}).get('voice_dictation_pause_ms', 2500)
+        # Locked dictation segments speech on the shorter dictation pause; each
+        # closed segment becomes its own transcript while the mic stays open.
+        self.dictation = False
+        self.dictation_open = False
+        self.dictation_queue = queue.Queue(maxsize=512)
+        self.dictation_deferred = []
+        self.dictation_open_pending = None
+        self.dictation_flush_pre = False
+        self.dictation_vad = None
         prefs = getattr(parent, 'preferences', None)
         self.tts_enabled = bool(getattr(prefs, 'values', {}).get('voice_tts_enabled', True))
         self.stt_language = getattr(prefs, 'values', {}).get('voice_stt_language', 'de')
@@ -256,6 +266,82 @@ class VoiceSession(QObject):
             self.set_status('Freisprechen nicht verfügbar: '+str(error))
             self.shutdown()
 
+    def set_dictation(self, active):
+        # Locked manual recording turns into segmented dictation: each silence
+        # closes the utterance, its transcript lands as a composer draft, and
+        # the next onset streams a fresh segment. The mic stays open until the
+        # user taps to finish or Esc/interrupt cancels.
+        if self.hands_free or self.closed:return
+        if active and self.capture is not None and self.accepting_audio and not self.dictation:
+            self.dictation=True;self.dictation_open=True
+            threading.Thread(target=self.dictation_loop, daemon=True).start()
+            self.set_status('Diktat läuft · Pause legt Abschnitt ab · Tippen zum Beenden', 'listening')
+        elif not active:
+            self.dictation_close()
+
+    def dictation_close(self):
+        self.dictation=False;self.dictation_open=False
+        self.dictation_deferred=[];self.dictation_open_pending=None;self.dictation_flush_pre=False
+        while True:
+            try:self.dictation_queue.get_nowait()
+            except queue.Empty:break
+
+    def dictation_loop(self):
+        from .voice_vad import EndpointDetector
+        try:
+            if self.dictation_vad is None:
+                from .voice_vad import SileroVad
+                self.dictation_vad=SileroVad()
+            vad=self.dictation_vad
+        except Exception as error:
+            # Without the VAD model locked recording keeps its manual semantics.
+            self.received.emit({'type':'dictation-unavailable','message':str(error)})
+            return
+        detector=EndpointDetector(self.dictation_pause_ms, self.max_seconds)
+        pending=bytearray()
+        try:
+            while self.dictation and not self.closed:
+                try:chunk=self.dictation_queue.get(timeout=.2)
+                except queue.Empty:continue
+                pending+=chunk
+                while len(pending)>=detector.FRAME_BYTES:
+                    frame=bytes(pending[:detector.FRAME_BYTES]);del pending[:detector.FRAME_BYTES]
+                    if self.dictation_open:self.control(frame)
+                    detector.pause_frames=max(13,min(313,math.ceil(self.dictation_pause_ms/32)))
+                    speaking=not self.speech_idle or time.monotonic()<self.audible_until
+                    if not detector.active and self.echo_guard.is_echo(frame):detector.reset();vad.reset();continue
+                    for kind,value in detector.feed(frame, vad(frame), speaking=speaking):
+                        if kind=='start':
+                            if self.dictation_open:pass
+                            elif self.recognizing or self.dictation_deferred or self.dictation_open_pending is not None:
+                                if self.dictation_open_pending is not None:self.dictation_deferred.append(self.dictation_open_pending)
+                                self.dictation_open_pending=bytearray()
+                                while sum(map(len,self.dictation_deferred))>1920000:self.dictation_deferred.pop(0)
+                            else:
+                                self.control({'type':'begin'});self.dictation_open=True;self.dictation_flush_pre=True
+                                self.received.emit({'type':'dictation-start'})
+                        elif kind=='pcm':
+                            if self.dictation_flush_pre:self.control(value);self.dictation_flush_pre=False
+                            elif self.dictation_open:pass
+                            elif self.dictation_open_pending is not None:self.dictation_open_pending+=value
+                        elif kind=='end':
+                            if self.dictation_open:
+                                self.control({'type':'end'});self.dictation_open=False;self.recognizing=True
+                                self.received.emit({'type':'dictation-end'})
+                            elif self.dictation_open_pending is not None:
+                                self.dictation_deferred.append(self.dictation_open_pending);self.dictation_open_pending=None
+        except Exception as error:
+            self.received.emit({'type':'error','message':'Diktat-Segmentierung gestoppt: '+str(error)})
+
+    def flush_dictation(self):
+        # Segments collected during ASR are replayed as their own requests.
+        deferred=self.dictation_deferred;self.dictation_deferred=[]
+        open_pending=self.dictation_open_pending;self.dictation_open_pending=None
+        for pcm in deferred:
+            self.control({'type':'begin'});self.control(bytes(pcm));self.control({'type':'end'});self.recognizing=True
+        if open_pending is not None:
+            self.control({'type':'begin'});self.control(bytes(open_pending));self.dictation_open=True
+
     def hands_free_microphone(self, data, _frames, _time, status):
         if self.closed:return
         if status:
@@ -283,6 +369,7 @@ class VoiceSession(QObject):
                     detector.reset();self.vad.reset();continue
                 if epoch != frame_epoch:
                     detector.reset();self.vad.reset();epoch = frame_epoch
+                detector.pause_frames=max(13,min(313,math.ceil(self.pause_ms/32)))
                 self.meter_levels = levels(pcm)
                 if not detector.active and self.echo_guard.is_echo(pcm):
                     self.echo_frames_rejected+=1;detector.reset();self.vad.reset();continue
@@ -330,7 +417,10 @@ class VoiceSession(QObject):
                 min(1.,math.sqrt(sum((x/32768)**2 for x in samples[i::11])/len(samples[i::11]))*8)
                 if samples[i::11] else 0. for i in range(11)]
             self.last_mic_at=time.monotonic()
-            self.control(pcm)
+            if self.dictation:
+                try:self.dictation_queue.put_nowait(pcm)
+                except queue.Full:pass
+            else:self.control(pcm)
         if self.recorded_bytes>=self.max_seconds*32000:
             self.accepting_audio=False
             self.limit_reached.emit()
@@ -371,7 +461,12 @@ class VoiceSession(QObject):
             self.capture.close()
             self.capture = None
             self.recognizing=True
-            if send:self.control({'type': 'end'})
+            if send:
+                # Tapping a locked dictation flushes the buffered segment and
+                # closes the wire utterance; plain holds end as before.
+                self.flush_dictation()
+                if self.dictation_open or not self.dictation:self.control({'type': 'end'})
+            self.dictation_close()
             self.set_status('Aufnahmelimit erreicht · transkribiert …' if automatic else 'Transkribiert …', 'recognizing')
 
     def interrupt(self, resume=True):
@@ -392,6 +487,7 @@ class VoiceSession(QObject):
         self.utterance_open = False
         self.accepting_audio = False
         self.recording_started = None
+        self.dictation_close()
         if not self.hands_free and self.capture:
             self.capture_timer.stop()
             try:
@@ -412,6 +508,8 @@ class VoiceSession(QObject):
         if prefs is None:
             return
         tts = bool(prefs.values.get('voice_tts_enabled', True))
+        self.pause_ms = prefs.values.get('voice_pause_ms', 800)
+        self.dictation_pause_ms = prefs.values.get('voice_dictation_pause_ms', 2500)
         self.stt_language = prefs.values.get('voice_stt_language', 'de')
         self.speech_speed = float(prefs.values.get('voice_speed', 1.0))
         self.volume = float(prefs.values.get('voice_volume', 1.0))
@@ -483,6 +581,14 @@ class VoiceSession(QObject):
             return
         if event['type'].startswith('vad-'):
             self.handle_vad(event);return
+        if event['type']=='dictation-start':
+            self.set_status('Diktat läuft · Pause legt Abschnitt ab · Tippen zum Beenden','listening');return
+        if event['type']=='dictation-end':
+            self.set_status('Transkribiert … · Diktat läuft weiter','listening');return
+        if event['type']=='dictation-unavailable':
+            # Fall back to plain locked recording; audio streams directly again.
+            self.dictation=False;self.dictation_open=False
+            self.set_status('Gesperrt · Pausenerkennung nicht verfügbar · Tippen zum Senden','listening');return
         if event['type'] == 'ready':
             self.max_seconds=max(1,min(600,int(event.get('maxUtteranceSeconds',60))))
             self.connected=True
@@ -507,16 +613,27 @@ class VoiceSession(QObject):
             # Hands-free is a conversation: the detected pause is the user's
             # send gesture, so review only applies to manual dictation.
             review=not self.hands_free and getattr(getattr(self.parent(),'preferences',None),'values',{}).get('voice_submit_mode','auto')=='review'
-            if review:
+            if self.dictation:
+                # Dictation keeps recording: the segment result parks in the
+                # composer (review) or submits (auto) while the mic stays open.
+                if review:
+                    self.turn_complete=True
+                    self.set_status('Abschnitt im Eingabefeld · Diktat läuft · Tippen zum Beenden','listening')
+                else:
+                    self.set_status('Denkt … · Diktat läuft','listening')
+                    self.waiting_request='augmentor-voice:'+str(event.get('requestId'))
+                    self.turn_complete=False
+            elif review:
                 # The draft goes to the composer instead of the session — no
                 # answer turn follows, so nothing is awaited here.
                 self.turn_complete=True
-                self.set_status('Hört zu · Entwurf im Eingabefeld' if self.hands_free else 'Entwurf im Eingabefeld · prüfen und senden','listening' if self.hands_free else 'ready')
+                self.set_status('Entwurf im Eingabefeld · prüfen und senden','ready')
             else:
                 self.set_status('Denkt …', 'thinking')
                 self.waiting_request='augmentor-voice:'+str(event.get('requestId'))
                 self.turn_complete=False
             self.transcript.emit(event)
+            self.flush_dictation()
             self.resume_detection()
         elif event['type']=='speaking':
             self.speech_idle=False
@@ -528,7 +645,9 @@ class VoiceSession(QObject):
         elif event['type'] == 'empty-transcript':
             self.recognizing=False
             self.turn_complete=True
-            self.set_status('Hört zu · Tippen zum Stoppen' if self.hands_free else 'Keine Sprache erkannt · halte zum Wiederholen', 'listening' if self.hands_free else 'ready')
+            if self.dictation:self.set_status('Keine Sprache erkannt · Diktat läuft','listening')
+            else:self.set_status('Hört zu · Tippen zum Stoppen' if self.hands_free else 'Keine Sprache erkannt · halte zum Wiederholen', 'listening' if self.hands_free else 'ready')
+            self.flush_dictation()
             self.resume_detection()
         elif event['type'] == 'error':
             if not event.get('recoverable'):self.connected=False
@@ -546,6 +665,7 @@ class VoiceSession(QObject):
     def shutdown(self):
         self.accepting_audio = False
         self.utterance_open = False
+        self.dictation_close()
         self.closed = True
         self.microphone_receiving = False
         self.vad_enabled.clear()

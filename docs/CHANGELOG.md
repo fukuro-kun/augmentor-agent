@@ -30,6 +30,25 @@
   the extension's voice section; the browser lease picks the mode up at
   `voice/start`. The hands-free pause bound grew from 2 s to 10 s for
   deliberate dictation with thinking pauses.
+- `voice_dictation_pause_ms` preference (default 2500, 400–10000 ms):
+  locked manual dictation now segments on its own pause threshold instead
+  of recording one unbounded utterance. Each detected pause finishes the
+  current segment while the microphone stays open — `review` appends every
+  segment to the composer draft, `auto` submits each segment. Audio is
+  queued locally while recognition is busy, so deferred segments keep
+  their order and no frames are lost; tapping the locked button flushes
+  and ends the dictation exactly once. The browser voice panel carries
+  the same setting and lock signalling.
+- `linux_desktop_look` desktop tool: delegated vision for any chat model.
+  The tool captures a fresh consented screenshot (or reuses the chat's
+  latest stored observation), persists it under
+  `$XDG_STATE_HOME/augmentor/desktop-observations/` with a JSON sidecar
+  (owner, timestamp, questions asked; ~50 MB cap, oldest pruned first)
+  and posts image + focused question to the LAN InferenzQuelle vision
+  endpoint. The text answer returns to the chat model. Image input is no
+  longer required for desktop control — `linux_desktop_snapshot` keeps
+  attaching the screenshot only when the selected model declares image
+  input, and `requiresImageModel` advertises `false`.
 
 ## 0.2.3
 

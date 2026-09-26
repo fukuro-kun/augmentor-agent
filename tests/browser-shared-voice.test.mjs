@@ -42,6 +42,13 @@ test('hands-free ignores review mode and still submits on pause',async t=>{
  f.event({type:'transcript',sessionId:'personal',requestId:id,text:'Freisprechen sendet'});await delay(0)
  assert.equal(calls.length,1);assert.equal(f.events.some(e=>e.params.type==='draft'),false)
 })
+test('dictation lock action is forwarded to the shared voice engine',async t=>{
+ const f=fixture(t)
+ await f.voice.start({id,sessionId:'personal'});await delay(0)
+ f.voice.control({id,sessionId:'personal',action:'dictation'})
+ assert.deepEqual(f.commands.at(-1),{action:'dictation'})
+ assert.throws(()=>f.voice.control({id,sessionId:'personal',action:'bogus'}),/unterstützte/)
+})
 test('closing during ticket preparation discards late credentials and audio start',async t=>{
  let resolve;const f=fixture(t,{ticket:()=>new Promise(r=>resolve=r)})
  await f.voice.start({id,sessionId:'personal',handsFree:true})

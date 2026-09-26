@@ -14,6 +14,8 @@ def request(value):
         settings=value['settings']
         if settings.get('mode') not in ('manual','hands-free'):raise ValueError('Choose a conversation mode')
         if type(settings.get('pauseMs')) is not int or not 400<=settings['pauseMs']<=10000:raise ValueError('Invalid pause duration')
+        dictation_pause=settings.get('dictationPauseMs',v['voice_dictation_pause_ms'])
+        if type(dictation_pause) is not int or not 400<=dictation_pause<=10000:raise ValueError('Invalid dictation pause duration')
         if type(settings.get('enabled')) is not bool:raise ValueError('Invalid voice setting')
         tts=settings.get('ttsEnabled',v['voice_tts_enabled'])
         if type(tts) is not bool:raise ValueError('Invalid speech output setting')
@@ -28,9 +30,10 @@ def request(value):
         if submit not in ('auto','review'):raise ValueError('Invalid submit mode')
         preferences.values.update(voice_mode=settings['mode'],voice_pause_ms=settings['pauseMs'],voice_enabled=settings['enabled'],
             voice_tts_enabled=tts,voice_stt_language=language,voice_speed=float(speed),voice_volume=float(volume),voice_id=voice,
-            voice_submit_mode=submit)
+            voice_submit_mode=submit,voice_dictation_pause_ms=dictation_pause)
         preferences.save()
     return {'ok':True,'mode':v['voice_mode'],'pauseMs':v['voice_pause_ms'],'enabled':v['voice_enabled'],'submitMode':v['voice_submit_mode'],
+            'dictationPauseMs':v['voice_dictation_pause_ms'],
             'ttsEnabled':v['voice_tts_enabled'],'sttLanguage':v['voice_stt_language'],
             'values':{'voiceId':v['voice_id'],'speed':v['voice_speed'],'volume':v['voice_volume']},
             'voices':[{'id':'','name':'Standardstimme'}]}

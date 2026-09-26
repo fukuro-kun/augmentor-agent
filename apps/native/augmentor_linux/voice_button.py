@@ -10,6 +10,7 @@ class VoiceButton(QPushButton):
     hands_free_requested = Signal()
     hold_started = Signal()
     cancelled = Signal()
+    lock_toggled = Signal(bool)
     HOLD_MS = 230
     LOCK_DISTANCE = 24
     TIPS = {
@@ -93,7 +94,7 @@ class VoiceButton(QPushButton):
         self.snap.setStartValue(self.drag_offset);self.snap.setEndValue(0.);self.snap.start()
 
     def cancel_hold(self):
-        self.locked=False
+        if self.locked:self.locked=False;self.lock_toggled.emit(False)
         self.lock_release_pending=False
         self.hands_free_release_pending=False
         self.disarm()
@@ -105,7 +106,7 @@ class VoiceButton(QPushButton):
         previous=getattr(self,'state',None)
         self.state = state
         if state!='listening':
-            self.locked=False
+            if self.locked:self.locked=False;self.lock_toggled.emit(False)
             self.levels=[0.] * 11
         elif previous!='listening':
             self.elapsed=0.
@@ -151,7 +152,7 @@ class VoiceButton(QPushButton):
 
     def lock_recording(self):
         if self.hands_free or self.state!='listening':return
-        self.locked=True;self.lock_release_pending=True
+        self.locked=True;self.lock_release_pending=True;self.lock_toggled.emit(True)
         self.disarm();self.setDown(False)
         self.snap_back()
         self.refresh_tip();self.update()
