@@ -535,7 +535,7 @@ manual: dsh plugin --profile ${found.name} add dsh-augmentor@${version}
   }
   ctx.tools.register(defineTool({
     name: "browser_tabs_list",
-    description: "List the browser tabs the Augmentor extension can see, through its native pipe. Tabs hosting the user's DSH web session carry a `dsh: true` marker: the agent never navigates those \u2014 browser_navigate opens a dedicated tab instead. Returns {ok: true, tabs} when a browser client is connected and {ok: false, error} when none is.",
+    description: `List the browser tabs the Augmentor extension can see, through its native pipe. Row markers: [active] marks the active tab of EACH browser window \u2014 several rows may carry it; [focused window] marks the single tab the user is actually looking at and always wins over [active] when identifying "the current page"; [work tab] is the tab the agent operates on; [DSH session] marks tabs hosting the user's DSH web session: the agent never navigates those \u2014 browser_navigate opens a dedicated tab instead. Returns {ok: true, tabs} when a browser client is connected and {ok: false, error} when none is.`,
     parameters: {},
     output: {
       schema: {
