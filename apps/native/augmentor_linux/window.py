@@ -307,7 +307,7 @@ class Window(QWidget):
     def refresh_voice_preferences(self):
         if not self.voice_dialog and not self.voice_opening and getattr(self.preferences,'persistent',False):
             latest=Preferences()
-            for key in ('voice_enabled','voice_mode','voice_pause_ms','voice_dictation_pause_ms','voice_tts_enabled','voice_stt_language','voice_speed','voice_volume'):
+            for key in ('voice_enabled','voice_mode','voice_pause_ms','voice_dictation_pause_ms','voice_submit_mode','voice_tts_enabled','voice_stt_language','voice_speed','voice_volume'):
                 self.preferences.values[key]=latest.values[key]
             self.voice_button.hands_free=self.voice_is_hands_free()
 

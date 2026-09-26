@@ -17,10 +17,15 @@ class Voice(QObject):
         self.can_record=False;self.accepting_audio=False;self.recording_available=False;self.closed=False;self.calls=[]
         self.dictation=False;self.hands_free=options.get('hands_free',False)
     def begin(self):self.calls.append('begin');self.can_record=False;self.accepting_audio=True;self.changed.emit()
-    def end(self):self.calls.append('end');self.accepting_audio=False
+    def end(self):self.calls.append('end');self.accepting_audio=False;self.dictation=False
     def set_dictation(self,active):self.calls.append('dictation' if active else 'dictation-off');self.dictation=bool(active)
-    def interrupt(self):self.calls.append('interrupt')
-    def observe(self,event):self.calls.append('observe')
+    def interrupt(self):self.calls.append('interrupt');self.dictation=False
+    def observe(self,event):
+        self.calls.append('observe')
+        # Mirrors VoiceSession.observe: only turn/end abort reasons interrupt.
+        if event.get('type')=='turn/end' and event.get('data',{}).get('reason',{}).get('kind') in ('aborted','error','interrupted'):
+            self.dictation=False;return True
+        return False
     def submission_result(self,result):self.calls.append('submission')
     def apply_voice_settings(self):self.calls.append('settings')
     def close(self):self.calls.append('close');self.closed=True
@@ -50,6 +55,43 @@ class BrowserVoiceTests(unittest.TestCase):
         self.assertEqual(voice.calls,['dictation']);self.assertTrue(voice.dictation)
         self.assertTrue(client.dictation_wanted)
         client.finish();self.assertFalse(client.dictation_wanted)
+
+    def test_dictation_does_not_reengage_on_the_next_hold(self):
+        # Regression: dictation_wanted surviving end/interrupt re-enabled
+        # dictation when the next hold reached accepting_audio, splitting a
+        # plain dictation that was never locked.
+        client=module.Client(lambda _:None,session_type=Voice)
+        client.receive({'action':'prepare'});client.receive({'action':'start','ticket':{}});voice=client.voice
+        client.receive({'action':'dictation','active':True})
+        self.assertTrue(client.dictation_wanted)
+        client.receive({'action':'end'})
+        self.assertFalse(client.dictation_wanted)
+        client.receive({'action':'begin'})
+        voice.can_record=True;voice.changed.emit()
+        self.assertEqual(voice.calls,['dictation','end','begin'])
+        self.assertFalse(voice.dictation)
+        # interrupt clears the latch the same way.
+        client.receive({'action':'dictation','active':True})
+        self.assertTrue(client.dictation_wanted)
+        client.receive({'action':'interrupt'})
+        self.assertFalse(client.dictation_wanted)
+        client.finish()
+
+    def test_observe_clears_dictation_intent_only_on_real_interrupt(self):
+        # A parked dictation intent (locked before accepting_audio opened) must
+        # survive benign session events but be released by an actual abort —
+        # otherwise the next hold silently re-engages segmentation.
+        client=module.Client(lambda _:None,session_type=Voice)
+        client.receive({'action':'prepare'});client.receive({'action':'start','ticket':{}});voice=client.voice
+        client.receive({'action':'dictation','active':True})
+        self.assertTrue(client.dictation_wanted)
+        client.receive({'action':'observe','event':{'type':'turn/start'}})
+        self.assertTrue(client.dictation_wanted)
+        client.receive({'action':'observe','event':{'type':'turn/end','data':{'reason':{'kind':'completed'}}}})
+        self.assertTrue(client.dictation_wanted)
+        client.receive({'action':'observe','event':{'type':'turn/end','data':{'reason':{'kind':'aborted'}}}})
+        self.assertFalse(client.dictation_wanted)
+        client.finish()
 
     def test_native_engine_is_the_production_default(self):
         from augmentor_linux.voice import VoiceSession

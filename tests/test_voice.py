@@ -152,27 +152,109 @@ class VoiceTests(unittest.TestCase):
             window.preferences.values['voice_submit_mode']='review'
             voice.dictation_pause_ms=400
             voice.begin()
-            # ~0.4s speech, ~0.64s silence ends segment one; more speech while
-            # ASR is busy is buffered as a deferred segment.
-            probs=iter([.9]*12+[0.]*20+[.9]*20+[0.]*40)
+            # ~0.4s speech, ~0.64s silence ends segment one; two more speech
+            # bursts during ASR are buffered as deferred segments.
+            probs=iter([.9]*12+[0.]*20+[.9]*20+[0.]*20+[.9]*20+[0.]*40)
             voice.dictation_vad=lambda pcm:next(probs,0.)
             voice.set_dictation(True)
             for _ in range(200):voice.microphone(bytes(640))
             deadline=time.monotonic()+5
             while time.monotonic()<deadline and not voice.dictation_deferred:
-                kinds=[p.get('type') for p in voice.sender_queue.queue if isinstance(p,dict)]
                 if voice.dictation_deferred:break
                 time.sleep(.02)
             kinds=[p.get('type') for p in voice.sender_queue.queue if isinstance(p,dict)]
             self.assertEqual(kinds.count('begin'),1)
             self.assertEqual(kinds.count('end'),1)
-            # Segment two ran during ASR and waits deferred until the transcript lands.
+            # Deferred segments replay ONE per transcript — the server drops
+            # back-to-back 'begin's while recognition is busy (P1 regression:
+            # multi-segment flushes used to lose every segment after the first).
             voice.handle({'type':'transcript','requestId':'seg1','text':'erster Abschnitt','sessionId':'s'})
             kinds=[p.get('type') for p in voice.sender_queue.queue if isinstance(p,dict)]
             self.assertEqual(kinds.count('begin'),2)
             self.assertEqual(kinds.count('end'),2)
             self.assertEqual(voice.state,'listening')
             self.assertIn('Diktat',voice.status_text)
+            if voice.dictation_deferred:
+                voice.handle({'type':'transcript','requestId':'seg2','text':'zweiter Abschnitt','sessionId':'s'})
+                kinds=[p.get('type') for p in voice.sender_queue.queue if isinstance(p,dict)]
+                self.assertEqual(kinds.count('begin'),3)
+                self.assertEqual(kinds.count('end'),3)
+            window.close()
+
+    def test_interrupted_dictation_leaves_no_stray_wire_messages(self):
+        # Regression: the worker kept draining its pending backlog after
+        # dictation_close() cleared the state, so a 'start' event post-close
+        # sent a stray 'begin' that never got an 'end' — and stale segments
+        # could resurface inside the next recording.
+        import time
+        with patch.object(VoiceDialog,'connect_voice',lambda self:None):
+            window,voice=self.make_voice_window()
+            voice.dictation_pause_ms=400
+            # speech → silence (ends segment one) → speech again: a second
+            # onset landing after the close is the stray-begin reproducer.
+            probs=iter([.9]*12+[0.]*20+[.9]*160)
+            voice.dictation_vad=lambda pcm:next(probs,0.)
+            voice.begin();voice.set_dictation(True)
+            self.assertTrue(voice.dictation)
+            for _ in range(200):voice.microphone(bytes(640))
+            voice.interrupt()
+            self.assertFalse(voice.dictation);self.assertFalse(voice.dictation_open)
+            self.assertEqual(voice.dictation_deferred,[]);self.assertIsNone(voice.dictation_open_pending)
+            baseline=[p.get('type') for p in list(voice.sender_queue.queue) if isinstance(p,dict)]
+            queued=baseline.count('begin');ends=baseline.count('end')
+            time.sleep(.5)
+            kinds=[p.get('type') for p in list(voice.sender_queue.queue) if isinstance(p,dict)]
+            # Nothing new may appear on the wire after the interrupt — in
+            # particular no unmatched 'begin' from the worker's backlog.
+            self.assertEqual(kinds.count('begin'),queued)
+            self.assertEqual(kinds.count('end'),ends)
+            window.close()
+
+    def test_dictation_unavailable_latches_and_falls_back(self):
+        # A missing/failing VAD must not loop: the lease keeps signalling
+        # dictation intent, but the failed worker is never respawned and the
+        # recording continues unsegmented.
+        import time
+        with patch.object(VoiceDialog,'connect_voice',lambda self:None):
+            window,voice=self.make_voice_window()
+            import augmentor_linux.voice_vad as voice_vad
+            with patch.object(voice_vad,'SileroVad',side_effect=RuntimeError('kein Modell')):
+                voice.begin();voice.set_dictation(True)
+                self.assertTrue(voice.dictation)
+                deadline=time.monotonic()+3
+                while time.monotonic()<deadline and not voice.dictation_failed:
+                    self.app.processEvents();time.sleep(.02)
+                self.assertTrue(voice.dictation_failed)
+                self.assertFalse(voice.dictation);self.assertFalse(voice.dictation_open)
+                self.assertIn('Pausenerkennung nicht verfügbar',voice.status_text)
+                # Re-engage signals are refused while the latch holds.
+                voice.set_dictation(True)
+                self.assertFalse(voice.dictation)
+                # …but a fresh hold is allowed to try the VAD once more.
+                voice.end()
+                voice.handle({'type':'transcript','requestId':'r1','text':'fertig','sessionId':'s'})
+                voice.begin()
+                self.assertFalse(voice.dictation_failed)
+            window.close()
+
+    def test_recoverable_error_keeps_dictation_lock_and_state(self):
+        # A recoverable local error (full dictation queue) must not flip the
+        # session to 'error': the button would disarm its lock, kill the
+        # dictation and turn the next tap into a full discard.
+        with patch.object(VoiceDialog,'connect_voice',lambda self:None):
+            window,voice=self.make_voice_window()
+            voice.dictation_vad=lambda pcm:0.
+            voice.begin();window.voice_button.lock_recording()
+            self.assertTrue(voice.dictation);self.assertTrue(window.voice_button.locked)
+            voice.recognizing=True  # an in-flight segment transcribes
+            voice.handle({'type':'error','recoverable':True,'local':True,'message':'Puffer voll'})
+            self.assertEqual(voice.state,'listening')
+            self.assertTrue(window.voice_button.locked)
+            self.assertTrue(voice.dictation)
+            self.assertTrue(voice.connected)
+            # Local errors never release the recognizing latch — the segment
+            # transcript is still expected.
+            self.assertTrue(voice.recognizing)
             window.close()
 
     def test_settings_disable_disconnects_hides_and_persists(self):

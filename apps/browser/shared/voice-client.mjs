@@ -51,12 +51,17 @@ export class BrowserVoice {
     return {id,sessionId}
   }
   write(active,value){if(this.active===active&&!active.worker.stdin.destroyed)active.worker.stdin.write(JSON.stringify(value)+'\n')}
-  control({id,sessionId,action,settings}){
+  control({id,sessionId,action,settings,active:flag}){
     const active=this.active
     if(!active||id!==active.id||sessionId!==active.sessionId)throw Error('Die Sprache gehört zu einer anderen oder geschlossenen Unterhaltung')
     if(!['heartbeat','begin','end','interrupt','close','settings','dictation'].includes(action))throw Error('Nicht unterstützte Sprachsteuerung')
     if(action==='close')this.close(active)
-    else this.write(active,{action,...(action==='settings'&&settings&&typeof settings==='object'?{settings}:{})})
+    else{
+      const extra={}
+      if(action==='settings'&&settings&&typeof settings==='object')extra.settings=settings
+      if(action==='dictation')extra.active=flag!==false
+      this.write(active,{action,...extra})
+    }
     return {ok:true}
   }
   observe(sessionId,event){if(this.active?.sessionId===sessionId)this.write(this.active,{action:'observe',event})}

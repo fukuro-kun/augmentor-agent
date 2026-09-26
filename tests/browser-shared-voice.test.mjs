@@ -46,7 +46,9 @@ test('dictation lock action is forwarded to the shared voice engine',async t=>{
  const f=fixture(t)
  await f.voice.start({id,sessionId:'personal'});await delay(0)
  f.voice.control({id,sessionId:'personal',action:'dictation'})
- assert.deepEqual(f.commands.at(-1),{action:'dictation'})
+ assert.deepEqual(f.commands.at(-1),{action:'dictation',active:true})
+ f.voice.control({id,sessionId:'personal',action:'dictation',active:false})
+ assert.deepEqual(f.commands.at(-1),{action:'dictation',active:false})
  assert.throws(()=>f.voice.control({id,sessionId:'personal',action:'bogus'}),/unterstützte/)
 })
 test('closing during ticket preparation discards late credentials and audio start',async t=>{

@@ -99,20 +99,27 @@ class Client(QObject):
                 if self.voice: self.voice.set_dictation(self.dictation_wanted)
             elif action == 'end':
                 self.intent = False
+                # A finished dictation must not re-engage on the next hold;
+                # only an explicit lock from the extension turns it on again.
+                self.dictation_wanted = False
                 if self.voice: self.voice.end()
             elif action == 'interrupt':
                 self.intent = False
+                self.dictation_wanted = False
                 if self.voice: self.voice.interrupt()
             elif action == 'submission' and self.voice:
                 self.voice.submission_result(value['result'])
             elif action == 'observe' and self.voice:
-                self.voice.observe(value['event'])
+                # Only a real interruption ends a parked dictation intent —
+                # benign session events must not drop it.
+                if self.voice.observe(value['event']): self.dictation_wanted = False
             elif action == 'settings' and self.voice:
                 # Settings arrive through a separate process; reload the
                 # persisted profile before applying it to the open session.
                 self.preferences = Preferences()
                 self.voice.apply_voice_settings()
             elif action == 'close':
+                self.dictation_wanted = False
                 self.finish()
         except Exception as error:
             self.fail(error)
