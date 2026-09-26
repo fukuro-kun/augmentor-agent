@@ -39,6 +39,17 @@ export function prune(root:string,capBytes=CAP_BYTES,now:number=Date.now()){
   // Fresh files can sit under an in-flight vision query; never pull those.
   if(now-file.stat.mtimeMs<MIN_KEEP_MS)continue;
   try{unlinkSync(join(root,file.name));total-=file.stat.size}catch{}
+  // Remove the sibling of an observation pair too — a lone sidecar or a
+  // screenshot without its query log leaves a misleading audit trail.
+  const stem=file.name.replace(/\.[a-z]+$/,'');
+  const siblings=file.name.endsWith('.json')?['.png','.jpg','.jpeg','.webp'].map(ext=>stem+ext):[stem+'.json'];
+  for(const sibling of siblings){
+   // The pair travels together, but a sibling still fresh enough for an
+   // in-flight query is left alone (sidecars are rewritten per query).
+   try{const stat=statSync(join(root,sibling));
+    if(now-stat.mtimeMs>=MIN_KEEP_MS){unlinkSync(join(root,sibling));total-=stat.size}
+   }catch{}
+  }
  }
 }
 
@@ -52,6 +63,9 @@ export function recordObservation(owner:string,image:{data:string,mimeType:strin
  writeFileSync(path,data,{mode:0o600});
  writeFileSync(sidecarPath(path),JSON.stringify({owner,capturedAt,bytes:data.length,mimeType:image.mimeType,queries:[]}),{mode:0o600});
  latest.set(owner,path);
+ // Bound the owner→path index; dead owners are also evicted lazily by
+ // latestObservation's existence check.
+ if(latest.size>256)latest.delete(latest.keys().next().value!);
  prune(root);
  return {path,bytes:data.length,capturedAt};
 }
@@ -73,7 +87,7 @@ export async function visionQuery({question,path,signal,endpoint,model,timeoutMs
  try{
   response=await fetch(base+'/v1/chat/completions',{method:'POST',headers:{'content-type':'application/json'},
    signal:AbortSignal.any(signals),
-   body:JSON.stringify({model:useModel,max_tokens:700,messages:[
+   body:JSON.stringify({model:useModel,max_tokens:1500,messages:[
     {role:'system',content:'You are a visual analysis sensor for a Linux desktop-control agent. Answer the question about the screenshot concisely and concretely. Give pixel coordinates relative to the screenshot image when asked for positions. If something is not visible, say so honestly. Do not add general advice beyond the question.'},
     {role:'user',content:[{type:'image_url',image_url:{url:`data:${mime};base64,${image.toString('base64')}`}},{type:'text',text:question}]}]})});
  }catch(error){
@@ -87,7 +101,11 @@ export async function visionQuery({question,path,signal,endpoint,model,timeoutMs
  if(!response.ok)throw Error(`Der Vision-Endpunkt meldet HTTP ${response.status}${result?.error?.message?': '+result.error.message:'.'}`);
  const content=result?.choices?.[0]?.message?.content;
  const text=typeof content==='string'?content.trim():'';
- if(!text)throw Error(`Das Bildmodell gab keine Antwort (finish_reason: ${result?.choices?.[0]?.finish_reason??'unbekannt'}).`);
+ // Thinking models can spend the whole budget on reasoning_content — surface
+ // that case so callers know to raise max_tokens rather than seeing a bare
+ // empty-answer failure.
+ const finish=result?.choices?.[0]?.finish_reason??'unbekannt';
+ if(!text)throw Error(finish==='length'?`Das Bildmodell verbrauchte das Token-Budget im Denken ohne Antwort (finish_reason: length).`:`Das Bildmodell gab keine Antwort (finish_reason: ${finish}).`);
  let capturedAt:string|undefined;
  try{
   const metaPath=sidecarPath(path);

@@ -48,7 +48,9 @@
   endpoint. The text answer returns to the chat model. Image input is no
   longer required for desktop control — `linux_desktop_snapshot` keeps
   attaching the screenshot only when the selected model declares image
-  input, and `requiresImageModel` advertises `false`.
+  input, and the desktop-control capability advertises
+  `requiresImageModel: false` (the desktop specialist still requires an
+  image-capable model because it attaches screenshots itself).
 
 ## 0.2.3
 

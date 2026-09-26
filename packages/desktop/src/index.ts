@@ -31,6 +31,7 @@ export async function look(owner:string,args:unknown,signal?:AbortSignal){
  const input=(args??{}) as {question?:string,reuse?:boolean};
  const question=typeof input.question==='string'?input.question.trim():'';
  if(!question)throw Error('linux_desktop_look braucht eine gezielte Frage für das Bildmodell.');
+ if(question.length>2000)throw Error('Die Frage für linux_desktop_look ist zu lang (max. 2000 Zeichen).');
  let path:string|undefined;
  if(input.reuse===true){
   path=latestObservation(owner);
@@ -41,7 +42,7 @@ export async function look(owner:string,args:unknown,signal?:AbortSignal){
   path=recordObservation(owner,image).path;
  }
  const answer=await visionQuery({question,path,signal});
- return {answer:answer.text,model:answer.model,observation:answer.observation};
+ return {answer:answer.text.length>4000?answer.text.slice(0,4000)+' … [gekürzt]':answer.text,model:answer.model,observation:answer.observation};
 }
 export function desktopPackage(owner:string){return (pi:ExtensionAPI)=>{
  for(const d of definitions)pi.registerTool({name:d.name,label:d.name,description:d.description,parameters:d.parameters,

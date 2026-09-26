@@ -24,12 +24,17 @@ export function apply(ctx,config={}){
       }
       let wantsImage=false
       if(d.method==='capture'){
-        const routed=exec.agent.session.requestHeader()?.config
-        const provider=routed?.provider??exec.agent.options.provider,model=routed?.model??exec.agent.options.model
-        const info=await ctx.llm.resolveModelInfo(provider,model,exec.signal)
-        // Delegated vision makes image input optional: the observation is
-        // always persisted; the attachment fallback stays for image models.
-        wantsImage=info.inputModalities?.includes('image')===true
+        try{
+          const routed=exec.agent.session.requestHeader()?.config
+          const provider=routed?.provider??exec.agent.options.provider,model=routed?.model??exec.agent.options.model
+          const info=await ctx.llm.resolveModelInfo(provider,model,exec.signal)
+          // Delegated vision makes image input optional: the observation is
+          // always persisted; the attachment fallback stays for image models.
+          wantsImage=info.inputModalities?.includes('image')===true
+        }catch{
+          // A model-info lookup failure must not break capture — the
+          // observation store plus linux_desktop_look still work.
+        }
       }
       const {image,...metadata}=await control(d.method,owner,args,exec.signal)
       if(image){
