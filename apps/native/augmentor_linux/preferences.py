@@ -54,7 +54,7 @@ class Preferences:
         else:self.values['background_image']=''
         if self.values['voice_mode'] not in ('manual','hands-free'):self.values['voice_mode']='manual'
         if self.values['voice_submit_mode'] not in ('auto','review'):self.values['voice_submit_mode']='auto'
-        self.values['voice_pause_ms']=max(400,min(2000,self.values['voice_pause_ms']))
+        self.values['voice_pause_ms']=max(400,min(10000,self.values['voice_pause_ms']))
         if self.values['voice_stt_language'] not in ('de','en','auto'):self.values['voice_stt_language']='de'
         self.values['voice_speed']=max(.5,min(2.0,float(self.values['voice_speed'])))
         self.values['voice_volume']=max(0.,min(1.0,float(self.values['voice_volume'])))

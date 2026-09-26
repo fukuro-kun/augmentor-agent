@@ -87,6 +87,18 @@ class VoiceTests(unittest.TestCase):
             self.assertTrue(dialog.turn_complete)
             dialog.close()
 
+    def test_hands_free_ignores_review_submit_mode(self):
+        with patch.object(VoiceDialog, 'connect_voice', lambda self: None), \
+                patch.object(VoiceDialog, 'start_hands_free', lambda self: None):
+            parent = QWidget(); parent.stop = lambda: None
+            parent.preferences = SimpleNamespace(values={'voice_submit_mode': 'review'})
+            dialog = VoiceDialog(parent, {'sessionId': 's'}, hands_free=True)
+            dialog.handle({'type': 'ready'})
+            dialog.handle({'type': 'transcript', 'requestId': 'r3', 'text': 'Freisprechen sendet', 'sessionId': 's'})
+            self.assertEqual(dialog.waiting_request, 'augmentor-voice:r3')
+            self.assertFalse(dialog.turn_complete)
+            dialog.close()
+
     def test_auto_submit_mode_keeps_thinking_state(self):
         with patch.object(VoiceDialog, 'connect_voice', lambda self: None):
             parent = QWidget(); parent.stop = lambda: None

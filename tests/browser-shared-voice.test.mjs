@@ -36,6 +36,12 @@ test('review mode parks the transcript as a composer draft and never submits',as
  assert.equal(drafts.length,1);assert.equal(drafts[0].params.text,'Diktierter Entwurf');assert.equal(drafts[0].params.requestId,id)
  assert.equal(f.commands.some(c=>c.action==='submission'),false)
 })
+test('hands-free ignores review mode and still submits on pause',async t=>{
+ const calls=[];const f=fixture(t,{submit:async(...args)=>{calls.push(args);return {accepted:true}}})
+ await f.voice.start({id,sessionId:'personal',submitMode:'review',handsFree:true});await delay(0)
+ f.event({type:'transcript',sessionId:'personal',requestId:id,text:'Freisprechen sendet'});await delay(0)
+ assert.equal(calls.length,1);assert.equal(f.events.some(e=>e.params.type==='draft'),false)
+})
 test('closing during ticket preparation discards late credentials and audio start',async t=>{
  let resolve;const f=fixture(t,{ticket:()=>new Promise(r=>resolve=r)})
  await f.voice.start({id,sessionId:'personal',handsFree:true})

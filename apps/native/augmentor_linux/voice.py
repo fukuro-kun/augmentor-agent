@@ -504,7 +504,9 @@ class VoiceSession(QObject):
             if self.closed or event.get('requestId') in self.submitted:return
             self.recognizing=False
             self.submitted.add(event.get('requestId'))
-            review=getattr(getattr(self.parent(),'preferences',None),'values',{}).get('voice_submit_mode','auto')=='review'
+            # Hands-free is a conversation: the detected pause is the user's
+            # send gesture, so review only applies to manual dictation.
+            review=not self.hands_free and getattr(getattr(self.parent(),'preferences',None),'values',{}).get('voice_submit_mode','auto')=='review'
             if review:
                 # The draft goes to the composer instead of the session — no
                 # answer turn follows, so nothing is awaited here.

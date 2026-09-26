@@ -110,7 +110,7 @@ async function showVoice(container){
   for(const [value,label] of [['de','Deutsch'],['en','Englisch'],['auto','Automatisch erkennen']]){const option=make('option',label);option.value=value;language.append(option)}language.value=data.sttLanguage||'de'
   const voices=add('voiceId','Sprechstimme',make('select'))
   for(const row of data.voices){const option=make('option',row.name);option.value=row.id;voices.append(option)}voices.value=data.values.voiceId
-  for(const [key,label,min,max,step,value] of [['speed','Sprechgeschwindigkeit',.5,2,.05,data.values.speed],['volume','Ausgabelautstärke',0,1,.05,data.values.volume],['pauseMs','Pause vor dem Senden (Millisekunden)',400,2000,50,data.pauseMs]]){
+  for(const [key,label,min,max,step,value] of [['speed','Sprechgeschwindigkeit',.5,2,.05,data.values.speed],['volume','Ausgabelautstärke',0,1,.05,data.values.volume],['pauseMs','Pause vor dem Senden (Freisprechen, Millisekunden)',400,10000,50,data.pauseMs]]){
     const input=add(key,label,make('input'));input.type='number';input.min=min;input.max=max;input.step=step;input.value=value
   }
   const mode=add('mode','Unterhaltungsmodus',make('select'))

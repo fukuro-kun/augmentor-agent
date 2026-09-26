@@ -138,6 +138,12 @@ Tested ref: `feature/x11-mate-desktop` commits `7c007a2` + `c41e787`
   preferences closes an open lease, so the change applies on next open.
   In review mode no `session.prompt` call is made and the server-side
   utterance lifecycle ends with the delivered transcript.
+  Review applies only to manual dictation (hold/lock). Hands-free stays a
+  conversation mode: the detected pause is the send gesture, so a
+  hands-free transcript always submits regardless of `voice_submit_mode`.
+- `voice_pause_ms` (hands-free endpointing, default 800) accepts
+  400–10000 ms. Longer thresholds suit deliberate dictation: short
+  thinking pauses no longer split an utterance into separate turns.
 - `dsh-memory` recognises both `resonant-voice:` and `augmentor-voice:`
   request prefixes during the transition; new sessions emit
   `augmentor-voice:`.

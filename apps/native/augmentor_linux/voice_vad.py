@@ -59,7 +59,7 @@ class EndpointDetector:
     FRAME_SECONDS = .032
 
     def __init__(self, pause_ms=800, maximum=600):
-        self.pause_frames = max(13, min(63, math.ceil(pause_ms/32)))
+        self.pause_frames = max(13, min(313, math.ceil(pause_ms/32)))
         self.maximum_frames = max(1, int(maximum/.032))
         self.reset()
 

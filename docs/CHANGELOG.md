@@ -25,9 +25,11 @@
 - `voice_submit_mode` preference (`auto` | `review`, default `auto`):
   `review` parks the finished transcript in the composer/sidebar input as
   a correctable draft instead of submitting it; `auto` keeps the
-  immediate submit. Exposed in the native Voice settings and the
-  extension's voice section; the browser lease picks the mode up at
-  `voice/start`.
+  immediate submit. Applies to manual dictation only — hands-free keeps
+  sending on its detected pause. Exposed in the native Voice settings and
+  the extension's voice section; the browser lease picks the mode up at
+  `voice/start`. The hands-free pause bound grew from 2 s to 10 s for
+  deliberate dictation with thinking pauses.
 
 ## 0.2.3
 

@@ -13,7 +13,7 @@ def request(value):
     if action=='save':
         settings=value['settings']
         if settings.get('mode') not in ('manual','hands-free'):raise ValueError('Choose a conversation mode')
-        if type(settings.get('pauseMs')) is not int or not 400<=settings['pauseMs']<=2000:raise ValueError('Invalid pause duration')
+        if type(settings.get('pauseMs')) is not int or not 400<=settings['pauseMs']<=10000:raise ValueError('Invalid pause duration')
         if type(settings.get('enabled')) is not bool:raise ValueError('Invalid voice setting')
         tts=settings.get('ttsEnabled',v['voice_tts_enabled'])
         if type(tts) is not bool:raise ValueError('Invalid speech output setting')

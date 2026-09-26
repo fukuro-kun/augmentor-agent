@@ -406,7 +406,7 @@ class Window(QWidget):
     def voice_transcript(self,event):
         controller=self.controller
         if not self.voice_dialog or self.voice_dialog.closed or not controller or controller.session!=event['sessionId'] or controller.read_only:return
-        if self.preferences.values.get('voice_submit_mode','auto')=='review':
+        if self.preferences.values.get('voice_submit_mode','auto')=='review' and not getattr(self.voice_dialog,'hands_free',False):
             # Devin-style dictation: park the transcript in the composer for
             # correction instead of submitting it to the session.
             from PySide6.QtGui import QTextCursor

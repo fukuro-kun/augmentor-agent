@@ -24,7 +24,7 @@ export class BrowserVoice {
     const worker=this.spawnWorker(voicePython(this.root),['-u',path.join(this.root,'services/voice/browser-client.py')],{
       stdio:['pipe','pipe','ignore'],env:{...process.env,AUGMENTOR_WINDOW_ID:'main'},
     })
-    const active={id,sessionId,worker,submitted:new Set(),buffer:'',submitMode};this.active=active
+    const active={id,sessionId,worker,submitted:new Set(),buffer:'',submitMode,handsFree};this.active=active
     const emit=event=>{if(this.active===active)this.notify({method:'voice.event',params:{id,sessionId,...event}})}
     worker.on('error',()=>{emit({type:'error',message:'Die gemeinsame Sprach-Engine konnte nicht starten. Prüfe die Companion-Installation.'});this.close(active)})
     worker.on('exit',()=>{emit({type:'state',state:'closed',closed:true,status:'Sprache getrennt'});this.close(active)})
@@ -64,7 +64,7 @@ export class BrowserVoice {
     if(this.active!==active||event.sessionId!==active.sessionId||!/^[-a-f0-9]{36}$/.test(event.requestId??'')||active.submitted.has(event.requestId))return
     if(typeof event.text!=='string'||!event.text.trim()||event.text.length>8192){this.close(active);return}
     active.submitted.add(event.requestId)
-    if(active.submitMode==='review'){this.notify({method:'voice.event',params:{id:active.id,sessionId:active.sessionId,type:'draft',requestId:event.requestId,text:event.text}});return}
+    if(active.submitMode==='review'&&!active.handsFree){this.notify({method:'voice.event',params:{id:active.id,sessionId:active.sessionId,type:'draft',requestId:event.requestId,text:event.text}});return}
     const id='augmentor-voice:'+event.requestId
     let result
     try{result=await this.submit(active.sessionId,id,event.text)}
