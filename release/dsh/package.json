@@ -5,6 +5,7 @@
   "description": "Pinned DSH qualification environment for Augmentor Agent Desktop",
   "dependencies": {
     "@deepseek-ai/dsh": "0.1.5-rc.1",
+    "@deepseek-ai/dsh-client-locale-de": "file:../../../deepseek-harness/packages/client/locale-de/deepseek-ai-dsh-client-locale-de-0.1.5-rc.1.tgz",
     "pnpm": "11.23.0"
   },
   "overrides": {
@@ -12,16 +13,16 @@
     "@deepseek-ai/dsh-acp-app": "0.1.5-rc.1",
     "@deepseek-ai/dsh-agent": "0.1.5-rc.1",
     "@deepseek-ai/dsh-agent-default-model": "0.1.5-rc.1",
-    "@deepseek-ai/dsh-agent-instructions": "0.1.5-rc.1",
+    "@deepseek-ai/dsh-agent-instructions": "file:/home/fukuro/git/deepseek-harness/packages/context/agent-instructions/deepseek-ai-dsh-agent-instructions-0.1.5-rc.1.tgz",
     "@deepseek-ai/dsh-agent-loop": "0.1.5-rc.1",
     "@deepseek-ai/dsh-agent-presets": "0.1.5-rc.1",
     "@deepseek-ai/dsh-agent-tool-presentation": "0.1.5-rc.1",
     "@deepseek-ai/dsh-anonymous-user-id": "0.1.5-rc.1",
     "@deepseek-ai/dsh-api-gateway": "0.1.5-rc.1",
-    "@deepseek-ai/dsh-api-remotes": "0.1.5-rc.1",
+    "@deepseek-ai/dsh-api-remotes": "file:/home/fukuro/git/deepseek-harness/packages/api/remotes/deepseek-ai-dsh-api-remotes-0.1.5-rc.1.tgz",
     "@deepseek-ai/dsh-api-session-controller": "0.1.5-rc.1",
     "@deepseek-ai/dsh-api-settings-controller": "0.1.5-rc.1",
-    "@deepseek-ai/dsh-api-workspace-controller": "0.1.5-rc.1",
+    "@deepseek-ai/dsh-api-workspace-controller": "file:/home/fukuro/git/deepseek-harness/packages/api/workspace-controller/deepseek-ai-dsh-api-workspace-controller-0.1.5-rc.1.tgz",
     "@deepseek-ai/dsh-api-workspace-files": "0.1.5-rc.1",
     "@deepseek-ai/dsh-app-boot": "0.1.5-rc.1",
     "@deepseek-ai/dsh-atomic-write": "0.1.5-rc.1",
@@ -33,7 +34,7 @@
     "@deepseek-ai/dsh-bash-sandbox": "0.1.5-rc.1",
     "@deepseek-ai/dsh-brand": "0.1.5-rc.1",
     "@deepseek-ai/dsh-chunked-list": "0.1.5-rc.1",
-    "@deepseek-ai/dsh-client-connection": "0.1.5-rc.1",
+    "@deepseek-ai/dsh-client-connection": "file:/home/fukuro/git/deepseek-harness/packages/client/connection/deepseek-ai-dsh-client-connection-0.1.5-rc.1.tgz",
     "@deepseek-ai/dsh-client-file-upload": "0.1.5-rc.1",
     "@deepseek-ai/dsh-client-hmr": "0.1.5-rc.1",
     "@deepseek-ai/dsh-client-locale": "0.1.5-rc.1",
@@ -79,7 +80,7 @@
     "@deepseek-ai/dsh-client-ui-trajectory": "0.1.5-rc.1",
     "@deepseek-ai/dsh-client-ui-user-questions": "0.1.5-rc.1",
     "@deepseek-ai/dsh-client-ui-workflow-run": "0.1.5-rc.1",
-    "@deepseek-ai/dsh-client-ui-workspace": "0.1.5-rc.1",
+    "@deepseek-ai/dsh-client-ui-workspace": "file:/home/fukuro/git/deepseek-harness/packages/client/ui-workspace/deepseek-ai-dsh-client-ui-workspace-0.1.5-rc.1.tgz",
     "@deepseek-ai/dsh-cmdline": "0.1.5-rc.1",
     "@deepseek-ai/dsh-code-runtime": "0.1.5-rc.1",
     "@deepseek-ai/dsh-code-runtime-worker-thread": "0.1.5-rc.1",
@@ -123,7 +124,7 @@
     "@deepseek-ai/dsh-jobs-local": "0.1.5-rc.1",
     "@deepseek-ai/dsh-launch-environment": "0.1.5-rc.1",
     "@deepseek-ai/dsh-llm": "0.1.5-rc.1",
-    "@deepseek-ai/dsh-llm-deepseek": "0.1.5-rc.1",
+    "@deepseek-ai/dsh-llm-deepseek": "file:/home/fukuro/git/deepseek-harness/packages/llm/llm-deepseek/deepseek-ai-dsh-llm-deepseek-0.1.5-rc.1.tgz",
     "@deepseek-ai/dsh-llm-pi-ai": "0.1.5-rc.1",
     "@deepseek-ai/dsh-llm-retry": "0.1.5-rc.1",
     "@deepseek-ai/dsh-mcp-client": "0.1.5-rc.1",
@@ -201,7 +202,7 @@
     "@deepseek-ai/dsh-tool-bash": "0.1.5-rc.1",
     "@deepseek-ai/dsh-tool-bash-persistent": "0.1.5-rc.1",
     "@deepseek-ai/dsh-tool-call-timeout-policy": "0.1.5-rc.1",
-    "@deepseek-ai/dsh-tool-cordis": "0.1.5-rc.1",
+    "@deepseek-ai/dsh-tool-cordis": "file:/home/fukuro/git/deepseek-harness/packages/extensions/tool-cordis/deepseek-ai-dsh-tool-cordis-0.1.5-rc.1.tgz",
     "@deepseek-ai/dsh-tool-fs": "0.1.5-rc.1",
     "@deepseek-ai/dsh-tool-fs-search": "0.1.5-rc.1",
     "@deepseek-ai/dsh-tool-goal": "0.1.5-rc.1",
@@ -237,6 +238,6 @@
     "@deepseek-ai/dsh-win32-process": "0.1.5-rc.1",
     "@deepseek-ai/dsh-workflow": "0.1.5-rc.1",
     "@deepseek-ai/dsh-workflow-worker-thread": "0.1.5-rc.1",
-    "@deepseek-ai/dsh-workspace": "0.1.5-rc.1"
+    "@deepseek-ai/dsh-workspace": "file:/home/fukuro/git/deepseek-harness/packages/workspace/workspace/deepseek-ai-dsh-workspace-0.1.5-rc.1.tgz"
   }
 }
