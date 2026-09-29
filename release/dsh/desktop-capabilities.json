@@ -163,6 +163,7 @@
     "name": "@deepseek-ai/dsh-tool-web",
     "config": {
       "fetch": false,
+      "search": false,
       "searchTimeoutMs": 60000
     }
   }

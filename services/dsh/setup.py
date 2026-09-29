@@ -37,6 +37,8 @@ def personal_agent_entries():
         {'id':'tool-fs','name':'@deepseek-ai/dsh-tool-fs'},
         {'id':'tool-ask-user','name':'@deepseek-ai/dsh-tool-ask-user'},
         {'id':'augmentor-desktop','name':str(ROOT/'adapters/dsh-desktop/index.mjs')},
+        {'id':'mcp-brave','name':'@deepseek-ai/dsh-mcp-client','config':{'serverName':'brave','transport':'streamable-http','url':'http://telesto:8080/mcp'}},
+        {'id':'mcp-exa','name':'@deepseek-ai/dsh-mcp-client','config':{'serverName':'exa','transport':'streamable-http','url':'http://telesto:8081/mcp'}},
     ]+json.loads((ROOT/'release/dsh/desktop-capabilities.json').read_text())
 
 def configuration():
