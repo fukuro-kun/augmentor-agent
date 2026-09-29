@@ -623,9 +623,14 @@ ui.setState = (s) => {
 }
 
 // M1's DSH view is read-only: prompts land in M2 (session.create/prompt).
-// The composer is disabled while a DSH session is open.
+// The composer is disabled while a DSH session is open, and the placeholder
+// says so — the default text would wrongly suggest the shown session is live.
 function setViewComposer(enabled) {
-  document.getElementById('input').disabled = !enabled
+  const input = document.getElementById('input')
+  input.disabled = !enabled
+  input.placeholder = enabled
+    ? 'Augmentor fragen…'
+    : 'Anzeigemodus — Fortsetzen im DSH-Web-Client'
   document.getElementById('send').disabled = !enabled
 }
 
