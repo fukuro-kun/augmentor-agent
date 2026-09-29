@@ -51,6 +51,14 @@
   input, and the desktop-control capability advertises
   `requiresImageModel: false` (the desktop specialist still requires an
   image-capable model because it attaches screenshots itself).
+- Fixed: hardened the segmented dictation lifecycle after multi-round
+  review. `set_dictation(False)` now keeps the deferred queue while a
+  replay is in flight, so multi-segment dictation no longer loses
+  everything after the first replayed segment. A `dictation_lock`
+  serializes claim+publish between GUI and worker (double-append,
+  `pop(0)` and zombie-utterance races), `dictation_epoch` tags retire
+  ghost workers on re-engage, the idle-tap `recognizing` wedge is gone,
+  and recoverable STT stalls re-drive the chain via `flush_dictation()`.
 
 ## 0.2.3
 
